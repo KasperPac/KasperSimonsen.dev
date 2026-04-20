@@ -1,26 +1,204 @@
 @import "tailwindcss";
 
+/* ── Design tokens ── */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-primary: #0b0b0b;
+  --text-primary: #fafafa;
+  --text-muted: #aaaaaa;
+  --text-dim: #666666;
+  --border: #1f1f1f;
+  --accent: #ff5a1f;
+  --health: #7a9b6e;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg-primary: var(--bg-primary);
+  --color-text-primary: var(--text-primary);
+  --color-text-muted: var(--text-muted);
+  --color-text-dim: var(--text-dim);
+  --color-border: var(--border);
+  --color-accent: var(--accent);
+  --color-health: var(--health);
+
+  --font-display: var(--font-inter), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-serif: var(--font-fraunces), "Instrument Serif", Georgia, serif;
+  --font-body: var(--font-instrument-sans), system-ui, -apple-system, sans-serif;
+  --font-mono: var(--font-geist-mono), "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* ── Base ── */
+body {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+}
+
+/* ── Hero morph ── */
+.hero-morph {
+  position: relative;
+  background: var(--bg-primary);
+  overflow: hidden;
+}
+
+.hero-name-morph {
+  font-family: var(--font-inter), "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-weight: 900;
+  fill: var(--text-primary);
+  font-size: 125px;
+  letter-spacing: -11px;
+}
+
+/* Scroll-driven morph — supported browsers */
+@supports (animation-timeline: scroll()) {
+  @keyframes hero-morph-scroll {
+    from { font-size: 125px; letter-spacing: -11px; }
+    to   { font-size: 86px;  letter-spacing: -3px;  }
+  }
+
+  .hero-name-morph {
+    animation: hero-morph-scroll linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0px 160px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Hover fallback for browsers without scroll-driven animation support */
+@supports not (animation-timeline: scroll()) {
+  .hero-name-morph {
+    transition:
+      font-size 0.55s cubic-bezier(0.22, 1, 0.36, 1),
+      letter-spacing 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .hero-morph:hover .hero-name-morph {
+    font-size: 86px;
+    letter-spacing: -3px;
+  }
+
+  /* Touch devices: relaxed state by default */
+  @media (hover: none) {
+    .hero-name-morph {
+      font-size: 86px;
+      letter-spacing: -3px;
+    }
+  }
+}
+
+/* Reduced motion: snap to relaxed state, no animation */
+@media (prefers-reduced-motion: reduce) {
+  .hero-name-morph {
+    animation: none !important;
+    transition: none !important;
+    font-size: 86px;
+    letter-spacing: -3px;
+  }
+}
+
+/* ── Availability pill ── */
+.hint-pill {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--font-geist-mono), "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  color: var(--text-dim);
+  text-transform: uppercase;
+}
+
+.pulse-dot-o {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: pulse-o 2s infinite;
+  vertical-align: middle;
+  margin-right: 7px;
+  flex-shrink: 0;
+}
+
+/* ── Tile row ── */
+.tile-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 0.5px solid var(--border);
+  border-bottom: 0.5px solid var(--border);
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.5rem 1.25rem;
+  border-right: 0.5px solid var(--border);
+  min-height: 160px;
+}
+
+.tile:last-child {
+  border-right: none;
+}
+
+@media (max-width: 768px) {
+  .tile-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .tile:nth-child(2) {
+    border-right: none;
+  }
+  .tile:nth-child(3) {
+    border-right: 0.5px solid var(--border);
+    border-top: 0.5px solid var(--border);
+  }
+  .tile:nth-child(4) {
+    border-top: 0.5px solid var(--border);
+    border-right: none;
+  }
+}
+
+.tile-label {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+
+.tile-number {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 40px;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.tile-meta {
+  font-family: var(--font-geist-mono), ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.03em;
+  color: var(--text-muted);
+}
+
+/* ── Sparkline draw-on-hover ── */
+[data-sparkline="pf"] {
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+  transition: stroke-dashoffset 1.2s ease-out 0.05s;
+}
+
+[data-sparkline="as"] {
+  stroke-dasharray: 400;
+  stroke-dashoffset: 400;
+  transition: stroke-dashoffset 1.0s ease-out 0.7s;
+}
+
+.group:hover [data-sparkline="pf"],
+.group:hover [data-sparkline="as"] {
+  stroke-dashoffset: 0;
+}
+
+@keyframes pulse-o {
+  0%   { box-shadow: 0 0 0 0   rgba(255, 90, 31, 0.6); }
+  70%  { box-shadow: 0 0 0 6px rgba(255, 90, 31, 0); }
+  100% { box-shadow: 0 0 0 0   rgba(255, 90, 31, 0); }
 }
