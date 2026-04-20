@@ -44,54 +44,8 @@ body {
   font-family: var(--font-inter), "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-weight: 900;
   fill: var(--text-primary);
-  font-size: 125px;
-  letter-spacing: -11px;
-}
-
-/* Scroll-driven morph — supported browsers */
-@supports (animation-timeline: scroll()) {
-  @keyframes hero-morph-scroll {
-    from { font-size: 125px; letter-spacing: -11px; }
-    to   { font-size: 86px;  letter-spacing: -3px;  }
-  }
-
-  .hero-name-morph {
-    animation: hero-morph-scroll linear both;
-    animation-timeline: scroll(root block);
-    animation-range: 0px 160px;
-  }
-}
-
-/* Hover fallback for browsers without scroll-driven animation support */
-@supports not (animation-timeline: scroll()) {
-  .hero-name-morph {
-    transition:
-      font-size 0.55s cubic-bezier(0.22, 1, 0.36, 1),
-      letter-spacing 0.55s cubic-bezier(0.22, 1, 0.36, 1);
-  }
-
-  .hero-morph:hover .hero-name-morph {
-    font-size: 86px;
-    letter-spacing: -3px;
-  }
-
-  /* Touch devices: relaxed state by default */
-  @media (hover: none) {
-    .hero-name-morph {
-      font-size: 86px;
-      letter-spacing: -3px;
-    }
-  }
-}
-
-/* Reduced motion: snap to relaxed state, no animation */
-@media (prefers-reduced-motion: reduce) {
-  .hero-name-morph {
-    animation: none !important;
-    transition: none !important;
-    font-size: 86px;
-    letter-spacing: -3px;
-  }
+  font-size: 95px;
+  letter-spacing: -4px;
 }
 
 /* ── Availability pill ── */

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { fetchRepoMeta, type RepoMeta } from "@/lib/github";
 import { currently, previously, type Project } from "./data";
+import InversionCursor from "@/app/components/InversionCursor";
 
 const mono    = { fontFamily: "var(--font-geist-mono), ui-monospace, monospace" };
 const body    = { fontFamily: "var(--font-instrument-sans), system-ui, -apple-system, sans-serif" };
@@ -182,17 +183,19 @@ export default async function WorkPage() {
         >
           {currently.length} projects — active
         </p>
-        <h1
-          className="font-black uppercase leading-none"
-          style={{
-            ...display,
-            fontSize: "clamp(72px, 10vw, 110px)",
-            letterSpacing: "-0.085em",
-            color: "var(--text-primary)",
-          }}
-        >
-          WORK
-        </h1>
+        <InversionCursor>
+          <h1
+            className="font-black uppercase leading-none"
+            style={{
+              ...display,
+              fontSize: "clamp(72px, 10vw, 110px)",
+              letterSpacing: "-0.085em",
+              color: "var(--text-primary)",
+            }}
+          >
+            WORK
+          </h1>
+        </InversionCursor>
       </div>
 
       {/* Currently section */}

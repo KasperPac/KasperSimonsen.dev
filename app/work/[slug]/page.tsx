@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { currently } from "@/app/work/data";
 import { fetchRepoMeta } from "@/lib/github";
-import InversionCursor from "./components/InversionCursor";
+import InversionCursor from "@/app/components/InversionCursor";
 import PacForgeContent from "./content/pac-forge";
 import AssemblioContent from "./content/assemblio";
 
