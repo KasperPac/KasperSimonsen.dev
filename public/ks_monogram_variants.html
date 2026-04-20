@@ -1,0 +1,72 @@
+<style>
+.logo-row { background: #0B0B0B; padding: 2.5rem 2rem 1.5rem; text-align: center; position: relative; border-bottom: 1px solid #1a1a1c; }
+.logo-row:last-child { border-bottom: none; }
+.logo-tag { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 10px; color: #FF5A1F; letter-spacing: 0.12em; margin-bottom: 1.5rem; display: flex; justify-content: space-between; max-width: 520px; margin-left: auto; margin-right: auto; }
+.logo-note { font-family: ui-monospace, monospace; font-size: 10px; color: #666; letter-spacing: 0.06em; margin-top: 1rem; }
+.sans-heavy { font-family: 'Inter Display','Suisse Intl','Helvetica Neue',Helvetica,Arial,sans-serif; font-weight: 900; fill: #FAFAFA; }
+.sans-heavy-outline { font-family: 'Inter Display','Suisse Intl','Helvetica Neue',Helvetica,Arial,sans-serif; font-weight: 900; fill: none; stroke: #FAFAFA; stroke-width: 2; }
+</style>
+<div style="border-radius: var(--border-radius-lg); overflow: hidden; border: 0.5px solid var(--color-border-tertiary);">
+
+  <div style="background: #1a1a1c; padding: 10px 14px; display: flex; align-items: center; gap: 8px; border-bottom: 0.5px solid rgba(255,255,255,0.08);">
+    <div style="display: flex; gap: 6px;"><span style="width:10px;height:10px;border-radius:50%;background:#3a3a3c;"></span><span style="width:10px;height:10px;border-radius:50%;background:#3a3a3c;"></span><span style="width:10px;height:10px;border-radius:50%;background:#3a3a3c;"></span></div>
+    <div style="flex:1; background:#0a0a0b; border-radius: 4px; padding: 4px 10px; font-family: ui-monospace, monospace; font-size: 11px; color: #6a6a6a; text-align:center;">KS monogram — variants</div>
+  </div>
+
+  <div class="logo-row">
+    <div class="logo-tag"><span>A — HEAVY OVERLAP · BOTH WHITE</span><span>baseline</span></div>
+    <svg viewBox="0 0 200 160" style="width: 200px; height: 160px;">
+      <text class="sans-heavy" x="0" y="130" font-size="170" letter-spacing="-70">KS</text>
+    </svg>
+    <div class="logo-note">Simplest — both glyphs filled, aggressive overlap. Reads as a single mark.</div>
+  </div>
+
+  <div class="logo-row">
+    <div class="logo-tag"><span>B — K SOLID, S OUTLINED</span><span>hierarchy</span></div>
+    <svg viewBox="0 0 200 160" style="width: 200px; height: 160px;">
+      <text class="sans-heavy" x="0" y="130" font-size="170" letter-spacing="-70">K</text>
+      <text class="sans-heavy-outline" x="68" y="130" font-size="170" letter-spacing="-70">S</text>
+    </svg>
+    <div class="logo-note">K dominates, S recedes into outline. More graphic interest, less solid density.</div>
+  </div>
+
+  <div class="logo-row">
+    <div class="logo-tag"><span>C — S IN ACCENT ORANGE</span><span>brand colour integration</span></div>
+    <svg viewBox="0 0 200 160" style="width: 200px; height: 160px;">
+      <text class="sans-heavy" x="0" y="130" font-size="170" letter-spacing="-70">K</text>
+      <text class="sans-heavy" x="68" y="130" font-size="170" letter-spacing="-70" fill="#FF5A1F">S</text>
+    </svg>
+    <div class="logo-note">S picks up the orange accent. Connects monogram to the site's colour system.</div>
+  </div>
+
+  <div class="logo-row">
+    <div class="logo-tag"><span>D — TIGHTER OVERLAP · CHISEL CUT</span><span>extreme</span></div>
+    <svg viewBox="0 0 200 160" style="width: 200px; height: 160px;">
+      <defs>
+        <mask id="chisel-mask">
+          <rect width="200" height="160" fill="white"/>
+          <text class="sans-heavy" x="68" y="130" font-size="170" letter-spacing="-70" fill="black">S</text>
+        </mask>
+      </defs>
+      <text class="sans-heavy" x="0" y="130" font-size="170" letter-spacing="-70" mask="url(#chisel-mask)">K</text>
+      <text class="sans-heavy" x="68" y="130" font-size="170" letter-spacing="-70">S</text>
+    </svg>
+    <div class="logo-note">Where the letters overlap, K is cut out. Creates a crisp negative-space boundary between them.</div>
+  </div>
+
+  <div class="logo-row">
+    <div class="logo-tag"><span>E — KNOCKOUT ON ORANGE SQUARE</span><span>app-icon ready</span></div>
+    <div style="display: inline-flex; gap: 1.5rem; align-items: center;">
+      <svg viewBox="0 0 200 200" style="width: 140px; height: 140px;">
+        <rect width="200" height="200" fill="#FF5A1F" rx="0"/>
+        <text class="sans-heavy" x="18" y="155" font-size="180" letter-spacing="-75" fill="#0B0B0B">KS</text>
+      </svg>
+      <svg viewBox="0 0 200 200" style="width: 140px; height: 140px;">
+        <rect width="200" height="200" fill="#0B0B0B" stroke="#1F1F1F" stroke-width="1" rx="0"/>
+        <text class="sans-heavy" x="18" y="155" font-size="180" letter-spacing="-75" fill="#FAFAFA">KS</text>
+      </svg>
+    </div>
+    <div class="logo-note">The same mark contained in a square — favicon / app icon ready. Orange-on-dark and dark-on-orange both work as siblings.</div>
+  </div>
+
+</div>
