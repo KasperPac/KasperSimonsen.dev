@@ -2,10 +2,11 @@
 
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
+import InversionCursor from "@/app/components/InversionCursor";
 
-const mono  = { fontFamily: "var(--font-geist-mono), ui-monospace, monospace" };
-const body  = { fontFamily: "var(--font-instrument-sans), system-ui, -apple-system, sans-serif" };
-const serif = { fontFamily: "var(--font-fraunces), 'Instrument Serif', Georgia, serif" };
+const mono    = { fontFamily: "var(--font-geist-mono), ui-monospace, monospace" };
+const body    = { fontFamily: "var(--font-instrument-sans), system-ui, -apple-system, sans-serif" };
+const display = { fontFamily: "var(--font-inter), 'Helvetica Neue', Helvetica, Arial, sans-serif" };
 
 const subjectMap: Record<string, string> = {
   tools:     "Tools & dashboards enquiry",
@@ -65,25 +66,38 @@ export default function ContactForm() {
     <div>
       {/* Page header */}
       <div
-        className="px-6 md:px-10 pt-10 pb-12"
+        className="px-6 md:px-10 pt-10 pb-10"
         style={{ borderBottom: "0.5px solid var(--border)" }}
       >
-        <h1
-          className="text-[clamp(2.5rem,6vw,4rem)] italic leading-tight mb-4"
-          style={{ ...serif, color: "var(--text-primary)" }}
-        >
-          Get in touch.
-        </h1>
-        <p className="text-[16px] leading-[1.7] max-w-[52ch]" style={{ ...body, color: "var(--text-muted)" }}>
+        <p className="text-xs tracking-[0.18em] uppercase mb-4" style={{ ...mono, color: "var(--accent)" }}>
+          — typical reply within 24 hours
+        </p>
+        <InversionCursor>
+          <h1
+            className="font-black uppercase leading-none mb-6"
+            style={{
+              ...display,
+              fontSize: "clamp(72px, 10vw, 110px)",
+              letterSpacing: "-0.085em",
+              color: "var(--text-primary)",
+            }}
+          >
+            CONTACT
+          </h1>
+        </InversionCursor>
+        <p className="text-sm leading-relaxed max-w-[52ch]" style={{ ...body, color: "var(--text-muted)" }}>
           Describe what you&apos;re building or what you need done. I read every message and reply within 24 hours.
         </p>
       </div>
 
-      {/* Form */}
-      <div className="px-6 md:px-10 py-12 max-w-[640px]">
+      {/* Form + Info panel */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,600px)_1fr]" style={{ borderTop: "0.5px solid var(--border)" }}>
+
+        {/* Form column */}
+        <div className="px-6 md:px-10 py-12" style={{ borderRight: "0.5px solid var(--border)" }}>
         {status === "sent" ? (
           <div className="space-y-3">
-            <p className="text-[1.2rem] italic" style={{ ...serif, color: "var(--text-primary)" }}>
+            <p className="font-black uppercase text-2xl leading-none" style={{ ...display, letterSpacing: "-0.02em", color: "var(--text-primary)" }}>
               Message sent.
             </p>
             <p className="text-sm" style={{ ...body, color: "var(--text-muted)" }}>
@@ -183,6 +197,62 @@ export default function ContactForm() {
             </div>
           </form>
         )}
+        </div>
+
+        {/* Info panel */}
+        <div className="hidden lg:block">
+
+          {/* Availability */}
+          <div className="px-8 py-8" style={{ borderBottom: "0.5px solid var(--border)" }}>
+            <p className="text-[10px] tracking-[0.1em] uppercase mb-3" style={{ ...mono, color: "var(--accent)" }}>Availability</p>
+            <div className="flex items-center gap-2 mb-2">
+              <span className="pulse-dot-o" style={{ margin: 0 }} />
+              <span className="text-sm font-black uppercase" style={{ ...display, letterSpacing: "-0.02em", color: "var(--text-primary)" }}>Available Q2 2026</span>
+            </div>
+            <p className="text-xs leading-relaxed" style={{ ...body, color: "var(--text-dim)" }}>
+              Accepting new projects now. Selective — I take on work I can do well, not everything that comes in.
+            </p>
+          </div>
+
+          {/* What to include */}
+          <div className="px-8 py-8" style={{ borderBottom: "0.5px solid var(--border)" }}>
+            <p className="text-[10px] tracking-[0.1em] uppercase mb-3" style={{ ...mono, color: "var(--accent)" }}>Good to include</p>
+            <ul className="space-y-2">
+              {[
+                "What you're building or trying to fix",
+                "Rough timeline or deadline",
+                "Your existing stack, if relevant",
+                "Budget range (optional but useful)",
+              ].map(item => (
+                <li key={item} className="flex items-start gap-2">
+                  <span style={{ ...mono, color: "var(--accent)", fontSize: 10, marginTop: 3 }}>—</span>
+                  <span className="text-xs leading-relaxed" style={{ ...body, color: "var(--text-dim)" }}>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Response + Location */}
+          <div className="px-8 py-8" style={{ borderBottom: "0.5px solid var(--border)" }}>
+            <p className="text-[10px] tracking-[0.1em] uppercase mb-3" style={{ ...mono, color: "var(--accent)" }}>Response</p>
+            <p className="text-xs leading-relaxed mb-4" style={{ ...body, color: "var(--text-dim)" }}>
+              I read every message and reply within 24 hours — usually much faster. If it&apos;s not a fit I&apos;ll say so and point you somewhere useful.
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] tracking-[0.06em] uppercase" style={{ ...mono, color: "var(--text-dim)" }}>Based in</span>
+              <span className="text-[10px] tracking-[0.06em] uppercase" style={{ ...mono, color: "var(--text-muted)" }}>Melbourne — AEST / UTC+10</span>
+            </div>
+          </div>
+
+          {/* Not taking on */}
+          <div className="px-8 py-8">
+            <p className="text-[10px] tracking-[0.1em] uppercase mb-3" style={{ ...mono, color: "var(--text-dim)" }}>Not currently taking on</p>
+            <p className="text-xs leading-relaxed" style={{ ...body, color: "var(--text-dim)" }}>
+              WordPress / Webflow work · front-end-only design · short-term staff aug through recruiters · anything under a few days of scope.
+            </p>
+          </div>
+
+        </div>
       </div>
     </div>
   );

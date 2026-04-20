@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import InversionCursor from "@/app/components/InversionCursor";
 import { availability } from "@/lib/availability";
@@ -10,123 +11,244 @@ const display = { fontFamily: "var(--font-inter), 'Helvetica Neue', Helvetica, A
 
 /* ── Wireframes ── */
 
+const LABEL_STYLE: React.CSSProperties = {
+  fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
+  fontSize: 10,
+  letterSpacing: "0.1em",
+  textTransform: "uppercase",
+  color: "rgba(255,255,255,0.45)",
+  textAlign: "center",
+  marginTop: 8,
+  display: "block",
+};
+
 function WireframeDashboard() {
+  const [hov, setHov] = useState<"d"|"t"|"p"|null>(null);
   const dim = "rgba(255,255,255,0.1)";
   const mid = "rgba(255,255,255,0.18)";
   const acc = "rgba(255,90,31,0.55)";
   const bg  = "#0f0f0f";
   const bg2 = "#161616";
   const frm = "rgba(255,255,255,0.2)";
-  const lbl = "rgba(255,255,255,0.4)";
+
   return (
-    <svg viewBox="0 0 390 162" style={{ width: "100%", height: "auto", display: "block" }}>
-      <style>{`
-        .wfd-gd:hover .wfd-ld,.wfd-gt:hover .wfd-lt,.wfd-gp:hover .wfd-lp{opacity:1}
-        .wfd-ld,.wfd-lt,.wfd-lp{opacity:0;transition:opacity 0.15s ease}
-      `}</style>
-      <defs>
-        <clipPath id="wfd-d"><rect x="1" y="1" width="218" height="146" /></clipPath>
-        <clipPath id="wfd-t"><rect x="229" y="1" width="90" height="146" /></clipPath>
-        <clipPath id="wfd-p"><rect x="330" y="7" width="56" height="134" /></clipPath>
-      </defs>
+    <div style={{ position: "relative" }}>
+      {/* Large preview — absolutely to the left, desktop only */}
+      <div className="hidden md:block" style={{ position: "absolute", right: "100%", top: 0, marginRight: 16, pointerEvents: "none" }}>
 
-      {/* ── Desktop ── */}
-      <g className="wfd-gd">
-        <rect x="0" y="0" width="220" height="148" rx="2" fill={bg} stroke={frm} strokeWidth="0.5" />
-        <g clipPath="url(#wfd-d)">
-          <rect x="1" y="1" width="218" height="17" fill={bg2} />
-          <rect x="5" y="5" width="22" height="8" rx="1" fill={acc} opacity="0.6" />
-          {[32,52,72].map(x => <rect key={x} x={x} y="7" width="16" height="4" rx="1" fill={mid} />)}
-          <rect x="183" y="5" width="14" height="7" rx="3" fill={dim} />
-          <rect x="200" y="5" width="14" height="7" rx="3" fill={dim} />
-          <line x1="1" y1="18" x2="219" y2="18" stroke={dim} strokeWidth="0.5" />
-          <rect x="1" y="18" width="36" height="127" fill={bg2} />
-          <line x1="37" y1="18" x2="37" y2="147" stroke={dim} strokeWidth="0.5" />
-          {[0,1,2,3,4].map(i => (
-            <g key={i}>
-              <rect x="6"  y={25+i*20} width="5" height="5" rx="1" fill={i===1?acc:dim} opacity={i===1?.8:1} />
-              <rect x="14" y={27+i*20} width="18" height="3" rx="1" fill={i===1?acc:dim} opacity={i===1?.6:.65} />
-            </g>
-          ))}
-          {[0,1,2].map(i => (
-            <g key={i}>
-              <rect x={41+i*59} y="21" width="53" height="26" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
-              <rect x={46+i*59} y="26" width="14" height="3" rx="1" fill={dim} />
-              <rect x={46+i*59} y="33" width="24" height="7" rx="1" fill={i===0?acc:mid} opacity={i===0?.6:.38} />
-            </g>
-          ))}
-          {[0,1,2,3,4,5].map(i => (
-            <g key={i}>
-              <rect x="41" y={53+i*15} width="176" height="15" fill={i===0?acc:"none"} fillOpacity="0.1" stroke={dim} strokeWidth="0.5" />
-              <rect x="46"  y={57+i*15} width={i===0?22:18} height="3" rx="1" fill={i===0?acc:dim} opacity={i===0?.6:.42-i*.05} />
-              <rect x="78"  y={57+i*15} width="38" height="3" rx="1" fill={dim} opacity={.38-i*.05} />
-              <rect x="130" y={57+i*15} width="22" height="3" rx="1" fill={dim} opacity={.34-i*.05} />
-              <rect x="168" y={57+i*15} width="40" height="3" rx="1" fill={i===3?acc:dim} opacity={i===3?.38:.28-i*.04} />
-            </g>
-          ))}
-        </g>
-        <text className="wfd-ld" x="110" y="159" textAnchor="middle" fontSize="5.5" fill={lbl} fontFamily="monospace" letterSpacing="0.8">WEB APP / SITE</text>
-      </g>
+        {hov === "d" && (
+          <div style={{ width: 260 }}>
+            <svg viewBox="0 0 220 148" style={{ width: "100%", height: "auto", display: "block" }}>
+              <defs><clipPath id="wfd-d2"><rect x="1" y="1" width="218" height="146" /></clipPath></defs>
+              <rect x="0" y="0" width="220" height="148" rx="2" fill={bg} stroke={frm} strokeWidth="0.5" />
+              <g clipPath="url(#wfd-d2)">
+                <rect x="1" y="1" width="218" height="17" fill={bg2} />
+                <rect x="5" y="5" width="22" height="8" rx="1" fill={acc} opacity="0.6" />
+                {[32,52,72].map(x => <rect key={x} x={x} y="7" width="16" height="4" rx="1" fill={mid} />)}
+                <rect x="183" y="5" width="14" height="7" rx="3" fill={dim} />
+                <rect x="200" y="5" width="14" height="7" rx="3" fill={dim} />
+                <line x1="1" y1="18" x2="219" y2="18" stroke={dim} strokeWidth="0.5" />
+                <rect x="1" y="18" width="36" height="127" fill={bg2} />
+                <line x1="37" y1="18" x2="37" y2="147" stroke={dim} strokeWidth="0.5" />
+                {[0,1,2,3,4,5,6].map(i => (
+                  <g key={i}>
+                    <rect x="6"  y={25+i*17} width="5" height="5" rx="1" fill={i===1?acc:dim} opacity={i===1?.8:1} />
+                    <rect x="14" y={27+i*17} width="18" height="3" rx="1" fill={i===1?acc:dim} opacity={i===1?.6:.65} />
+                  </g>
+                ))}
+                {[0,1,2].map(i => (
+                  <g key={i}>
+                    <rect x={41+i*59} y="21" width="53" height="26" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
+                    <rect x={46+i*59} y="26" width="14" height="3" rx="1" fill={dim} />
+                    <rect x={46+i*59} y="33" width="24" height="7" rx="1" fill={i===0?acc:mid} opacity={i===0?.6:.38} />
+                  </g>
+                ))}
+                {[0,1,2,3,4,5,6,7].map(i => (
+                  <g key={i}>
+                    <rect x="41" y={53+i*12} width="176" height="12" fill={i===0?acc:"none"} fillOpacity="0.1" stroke={dim} strokeWidth="0.5" />
+                    <rect x="46"  y={56+i*12} width={i===0?22:18} height="3" rx="1" fill={i===0?acc:dim} opacity={i===0?.6:.42-i*.04} />
+                    <rect x="78"  y={56+i*12} width="38" height="3" rx="1" fill={dim} opacity={.38-i*.04} />
+                    <rect x="130" y={56+i*12} width="22" height="3" rx="1" fill={dim} opacity={.34-i*.04} />
+                    <rect x="168" y={56+i*12} width="40" height="3" rx="1" fill={i===3?acc:dim} opacity={i===3?.38:.28-i*.03} />
+                  </g>
+                ))}
+              </g>
+            </svg>
+            <span style={LABEL_STYLE}>WEB APP / SITE</span>
+          </div>
+        )}
 
-      {/* ── Tablet ── */}
-      <g className="wfd-gt">
-        <rect x="228" y="0" width="92" height="148" rx="3" fill={bg} stroke={frm} strokeWidth="0.5" />
-        <g clipPath="url(#wfd-t)">
-          <rect x="229" y="1" width="90" height="14" fill={bg2} />
-          <rect x="233" y="4" width="14" height="6" rx="1" fill={acc} opacity="0.5" />
-          <rect x="297" y="4" width="9" height="6" rx="2" fill={dim} />
-          <rect x="309" y="4" width="9" height="6" rx="2" fill={dim} />
-          <line x1="229" y1="15" x2="319" y2="15" stroke={dim} strokeWidth="0.5" />
-          {[0,1].map(col => [0,1].map(row => (
-            <g key={`${col}${row}`}>
-              <rect x={231+col*44} y={18+row*22} width="40" height="18" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
-              <rect x={235+col*44} y={22+row*22} width="12" height="3" rx="1" fill={dim} />
-              <rect x={235+col*44} y={28+row*22} width={col===0&&row===0?22:16} height="5" rx="1" fill={col===0&&row===0?acc:mid} opacity={col===0&&row===0?.58:.35} />
-            </g>
-          )))}
-          {[0,1,2,3,4,5].map(i => (
-            <g key={i}>
-              <rect x="231" y={64+i*13} width="86" height="13" fill={i===0?acc:"none"} fillOpacity="0.08" stroke={dim} strokeWidth="0.5" />
-              <rect x="235" y={68+i*13} width={i===0?18:14} height="3" rx="1" fill={i===0?acc:dim} opacity={i===0?.55:.4-i*.05} />
-              <rect x="262" y={68+i*13} width="28" height="3" rx="1" fill={dim} opacity={.35-i*.05} />
-              <rect x="300" y={68+i*13} width="14" height="3" rx="1" fill={i===3?acc:dim} opacity={i===3?.35:.28-i*.04} />
-            </g>
-          ))}
-        </g>
-        <text className="wfd-lt" x="274" y="159" textAnchor="middle" fontSize="5.5" fill={lbl} fontFamily="monospace" letterSpacing="0.8">TABLET</text>
-      </g>
+        {hov === "t" && (
+          <div style={{ width: 200 }}>
+            <svg viewBox="228 0 92 148" style={{ width: "100%", height: "auto", display: "block" }}>
+              <defs><clipPath id="wfd-t2"><rect x="229" y="1" width="90" height="146" /></clipPath></defs>
+              <rect x="228" y="0" width="92" height="148" rx="3" fill={bg} stroke={frm} strokeWidth="0.5" />
+              <g clipPath="url(#wfd-t2)">
+                <rect x="229" y="1" width="90" height="14" fill={bg2} />
+                <rect x="233" y="4" width="14" height="6" rx="1" fill={acc} opacity="0.5" />
+                <rect x="297" y="4" width="9" height="6" rx="2" fill={dim} />
+                <rect x="309" y="4" width="9" height="6" rx="2" fill={dim} />
+                <line x1="229" y1="15" x2="319" y2="15" stroke={dim} strokeWidth="0.5" />
+                {[0,1].map(col => [0,1,2].map(row => (
+                  <g key={`${col}${row}`}>
+                    <rect x={231+col*44} y={18+row*20} width="40" height="16" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
+                    <rect x={235+col*44} y={22+row*20} width="12" height="3" rx="1" fill={dim} />
+                    <rect x={235+col*44} y={27+row*20} width={col===0&&row===0?22:16} height="4" rx="1" fill={col===0&&row===0?acc:mid} opacity={col===0&&row===0?.58:.35} />
+                  </g>
+                )))}
+                {[0,1,2,3,4,5,6].map(i => (
+                  <g key={i}>
+                    <rect x="231" y={82+i*9} width="86" height="8" fill={i===0?acc:"none"} fillOpacity="0.08" stroke={dim} strokeWidth="0.5" />
+                    <rect x="235" y={85+i*9} width={i===0?18:14} height="3" rx="1" fill={i===0?acc:dim} opacity={i===0?.55:.4-i*.04} />
+                    <rect x="262" y={85+i*9} width="28" height="3" rx="1" fill={dim} opacity={.35-i*.04} />
+                    <rect x="300" y={85+i*9} width="14" height="3" rx="1" fill={i===3?acc:dim} opacity={i===3?.35:.28-i*.04} />
+                  </g>
+                ))}
+              </g>
+            </svg>
+            <span style={LABEL_STYLE}>TABLET</span>
+          </div>
+        )}
 
-      {/* ── Phone ── */}
-      <g className="wfd-gp">
-        <rect x="328" y="0" width="58" height="148" rx="6" fill={bg} stroke={frm} strokeWidth="0.5" />
-        <rect x="342" y="3" width="14" height="3" rx="1.5" fill={dim} />
-        <rect x="348" y="142" width="14" height="3" rx="1.5" fill={dim} />
-        <g clipPath="url(#wfd-p)">
-          <rect x="330" y="9" width="56" height="12" fill={bg2} />
-          <rect x="334" y="12" width="8" height="5" rx="1" fill={acc} opacity="0.45" />
-          <rect x="374" y="12" width="7" height="5" rx="1" fill={dim} />
-          <line x1="330" y1="21" x2="386" y2="21" stroke={dim} strokeWidth="0.5" />
-          {[0,1,2].map(i => (
-            <g key={i}>
-              <rect x="332" y={24+i*26} width="52" height="22" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
-              <rect x="336" y={28+i*26} width="14" height="3" rx="1" fill={dim} />
-              <rect x="336" y={35+i*26} width={[28,22,26][i]} height="7" rx="1" fill={i===0?acc:mid} opacity={i===0?.55:.35} />
-            </g>
-          ))}
-          {[0,1,2,3].map(i => (
-            <g key={i}>
-              <rect x="332" y={104+i*9} width="52" height="8" fill="none" stroke={dim} strokeWidth="0.5" />
-              <rect x="336" y={107+i*9} width={[22,28,18,24][i]} height="3" rx="1" fill={i===0?acc:dim} opacity={.42-i*.07} />
-            </g>
-          ))}
+        {hov === "p" && (
+          <div style={{ width: 130 }}>
+            <svg viewBox="328 0 58 148" style={{ width: "100%", height: "auto", display: "block" }}>
+              <defs><clipPath id="wfd-p2"><rect x="330" y="7" width="56" height="134" /></clipPath></defs>
+              <rect x="328" y="0" width="58" height="148" rx="6" fill={bg} stroke={frm} strokeWidth="0.5" />
+              <rect x="342" y="3" width="14" height="3" rx="1.5" fill={dim} />
+              <rect x="348" y="142" width="14" height="3" rx="1.5" fill={dim} />
+              <g clipPath="url(#wfd-p2)">
+                <rect x="330" y="9" width="56" height="12" fill={bg2} />
+                <rect x="334" y="12" width="8" height="5" rx="1" fill={acc} opacity="0.45" />
+                <rect x="374" y="12" width="7" height="5" rx="1" fill={dim} />
+                <line x1="330" y1="21" x2="386" y2="21" stroke={dim} strokeWidth="0.5" />
+                {[0,1,2,3].map(i => (
+                  <g key={i}>
+                    <rect x="332" y={24+i*20} width="52" height="16" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
+                    <rect x="336" y={28+i*20} width="14" height="3" rx="1" fill={dim} />
+                    <rect x="336" y={34+i*20} width={[28,22,26,20][i]} height="5" rx="1" fill={i===0?acc:mid} opacity={i===0?.55:.35} />
+                  </g>
+                ))}
+                {[0,1,2,3,4,5].map(i => (
+                  <g key={i}>
+                    <rect x="332" y={108+i*6} width="52" height="5" fill="none" stroke={dim} strokeWidth="0.5" />
+                    <rect x="336" y={110+i*6} width={[22,28,18,24,20,16][i]} height="2" rx="1" fill={i===0?acc:dim} opacity={.42-i*.06} />
+                  </g>
+                ))}
+              </g>
+            </svg>
+            <span style={LABEL_STYLE}>IPHONE / ANDROID</span>
+          </div>
+        )}
+      </div>
+
+      {/* Small cluster */}
+      <svg viewBox="0 0 390 148" style={{ width: "100%", height: "auto", display: "block" }}>
+        <defs>
+          <clipPath id="wfd-d"><rect x="1" y="1" width="218" height="146" /></clipPath>
+          <clipPath id="wfd-t"><rect x="229" y="1" width="90" height="146" /></clipPath>
+          <clipPath id="wfd-p"><rect x="330" y="7" width="56" height="134" /></clipPath>
+        </defs>
+
+        {/* Desktop */}
+        <g onMouseEnter={() => setHov("d")} onMouseLeave={() => setHov(null)}
+           style={{ opacity: hov && hov !== "d" ? 0.45 : 1, transition: "opacity 0.15s" }}>
+          <rect x="0" y="0" width="220" height="148" rx="2" fill={bg} stroke={frm} strokeWidth="0.5" />
+          <g clipPath="url(#wfd-d)">
+            <rect x="1" y="1" width="218" height="17" fill={bg2} />
+            <rect x="5" y="5" width="22" height="8" rx="1" fill={acc} opacity="0.6" />
+            {[32,52,72].map(x => <rect key={x} x={x} y="7" width="16" height="4" rx="1" fill={mid} />)}
+            <rect x="183" y="5" width="14" height="7" rx="3" fill={dim} />
+            <rect x="200" y="5" width="14" height="7" rx="3" fill={dim} />
+            <line x1="1" y1="18" x2="219" y2="18" stroke={dim} strokeWidth="0.5" />
+            <rect x="1" y="18" width="36" height="127" fill={bg2} />
+            <line x1="37" y1="18" x2="37" y2="147" stroke={dim} strokeWidth="0.5" />
+            {[0,1,2,3,4].map(i => (
+              <g key={i}>
+                <rect x="6"  y={25+i*20} width="5" height="5" rx="1" fill={i===1?acc:dim} opacity={i===1?.8:1} />
+                <rect x="14" y={27+i*20} width="18" height="3" rx="1" fill={i===1?acc:dim} opacity={i===1?.6:.65} />
+              </g>
+            ))}
+            {[0,1,2].map(i => (
+              <g key={i}>
+                <rect x={41+i*59} y="21" width="53" height="26" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
+                <rect x={46+i*59} y="26" width="14" height="3" rx="1" fill={dim} />
+                <rect x={46+i*59} y="33" width="24" height="7" rx="1" fill={i===0?acc:mid} opacity={i===0?.6:.38} />
+              </g>
+            ))}
+            {[0,1,2,3,4,5].map(i => (
+              <g key={i}>
+                <rect x="41" y={53+i*15} width="176" height="15" fill={i===0?acc:"none"} fillOpacity="0.1" stroke={dim} strokeWidth="0.5" />
+                <rect x="46"  y={57+i*15} width={i===0?22:18} height="3" rx="1" fill={i===0?acc:dim} opacity={i===0?.6:.42-i*.05} />
+                <rect x="78"  y={57+i*15} width="38" height="3" rx="1" fill={dim} opacity={.38-i*.05} />
+                <rect x="130" y={57+i*15} width="22" height="3" rx="1" fill={dim} opacity={.34-i*.05} />
+                <rect x="168" y={57+i*15} width="40" height="3" rx="1" fill={i===3?acc:dim} opacity={i===3?.38:.28-i*.04} />
+              </g>
+            ))}
+          </g>
         </g>
-        <text className="wfd-lp" x="357" y="159" textAnchor="middle" fontSize="5.5" fill={lbl} fontFamily="monospace" letterSpacing="0.8">IPHONE / ANDROID</text>
-      </g>
-    </svg>
+
+        {/* Tablet */}
+        <g onMouseEnter={() => setHov("t")} onMouseLeave={() => setHov(null)}
+           style={{ opacity: hov && hov !== "t" ? 0.45 : 1, transition: "opacity 0.15s" }}>
+          <rect x="228" y="0" width="92" height="148" rx="3" fill={bg} stroke={frm} strokeWidth="0.5" />
+          <g clipPath="url(#wfd-t)">
+            <rect x="229" y="1" width="90" height="14" fill={bg2} />
+            <rect x="233" y="4" width="14" height="6" rx="1" fill={acc} opacity="0.5" />
+            <rect x="297" y="4" width="9" height="6" rx="2" fill={dim} />
+            <rect x="309" y="4" width="9" height="6" rx="2" fill={dim} />
+            <line x1="229" y1="15" x2="319" y2="15" stroke={dim} strokeWidth="0.5" />
+            {[0,1].map(col => [0,1].map(row => (
+              <g key={`${col}${row}`}>
+                <rect x={231+col*44} y={18+row*22} width="40" height="18" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
+                <rect x={235+col*44} y={22+row*22} width="12" height="3" rx="1" fill={dim} />
+                <rect x={235+col*44} y={28+row*22} width={col===0&&row===0?22:16} height="5" rx="1" fill={col===0&&row===0?acc:mid} opacity={col===0&&row===0?.58:.35} />
+              </g>
+            )))}
+            {[0,1,2,3,4,5].map(i => (
+              <g key={i}>
+                <rect x="231" y={64+i*13} width="86" height="13" fill={i===0?acc:"none"} fillOpacity="0.08" stroke={dim} strokeWidth="0.5" />
+                <rect x="235" y={68+i*13} width={i===0?18:14} height="3" rx="1" fill={i===0?acc:dim} opacity={i===0?.55:.4-i*.05} />
+                <rect x="262" y={68+i*13} width="28" height="3" rx="1" fill={dim} opacity={.35-i*.05} />
+                <rect x="300" y={68+i*13} width="14" height="3" rx="1" fill={i===3?acc:dim} opacity={i===3?.35:.28-i*.04} />
+              </g>
+            ))}
+          </g>
+        </g>
+
+        {/* Phone */}
+        <g onMouseEnter={() => setHov("p")} onMouseLeave={() => setHov(null)}
+           style={{ opacity: hov && hov !== "p" ? 0.45 : 1, transition: "opacity 0.15s" }}>
+          <rect x="328" y="0" width="58" height="148" rx="6" fill={bg} stroke={frm} strokeWidth="0.5" />
+          <rect x="342" y="3" width="14" height="3" rx="1.5" fill={dim} />
+          <rect x="348" y="142" width="14" height="3" rx="1.5" fill={dim} />
+          <g clipPath="url(#wfd-p)">
+            <rect x="330" y="9" width="56" height="12" fill={bg2} />
+            <rect x="334" y="12" width="8" height="5" rx="1" fill={acc} opacity="0.45" />
+            <rect x="374" y="12" width="7" height="5" rx="1" fill={dim} />
+            <line x1="330" y1="21" x2="386" y2="21" stroke={dim} strokeWidth="0.5" />
+            {[0,1,2].map(i => (
+              <g key={i}>
+                <rect x="332" y={24+i*26} width="52" height="22" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
+                <rect x="336" y={28+i*26} width="14" height="3" rx="1" fill={dim} />
+                <rect x="336" y={35+i*26} width={[28,22,26][i]} height="7" rx="1" fill={i===0?acc:mid} opacity={i===0?.55:.35} />
+              </g>
+            ))}
+            {[0,1,2,3].map(i => (
+              <g key={i}>
+                <rect x="332" y={104+i*9} width="52" height="8" fill="none" stroke={dim} strokeWidth="0.5" />
+                <rect x="336" y={107+i*9} width={[22,28,18,24][i]} height="3" rx="1" fill={i===0?acc:dim} opacity={.42-i*.07} />
+              </g>
+            ))}
+          </g>
+        </g>
+      </svg>
+    </div>
   );
 }
 
 function WireframePlatform() {
+  const [hov, setHov] = useState<"d"|"t"|"p"|null>(null);
   const dim  = "rgba(255,255,255,0.1)";
   const mid  = "rgba(255,255,255,0.18)";
   const acc  = "rgba(255,90,31,0.55)";
@@ -134,141 +256,272 @@ function WireframePlatform() {
   const bg2  = "#161616";
   const frm  = "rgba(255,255,255,0.2)";
   const conn = "rgba(255,90,31,0.25)";
-  const lbl  = "rgba(255,255,255,0.4)";
+
   return (
-    <svg viewBox="0 0 390 162" style={{ width: "100%", height: "auto", display: "block" }}>
-      <style>{`
-        .wfp-gd:hover .wfp-ld,.wfp-gt:hover .wfp-lt,.wfp-gp:hover .wfp-lp{opacity:1}
-        .wfp-ld,.wfp-lt,.wfp-lp{opacity:0;transition:opacity 0.15s ease}
-      `}</style>
-      <defs>
-        <clipPath id="wfp-d"><rect x="1" y="1" width="218" height="146" /></clipPath>
-        <clipPath id="wfp-t"><rect x="229" y="1" width="90" height="146" /></clipPath>
-        <clipPath id="wfp-p"><rect x="330" y="7" width="56" height="134" /></clipPath>
-        <marker id="arr2" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
-          <path d="M0,0 L5,2.5 L0,5 Z" fill={conn} />
-        </marker>
-      </defs>
+    <div style={{ position: "relative" }}>
+      {/* Large preview — absolutely to the left, desktop only */}
+      <div className="hidden md:block" style={{ position: "absolute", right: "100%", top: 0, marginRight: 16, pointerEvents: "none" }}>
 
-      {/* ── Desktop — architecture diagram ── */}
-      <g className="wfp-gd">
-        <rect x="0" y="0" width="220" height="148" rx="2" fill={bg} stroke={frm} strokeWidth="0.5" />
-        <g clipPath="url(#wfp-d)">
-          <rect x="1" y="1" width="218" height="14" fill={bg2} />
-          <rect x="5" y="4" width="18" height="6" rx="1" fill={acc} opacity="0.5" />
-          <rect x="175" y="4" width="11" height="6" rx="2" fill={dim} />
-          <rect x="190" y="4" width="11" height="6" rx="2" fill={dim} />
-          <rect x="205" y="4" width="11" height="6" rx="2" fill={dim} />
-          <line x1="1" y1="15" x2="219" y2="15" stroke={dim} strokeWidth="0.5" />
-          <text x="9" y="28" fontSize="4.5" fill={conn} fontFamily="monospace" letterSpacing="0.5">TENANTS</text>
-          {["A","B","C"].map((label, i) => (
-            <g key={label}>
-              <rect x="5" y={33+i*34} width="48" height="24" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
-              <rect x="9" y={37+i*34} width="6" height="6" rx="1" fill={acc} opacity="0.4" />
-              <rect x="19" y={38+i*34} width="16" height="3" rx="1" fill={mid} />
-              <rect x="19" y={44+i*34} width="28" height="3" rx="1" fill={dim} opacity="0.5" />
-            </g>
-          ))}
-          <line x1="53" y1="45" x2="53" y2="113" stroke={conn} strokeWidth="0.5" strokeDasharray="2,2" />
-          <text x="82" y="28" fontSize="4.5" fill={conn} fontFamily="monospace" letterSpacing="0.5">PLATFORM</text>
-          <rect x="72" y="32" width="76" height="84" rx="1" fill={bg2} stroke={acc} strokeWidth="0.5" strokeOpacity="0.4" />
-          {[
-            { label: "Auth",   y: 42, w: 24 },
-            { label: "Schema", y: 58, w: 28 },
-            { label: "API",    y: 74, w: 20 },
-            { label: "RLS",    y: 90, w: 16 },
-            { label: "Jobs",   y: 106, w: 20 },
-          ].map(({ label, y, w }) => (
-            <g key={label}>
-              <rect x="78" y={y} width="60" height="10" rx="1" fill={bg} stroke={dim} strokeWidth="0.5" />
-              <rect x="82" y={y+3} width="4" height="4" rx="0.5" fill={acc} opacity="0.5" />
-              <rect x="90" y={y+3} width={w} height="4" rx="1" fill={mid} opacity="0.5" />
-            </g>
-          ))}
-          {[45,79,113].map(y => (
-            <line key={y} x1="54" y1={y} x2="71" y2={y>79?87:y<79?71:79} stroke={conn} strokeWidth="0.75" markerEnd="url(#arr2)" />
-          ))}
-          <text x="157" y="28" fontSize="4.5" fill={conn} fontFamily="monospace" letterSpacing="0.5">INTEGRATIONS</text>
-          {["Shopify","Webhooks","Supabase"].map((label, i) => (
-            <g key={label}>
-              <rect x="152" y={33+i*34} width="62" height="24" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
-              <rect x="156" y={37+i*34} width="6" height="6" rx="1" fill={dim} opacity="0.6" />
-              <rect x="166" y={38+i*34} width={[22,26,22][i]} height="3" rx="1" fill={mid} opacity="0.5" />
-              <rect x="166" y={44+i*34} width={[14,18,14][i]} height="3" rx="1" fill={dim} opacity="0.35" />
-            </g>
-          ))}
-          <line x1="152" y1="45" x2="152" y2="113" stroke={conn} strokeWidth="0.5" strokeDasharray="2,2" />
-          {[45,79,113].map(y => (
-            <line key={y} x1="149" y1={y>79?87:y<79?71:79} x2="151" y2={y} stroke={conn} strokeWidth="0.75" markerEnd="url(#arr2)" />
-          ))}
-          <rect x="1" y="124" width="218" height="23" fill={bg2} />
-          <line x1="1" y1="124" x2="219" y2="124" stroke={dim} strokeWidth="0.5" />
-          {[0,1,2,3].map(i => (
-            <g key={i}>
-              <rect x={6+i*52} y="129" width="6" height="6" rx="3" fill={i<3?acc:dim} opacity={i<3?.5:.3} />
-              <rect x={16+i*52} y="130" width={[30,26,22,28][i]} height="3" rx="1" fill={dim} opacity="0.4" />
-            </g>
-          ))}
-        </g>
-        <text className="wfp-ld" x="110" y="159" textAnchor="middle" fontSize="5.5" fill={lbl} fontFamily="monospace" letterSpacing="0.8">WEB APP / SITE</text>
-      </g>
+        {hov === "d" && (
+          <div style={{ width: 260 }}>
+            <svg viewBox="0 0 220 148" style={{ width: "100%", height: "auto", display: "block" }}>
+              <defs>
+                <clipPath id="wfp-d2"><rect x="1" y="1" width="218" height="146" /></clipPath>
+                <marker id="arr2lg" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+                  <path d="M0,0 L5,2.5 L0,5 Z" fill={conn} />
+                </marker>
+              </defs>
+              <rect x="0" y="0" width="220" height="148" rx="2" fill={bg} stroke={frm} strokeWidth="0.5" />
+              <g clipPath="url(#wfp-d2)">
+                <rect x="1" y="1" width="218" height="14" fill={bg2} />
+                <rect x="5" y="4" width="18" height="6" rx="1" fill={acc} opacity="0.5" />
+                <rect x="175" y="4" width="11" height="6" rx="2" fill={dim} />
+                <rect x="190" y="4" width="11" height="6" rx="2" fill={dim} />
+                <rect x="205" y="4" width="11" height="6" rx="2" fill={dim} />
+                <line x1="1" y1="15" x2="219" y2="15" stroke={dim} strokeWidth="0.5" />
+                <text x="9" y="28" fontSize="4.5" fill={conn} fontFamily="monospace" letterSpacing="0.5">TENANTS</text>
+                {["A","B","C"].map((label, i) => (
+                  <g key={label}>
+                    <rect x="5" y={33+i*34} width="48" height="24" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
+                    <rect x="9" y={37+i*34} width="6" height="6" rx="1" fill={acc} opacity="0.4" />
+                    <rect x="19" y={38+i*34} width="16" height="3" rx="1" fill={mid} />
+                    <rect x="19" y={44+i*34} width="28" height="3" rx="1" fill={dim} opacity="0.5" />
+                  </g>
+                ))}
+                <line x1="53" y1="45" x2="53" y2="113" stroke={conn} strokeWidth="0.5" strokeDasharray="2,2" />
+                <text x="82" y="28" fontSize="4.5" fill={conn} fontFamily="monospace" letterSpacing="0.5">PLATFORM</text>
+                <rect x="72" y="32" width="76" height="84" rx="1" fill={bg2} stroke={acc} strokeWidth="0.5" strokeOpacity="0.4" />
+                {[
+                  { label: "Auth",   y: 42, w: 24 },
+                  { label: "Schema", y: 58, w: 28 },
+                  { label: "API",    y: 74, w: 20 },
+                  { label: "RLS",    y: 90, w: 16 },
+                  { label: "Jobs",   y: 106, w: 20 },
+                ].map(({ label, y, w }) => (
+                  <g key={label}>
+                    <rect x="78" y={y} width="60" height="10" rx="1" fill={bg} stroke={dim} strokeWidth="0.5" />
+                    <rect x="82" y={y+3} width="4" height="4" rx="0.5" fill={acc} opacity="0.5" />
+                    <rect x="90" y={y+3} width={w} height="4" rx="1" fill={mid} opacity="0.5" />
+                  </g>
+                ))}
+                {[45,79,113].map(y => (
+                  <line key={y} x1="54" y1={y} x2="71" y2={y>79?87:y<79?71:79} stroke={conn} strokeWidth="0.75" markerEnd="url(#arr2lg)" />
+                ))}
+                <text x="157" y="28" fontSize="4.5" fill={conn} fontFamily="monospace" letterSpacing="0.5">INTEGRATIONS</text>
+                {["Shopify","Webhooks","Supabase"].map((label, i) => (
+                  <g key={label}>
+                    <rect x="152" y={33+i*34} width="62" height="24" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
+                    <rect x="156" y={37+i*34} width="6" height="6" rx="1" fill={dim} opacity="0.6" />
+                    <rect x="166" y={38+i*34} width={[22,26,22][i]} height="3" rx="1" fill={mid} opacity="0.5" />
+                    <rect x="166" y={44+i*34} width={[14,18,14][i]} height="3" rx="1" fill={dim} opacity="0.35" />
+                  </g>
+                ))}
+                <line x1="152" y1="45" x2="152" y2="113" stroke={conn} strokeWidth="0.5" strokeDasharray="2,2" />
+                {[45,79,113].map(y => (
+                  <line key={y} x1="149" y1={y>79?87:y<79?71:79} x2="151" y2={y} stroke={conn} strokeWidth="0.75" markerEnd="url(#arr2lg)" />
+                ))}
+                <rect x="1" y="124" width="218" height="23" fill={bg2} />
+                <line x1="1" y1="124" x2="219" y2="124" stroke={dim} strokeWidth="0.5" />
+                {[0,1,2,3].map(i => (
+                  <g key={i}>
+                    <rect x={6+i*52} y="129" width="6" height="6" rx="3" fill={i<3?acc:dim} opacity={i<3?.5:.3} />
+                    <rect x={16+i*52} y="130" width={[30,26,22,28][i]} height="3" rx="1" fill={dim} opacity="0.4" />
+                  </g>
+                ))}
+              </g>
+            </svg>
+            <span style={LABEL_STYLE}>WEB APP / SITE</span>
+          </div>
+        )}
 
-      {/* ── Tablet ── */}
-      <g className="wfp-gt">
-        <rect x="228" y="0" width="92" height="148" rx="3" fill={bg} stroke={frm} strokeWidth="0.5" />
-        <g clipPath="url(#wfp-t)">
-          <rect x="229" y="1" width="90" height="13" fill={bg2} />
-          <rect x="233" y="4" width="12" height="6" rx="1" fill={acc} opacity="0.45" />
-          <rect x="309" y="4" width="8" height="5" rx="2" fill={dim} />
-          <line x1="229" y1="14" x2="319" y2="14" stroke={dim} strokeWidth="0.5" />
-          {[0,1,2].map(i => (
-            <g key={i}>
-              <rect x={231+i*29} y="17" width="26" height="16" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
-              <rect x={234+i*29} y="21" width="10" height="3" rx="1" fill={dim} />
-              <rect x={234+i*29} y="27" width={[16,12,14][i]} height="4" rx="1" fill={i===1?acc:mid} opacity={i===1?.55:.35} />
-            </g>
-          ))}
-          {[0,1,2].map(row => [0,1].map(col => (
-            <g key={`${row}${col}`}>
-              <rect x={231+col*44} y={37+row*26} width="40" height="22" rx="1" fill={bg2} stroke={col===0&&row===1?acc:dim} strokeWidth={col===0&&row===1?"0.75":"0.5"} strokeOpacity={col===0&&row===1?.5:1} />
-              <rect x={235+col*44} y={41+row*26} width="4" height="4" rx="0.5" fill={col===0&&row===1?acc:dim} opacity={col===0&&row===1?.6:.5} />
-              <rect x={243+col*44} y={42+row*26} width={[18,16,20,14,22,12][row*2+col]} height="3" rx="1" fill={mid} opacity="0.4" />
-              <rect x={243+col*44} y={48+row*26} width={[12,20,14,18,10,16][row*2+col]} height="3" rx="1" fill={dim} opacity="0.28" />
-            </g>
-          )))}
-          <rect x="231" y="117" width="86" height="29" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
-          {[0,1,2].map(i => (
-            <g key={i}>
-              <rect x="235" y={121+i*9} width="4" height="4" rx="0.5" fill={i===0?acc:dim} opacity={i===0?.5:.35} />
-              <rect x="243" y={122+i*9} width={[40,30,36][i]} height="3" rx="1" fill={dim} opacity={.35-i*.07} />
-            </g>
-          ))}
-        </g>
-        <text className="wfp-lt" x="274" y="159" textAnchor="middle" fontSize="5.5" fill={lbl} fontFamily="monospace" letterSpacing="0.8">TABLET</text>
-      </g>
+        {hov === "t" && (
+          <div style={{ width: 200 }}>
+            <svg viewBox="228 0 92 148" style={{ width: "100%", height: "auto", display: "block" }}>
+              <defs><clipPath id="wfp-t2"><rect x="229" y="1" width="90" height="146" /></clipPath></defs>
+              <rect x="228" y="0" width="92" height="148" rx="3" fill={bg} stroke={frm} strokeWidth="0.5" />
+              <g clipPath="url(#wfp-t2)">
+                <rect x="229" y="1" width="90" height="13" fill={bg2} />
+                <rect x="233" y="4" width="12" height="6" rx="1" fill={acc} opacity="0.45" />
+                <rect x="309" y="4" width="8" height="5" rx="2" fill={dim} />
+                <line x1="229" y1="14" x2="319" y2="14" stroke={dim} strokeWidth="0.5" />
+                {[0,1,2].map(i => (
+                  <g key={i}>
+                    <rect x={231+i*29} y="17" width="26" height="16" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
+                    <rect x={234+i*29} y="21" width="10" height="3" rx="1" fill={dim} />
+                    <rect x={234+i*29} y="27" width={[16,12,14][i]} height="4" rx="1" fill={i===1?acc:mid} opacity={i===1?.55:.35} />
+                  </g>
+                ))}
+                {[0,1,2,3].map(row => [0,1].map(col => (
+                  <g key={`${row}${col}`}>
+                    <rect x={231+col*44} y={37+row*26} width="40" height="22" rx="1" fill={bg2} stroke={col===0&&row===1?acc:dim} strokeWidth={col===0&&row===1?"0.75":"0.5"} strokeOpacity={col===0&&row===1?.5:1} />
+                    <rect x={235+col*44} y={41+row*26} width="4" height="4" rx="0.5" fill={col===0&&row===1?acc:dim} opacity={col===0&&row===1?.6:.5} />
+                    <rect x={243+col*44} y={42+row*26} width={[18,16,20,14,22,12,18,16][row*2+col]} height="3" rx="1" fill={mid} opacity="0.4" />
+                    <rect x={243+col*44} y={48+row*26} width={[12,20,14,18,10,16,12,14][row*2+col]} height="3" rx="1" fill={dim} opacity="0.28" />
+                  </g>
+                )))}
+              </g>
+            </svg>
+            <span style={LABEL_STYLE}>TABLET</span>
+          </div>
+        )}
 
-      {/* ── Phone ── */}
-      <g className="wfp-gp">
-        <rect x="328" y="0" width="58" height="148" rx="6" fill={bg} stroke={frm} strokeWidth="0.5" />
-        <rect x="342" y="3" width="14" height="3" rx="1.5" fill={dim} />
-        <rect x="348" y="142" width="14" height="3" rx="1.5" fill={dim} />
-        <g clipPath="url(#wfp-p)">
-          <rect x="330" y="9" width="56" height="12" fill={bg2} />
-          <rect x="334" y="12" width="8" height="5" rx="1" fill={acc} opacity="0.4" />
-          <line x1="330" y1="21" x2="386" y2="21" stroke={dim} strokeWidth="0.5" />
-          {["Platform","Auth","API","Jobs","Queue","DB"].map((label, i) => (
-            <g key={label}>
-              <rect x="332" y={24+i*16} width="52" height="13" fill="none" stroke={dim} strokeWidth="0.5" />
-              <rect x="336" y={28+i*16} width="5" height="5" rx="2.5" fill={i<4?acc:dim} opacity={i<4?.55:.3} />
-              <rect x="345" y={29+i*16} width={[24,16,12,20,14,18][i]} height="3" rx="1" fill={mid} opacity="0.45" />
-            </g>
-          ))}
-          <rect x="332" y="122" width="52" height="10" rx="1" fill={bg2} stroke={acc} strokeWidth="0.5" strokeOpacity="0.3" />
-          <rect x="336" y="125" width="28" height="3" rx="1" fill={acc} opacity="0.4" />
+        {hov === "p" && (
+          <div style={{ width: 130 }}>
+            <svg viewBox="328 0 58 148" style={{ width: "100%", height: "auto", display: "block" }}>
+              <defs><clipPath id="wfp-p2"><rect x="330" y="7" width="56" height="134" /></clipPath></defs>
+              <rect x="328" y="0" width="58" height="148" rx="6" fill={bg} stroke={frm} strokeWidth="0.5" />
+              <rect x="342" y="3" width="14" height="3" rx="1.5" fill={dim} />
+              <rect x="348" y="142" width="14" height="3" rx="1.5" fill={dim} />
+              <g clipPath="url(#wfp-p2)">
+                <rect x="330" y="9" width="56" height="12" fill={bg2} />
+                <rect x="334" y="12" width="8" height="5" rx="1" fill={acc} opacity="0.4" />
+                <line x1="330" y1="21" x2="386" y2="21" stroke={dim} strokeWidth="0.5" />
+                {["Platform","Auth","API","Jobs","Queue","DB","Cache","Events"].map((label, i) => (
+                  <g key={label}>
+                    <rect x="332" y={24+i*14} width="52" height="11" fill="none" stroke={dim} strokeWidth="0.5" />
+                    <rect x="336" y={27+i*14} width="5" height="5" rx="2.5" fill={i<4?acc:dim} opacity={i<4?.55:.3} />
+                    <rect x="345" y={28+i*14} width={[24,16,12,20,14,18,22,16][i]} height="3" rx="1" fill={mid} opacity="0.45" />
+                  </g>
+                ))}
+                <rect x="332" y="138" width="52" height="5" rx="1" fill={bg2} stroke={acc} strokeWidth="0.5" strokeOpacity="0.3" />
+              </g>
+            </svg>
+            <span style={LABEL_STYLE}>IPHONE / ANDROID</span>
+          </div>
+        )}
+      </div>
+
+      {/* Small cluster */}
+      <svg viewBox="0 0 390 148" style={{ width: "100%", height: "auto", display: "block" }}>
+        <defs>
+          <clipPath id="wfp-d"><rect x="1" y="1" width="218" height="146" /></clipPath>
+          <clipPath id="wfp-t"><rect x="229" y="1" width="90" height="146" /></clipPath>
+          <clipPath id="wfp-p"><rect x="330" y="7" width="56" height="134" /></clipPath>
+          <marker id="arr2" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+            <path d="M0,0 L5,2.5 L0,5 Z" fill={conn} />
+          </marker>
+        </defs>
+
+        {/* Desktop — architecture diagram */}
+        <g onMouseEnter={() => setHov("d")} onMouseLeave={() => setHov(null)}
+           style={{ opacity: hov && hov !== "d" ? 0.45 : 1, transition: "opacity 0.15s" }}>
+          <rect x="0" y="0" width="220" height="148" rx="2" fill={bg} stroke={frm} strokeWidth="0.5" />
+          <g clipPath="url(#wfp-d)">
+            <rect x="1" y="1" width="218" height="14" fill={bg2} />
+            <rect x="5" y="4" width="18" height="6" rx="1" fill={acc} opacity="0.5" />
+            <rect x="175" y="4" width="11" height="6" rx="2" fill={dim} />
+            <rect x="190" y="4" width="11" height="6" rx="2" fill={dim} />
+            <rect x="205" y="4" width="11" height="6" rx="2" fill={dim} />
+            <line x1="1" y1="15" x2="219" y2="15" stroke={dim} strokeWidth="0.5" />
+            <text x="9" y="28" fontSize="4.5" fill={conn} fontFamily="monospace" letterSpacing="0.5">TENANTS</text>
+            {["A","B","C"].map((label, i) => (
+              <g key={label}>
+                <rect x="5" y={33+i*34} width="48" height="24" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
+                <rect x="9" y={37+i*34} width="6" height="6" rx="1" fill={acc} opacity="0.4" />
+                <rect x="19" y={38+i*34} width="16" height="3" rx="1" fill={mid} />
+                <rect x="19" y={44+i*34} width="28" height="3" rx="1" fill={dim} opacity="0.5" />
+              </g>
+            ))}
+            <line x1="53" y1="45" x2="53" y2="113" stroke={conn} strokeWidth="0.5" strokeDasharray="2,2" />
+            <text x="82" y="28" fontSize="4.5" fill={conn} fontFamily="monospace" letterSpacing="0.5">PLATFORM</text>
+            <rect x="72" y="32" width="76" height="84" rx="1" fill={bg2} stroke={acc} strokeWidth="0.5" strokeOpacity="0.4" />
+            {[
+              { label: "Auth",   y: 42, w: 24 },
+              { label: "Schema", y: 58, w: 28 },
+              { label: "API",    y: 74, w: 20 },
+              { label: "RLS",    y: 90, w: 16 },
+              { label: "Jobs",   y: 106, w: 20 },
+            ].map(({ label, y, w }) => (
+              <g key={label}>
+                <rect x="78" y={y} width="60" height="10" rx="1" fill={bg} stroke={dim} strokeWidth="0.5" />
+                <rect x="82" y={y+3} width="4" height="4" rx="0.5" fill={acc} opacity="0.5" />
+                <rect x="90" y={y+3} width={w} height="4" rx="1" fill={mid} opacity="0.5" />
+              </g>
+            ))}
+            {[45,79,113].map(y => (
+              <line key={y} x1="54" y1={y} x2="71" y2={y>79?87:y<79?71:79} stroke={conn} strokeWidth="0.75" markerEnd="url(#arr2)" />
+            ))}
+            <text x="157" y="28" fontSize="4.5" fill={conn} fontFamily="monospace" letterSpacing="0.5">INTEGRATIONS</text>
+            {["Shopify","Webhooks","Supabase"].map((label, i) => (
+              <g key={label}>
+                <rect x="152" y={33+i*34} width="62" height="24" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
+                <rect x="156" y={37+i*34} width="6" height="6" rx="1" fill={dim} opacity="0.6" />
+                <rect x="166" y={38+i*34} width={[22,26,22][i]} height="3" rx="1" fill={mid} opacity="0.5" />
+                <rect x="166" y={44+i*34} width={[14,18,14][i]} height="3" rx="1" fill={dim} opacity="0.35" />
+              </g>
+            ))}
+            <line x1="152" y1="45" x2="152" y2="113" stroke={conn} strokeWidth="0.5" strokeDasharray="2,2" />
+            {[45,79,113].map(y => (
+              <line key={y} x1="149" y1={y>79?87:y<79?71:79} x2="151" y2={y} stroke={conn} strokeWidth="0.75" markerEnd="url(#arr2)" />
+            ))}
+            <rect x="1" y="124" width="218" height="23" fill={bg2} />
+            <line x1="1" y1="124" x2="219" y2="124" stroke={dim} strokeWidth="0.5" />
+            {[0,1,2,3].map(i => (
+              <g key={i}>
+                <rect x={6+i*52} y="129" width="6" height="6" rx="3" fill={i<3?acc:dim} opacity={i<3?.5:.3} />
+                <rect x={16+i*52} y="130" width={[30,26,22,28][i]} height="3" rx="1" fill={dim} opacity="0.4" />
+              </g>
+            ))}
+          </g>
         </g>
-        <text className="wfp-lp" x="357" y="159" textAnchor="middle" fontSize="5.5" fill={lbl} fontFamily="monospace" letterSpacing="0.8">IPHONE / ANDROID</text>
-      </g>
-    </svg>
+
+        {/* Tablet */}
+        <g onMouseEnter={() => setHov("t")} onMouseLeave={() => setHov(null)}
+           style={{ opacity: hov && hov !== "t" ? 0.45 : 1, transition: "opacity 0.15s" }}>
+          <rect x="228" y="0" width="92" height="148" rx="3" fill={bg} stroke={frm} strokeWidth="0.5" />
+          <g clipPath="url(#wfp-t)">
+            <rect x="229" y="1" width="90" height="13" fill={bg2} />
+            <rect x="233" y="4" width="12" height="6" rx="1" fill={acc} opacity="0.45" />
+            <rect x="309" y="4" width="8" height="5" rx="2" fill={dim} />
+            <line x1="229" y1="14" x2="319" y2="14" stroke={dim} strokeWidth="0.5" />
+            {[0,1,2].map(i => (
+              <g key={i}>
+                <rect x={231+i*29} y="17" width="26" height="16" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
+                <rect x={234+i*29} y="21" width="10" height="3" rx="1" fill={dim} />
+                <rect x={234+i*29} y="27" width={[16,12,14][i]} height="4" rx="1" fill={i===1?acc:mid} opacity={i===1?.55:.35} />
+              </g>
+            ))}
+            {[0,1,2].map(row => [0,1].map(col => (
+              <g key={`${row}${col}`}>
+                <rect x={231+col*44} y={37+row*26} width="40" height="22" rx="1" fill={bg2} stroke={col===0&&row===1?acc:dim} strokeWidth={col===0&&row===1?"0.75":"0.5"} strokeOpacity={col===0&&row===1?.5:1} />
+                <rect x={235+col*44} y={41+row*26} width="4" height="4" rx="0.5" fill={col===0&&row===1?acc:dim} opacity={col===0&&row===1?.6:.5} />
+                <rect x={243+col*44} y={42+row*26} width={[18,16,20,14,22,12][row*2+col]} height="3" rx="1" fill={mid} opacity="0.4" />
+                <rect x={243+col*44} y={48+row*26} width={[12,20,14,18,10,16][row*2+col]} height="3" rx="1" fill={dim} opacity="0.28" />
+              </g>
+            )))}
+            <rect x="231" y="117" width="86" height="29" rx="1" fill={bg2} stroke={dim} strokeWidth="0.5" />
+            {[0,1,2].map(i => (
+              <g key={i}>
+                <rect x="235" y={121+i*9} width="4" height="4" rx="0.5" fill={i===0?acc:dim} opacity={i===0?.5:.35} />
+                <rect x="243" y={122+i*9} width={[40,30,36][i]} height="3" rx="1" fill={dim} opacity={.35-i*.07} />
+              </g>
+            ))}
+          </g>
+        </g>
+
+        {/* Phone */}
+        <g onMouseEnter={() => setHov("p")} onMouseLeave={() => setHov(null)}
+           style={{ opacity: hov && hov !== "p" ? 0.45 : 1, transition: "opacity 0.15s" }}>
+          <rect x="328" y="0" width="58" height="148" rx="6" fill={bg} stroke={frm} strokeWidth="0.5" />
+          <rect x="342" y="3" width="14" height="3" rx="1.5" fill={dim} />
+          <rect x="348" y="142" width="14" height="3" rx="1.5" fill={dim} />
+          <g clipPath="url(#wfp-p)">
+            <rect x="330" y="9" width="56" height="12" fill={bg2} />
+            <rect x="334" y="12" width="8" height="5" rx="1" fill={acc} opacity="0.4" />
+            <line x1="330" y1="21" x2="386" y2="21" stroke={dim} strokeWidth="0.5" />
+            {["Platform","Auth","API","Jobs","Queue","DB"].map((label, i) => (
+              <g key={label}>
+                <rect x="332" y={24+i*16} width="52" height="13" fill="none" stroke={dim} strokeWidth="0.5" />
+                <rect x="336" y={28+i*16} width="5" height="5" rx="2.5" fill={i<4?acc:dim} opacity={i<4?.55:.3} />
+                <rect x="345" y={29+i*16} width={[24,16,12,20,14,18][i]} height="3" rx="1" fill={mid} opacity="0.45" />
+              </g>
+            ))}
+            <rect x="332" y="122" width="52" height="10" rx="1" fill={bg2} stroke={acc} strokeWidth="0.5" strokeOpacity="0.3" />
+            <rect x="336" y="125" width="28" height="3" rx="1" fill={acc} opacity="0.4" />
+          </g>
+        </g>
+      </svg>
+    </div>
   );
 }
 
