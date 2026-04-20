@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 
 const links = [
   { href: "/work",          label: "Work"          },
@@ -9,25 +10,48 @@ const links = [
   { href: "/contact",      label: "Contact"        },
 ];
 
+const LOGO_FONT = "'Inter Display','Helvetica Neue',Helvetica,Arial,sans-serif";
+
+function KSLogo({ hovered }: { hovered: boolean }) {
+  return (
+    <svg viewBox="0 0 200 200" style={{ width: 40, height: 40, display: "block" }}>
+      <rect
+        width="200" height="200"
+        fill={hovered ? "#0B0B0B" : "#FF5A1F"}
+        stroke={hovered ? "#1F1F1F" : "none"}
+        strokeWidth="1"
+      />
+      <text
+        x="18" y="155"
+        fontSize="180"
+        letterSpacing="-75"
+        fill={hovered ? "#FAFAFA" : "#0B0B0B"}
+        style={{ fontFamily: LOGO_FONT, fontWeight: 900 }}
+      >
+        KS
+      </text>
+    </svg>
+  );
+}
+
 export default function Nav() {
   const pathname = usePathname();
+  const [logoHovered, setLogoHovered] = useState(false);
 
   return (
     <nav
-      className="flex items-center justify-between px-6 md:px-10 py-4"
+      className="flex items-center justify-between px-6 md:px-10 py-5"
       style={{ borderBottom: "0.5px solid var(--border)" }}
     >
       <Link
         href="/"
-        className="text-xs tracking-[0.06em] uppercase"
-        style={{
-          fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
-          color: "var(--text-primary)",
-        }}
+        style={{ display: "block", lineHeight: 0 }}
+        onMouseEnter={() => setLogoHovered(true)}
+        onMouseLeave={() => setLogoHovered(false)}
       >
-        KS —
+        <KSLogo hovered={logoHovered} />
       </Link>
-      <div className="flex items-center gap-6">
+      <div className="flex items-center gap-8">
         {links.map(({ href, label }) => {
           const active = pathname === href || pathname.startsWith(href + "/");
           return (

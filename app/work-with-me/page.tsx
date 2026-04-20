@@ -603,18 +603,20 @@ function Offering({
               <p className="text-sm leading-relaxed max-w-[60ch]" style={{ ...body, color: "var(--text-dim)" }}>{requiresBody}</p>
             </div>
           </div>
-          <div className="flex items-center justify-between pt-2 flex-wrap gap-4">
-            <span className="text-xs" style={{ ...mono, color: "var(--text-dim)" }}>{replyHint}</span>
-            <Link
-              href={ctaHref}
-              className="group flex items-center gap-3 px-4 py-2.5 text-xs tracking-[0.08em] uppercase transition-colors duration-150"
-              style={{ ...mono, color: "var(--accent)", border: "0.5px solid var(--accent)", background: "rgba(255,90,31,0.04)" }}
-              onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,90,31,0.1)"; }}
-              onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,90,31,0.04)"; }}
-            >
-              {ctaLabel}
-              <span className="inline-block transition-transform duration-150 group-hover:translate-x-[3px]">→</span>
-            </Link>
+          <div className="pt-2 space-y-3">
+            <span className="text-xs block" style={{ ...mono, color: "var(--text-dim)" }}>{replyHint}</span>
+            <div className="flex justify-end">
+              <Link
+                href={ctaHref}
+                className="group flex items-center gap-3 px-4 py-2.5 text-xs tracking-[0.08em] uppercase transition-colors duration-150"
+                style={{ ...mono, color: "var(--accent)", border: "0.5px solid var(--accent)", background: "rgba(255,90,31,0.04)" }}
+                onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,90,31,0.1)"; }}
+                onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.background = "rgba(255,90,31,0.04)"; }}
+              >
+                {ctaLabel}
+                <span className="inline-block transition-transform duration-150 group-hover:translate-x-[3px]">→</span>
+              </Link>
+            </div>
           </div>
         </div>
 
