@@ -10,7 +10,7 @@ const links = [
   { href: "/contact",      label: "Contact"        },
 ];
 
-const LOGO_FONT = "'Inter Display','Helvetica Neue',Helvetica,Arial,sans-serif";
+const LOGO_FONT = "var(--font-inter), 'Helvetica Neue', Helvetica, Arial, sans-serif";
 const MONO = "var(--font-geist-mono), ui-monospace, monospace";
 
 function KSLogo({ hovered }: { hovered: boolean }) {
@@ -25,7 +25,7 @@ function KSLogo({ hovered }: { hovered: boolean }) {
       <text
         x="18" y="155"
         fontSize="180"
-        letterSpacing="-75"
+        letterSpacing="-45"
         fill={hovered ? "#FAFAFA" : "#0B0B0B"}
         style={{ fontFamily: LOGO_FONT, fontWeight: 900 }}
       >
