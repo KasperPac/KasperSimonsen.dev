@@ -3,10 +3,7 @@ const body = { fontFamily: "var(--font-instrument-sans), system-ui, -apple-syste
 
 export default function SystemsTile() {
   return (
-    <div
-      className="group relative h-[240px] cursor-default overflow-hidden"
-      style={{ borderRight: "0.5px solid var(--border)" }}
-    >
+    <div className="tile-cell group relative h-[240px] cursor-default overflow-hidden">
       {/* Label — fades out as pac-forge slides up */}
       <p
         className="absolute text-xs tracking-[0.06em] uppercase transition-opacity duration-300 group-hover:opacity-0"

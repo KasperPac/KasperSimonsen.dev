@@ -103,7 +103,7 @@ export default function PacForgeContent() {
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-2 min-w-[520px]">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2">
             {agents.map((agent) => (
               <div key={agent.id} className="flex gap-2">
                 <span className="text-[10px] flex-shrink-0 w-[28px] pt-0.5" style={{ ...mono, color: "var(--accent)" }}>

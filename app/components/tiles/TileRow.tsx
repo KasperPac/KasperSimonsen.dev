@@ -6,8 +6,8 @@ import StackTile from "./StackTile";
 function TileSkeleton() {
   return (
     <div
-      className="flex flex-col gap-3 p-5 min-h-[180px] animate-pulse"
-      style={{ borderRight: "0.5px solid var(--border)", opacity: 0.3 }}
+      className="tile-cell flex flex-col gap-3 p-5 min-h-[180px] animate-pulse"
+      style={{ opacity: 0.3 }}
     />
   );
 }
@@ -15,7 +15,7 @@ function TileSkeleton() {
 export default function TileRow() {
   return (
     <div
-      className="grid grid-cols-3"
+      className="grid grid-cols-1 md:grid-cols-3"
       style={{
         borderTop: "0.5px solid var(--border)",
         borderBottom: "0.5px solid var(--border)",

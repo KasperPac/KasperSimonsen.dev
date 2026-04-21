@@ -1,4 +1,5 @@
 import InversionCursor from "./InversionCursor";
+import HeroMobile from "./HeroMobile";
 import { availability } from "@/lib/availability";
 
 export default function Hero() {
@@ -11,25 +12,33 @@ export default function Hero() {
         </span>
       </div>
 
-      <InversionCursor>
-        <svg
-          viewBox="0 0 760 130"
-          preserveAspectRatio="xMidYMid meet"
-          style={{ width: "100%", display: "block", overflow: "visible" }}
-          aria-label="Kasper Simonsen"
-        >
-          <text
-            className="hero-name-morph"
-            x="-2"
-            y="65"
-            textLength="762"
-            lengthAdjust="spacing"
-            dominantBaseline="central"
+      {/* Mobile: scroll-driven logo → wordmark morph */}
+      <div className="md:hidden px-4">
+        <HeroMobile />
+      </div>
+
+      {/* Desktop: static full-width wordmark */}
+      <div className="hidden md:block">
+        <InversionCursor>
+          <svg
+            viewBox="0 0 760 130"
+            preserveAspectRatio="xMidYMid meet"
+            style={{ width: "100%", display: "block", overflow: "visible" }}
+            aria-label="Kasper Simonsen"
           >
-            KASPER SIMONSEN
-          </text>
-        </svg>
-      </InversionCursor>
+            <text
+              className="hero-name-morph"
+              x="-2"
+              y="65"
+              textLength="762"
+              lengthAdjust="spacing"
+              dominantBaseline="central"
+            >
+              KASPER SIMONSEN
+            </text>
+          </svg>
+        </InversionCursor>
+      </div>
 
       <div className="mt-6 space-y-4 px-6 md:px-10">
         <p

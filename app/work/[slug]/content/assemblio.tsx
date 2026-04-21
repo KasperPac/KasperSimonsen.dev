@@ -77,15 +77,15 @@ export default function AssemblioContent() {
             { from: "BOM explosion", to: "Ledger write", note: "append-only, transactional" },
             { from: "Ledger", to: "Availability view", note: "materialized, short TTL" },
           ].map(({ from, to, note }) => (
-            <div key={from} className="flex items-center gap-3 min-w-[400px]">
-              <span className="text-[11px] w-[140px] flex-shrink-0" style={{ ...mono, color: "var(--text-muted)" }}>{from}</span>
-              <div className="flex items-center gap-1 flex-1">
-                <div className="flex-1 h-[0.5px]" style={{ background: "var(--border)" }} />
-                <span className="text-[10px] px-2 flex-shrink-0" style={{ ...mono, color: "var(--text-dim)" }}>{note}</span>
-                <div className="w-3 h-[0.5px]" style={{ background: "var(--border)" }} />
+            <div key={from} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+              <span className="text-[11px] sm:w-[140px] flex-shrink-0" style={{ ...mono, color: "var(--text-muted)" }}>{from}</span>
+              <div className="flex items-center gap-1 sm:flex-1">
+                <div className="hidden sm:block flex-1 h-[0.5px]" style={{ background: "var(--border)" }} />
+                <span className="text-[10px] sm:px-2 flex-shrink-0" style={{ ...mono, color: "var(--text-dim)" }}>{note}</span>
+                <div className="hidden sm:block w-3 h-[0.5px]" style={{ background: "var(--border)" }} />
                 <span style={{ color: "var(--accent)", fontSize: 10 }}>→</span>
               </div>
-              <span className="text-[11px] w-[140px] flex-shrink-0 text-right" style={{ ...mono, color: "var(--text-muted)" }}>{to}</span>
+              <span className="text-[11px] sm:w-[140px] flex-shrink-0 sm:text-right" style={{ ...mono, color: "var(--text-muted)" }}>{to}</span>
             </div>
           ))}
         </div>

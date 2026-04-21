@@ -153,10 +153,7 @@ export default async function CommitsTile() {
   const hasData = combined.length > 0;
 
   return (
-    <div
-      className="group flex flex-col gap-3 p-5 h-[240px] cursor-default"
-      style={{ borderRight: "0.5px solid var(--border)" }}
-    >
+    <div className="tile-cell group flex flex-col gap-3 p-5 h-[240px] cursor-default">
       <p className="text-xs tracking-[0.06em] uppercase flex-shrink-0" style={{ ...mono, color: "var(--text-dim)" }}>
         Commits · 12w
       </p>

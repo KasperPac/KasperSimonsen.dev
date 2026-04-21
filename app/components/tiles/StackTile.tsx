@@ -13,9 +13,9 @@ const body = { fontFamily: "var(--font-instrument-sans), system-ui, -apple-syste
 
 export default function StackTile() {
   return (
-    <div className="group relative h-[240px] cursor-default overflow-hidden">
+    <div className="tile-cell group relative h-[240px] cursor-default overflow-hidden">
       {/* At rest */}
-      <div className="absolute inset-0 flex flex-col gap-3 p-5 transition-opacity duration-300 opacity-100 group-hover:opacity-0">
+      <div className="stack-at-rest absolute inset-0 flex flex-col gap-3 p-5 transition-opacity duration-300 opacity-100 group-hover:opacity-0">
         <p className="text-xs tracking-[0.06em] uppercase flex-shrink-0" style={{ ...mono, color: "var(--text-dim)" }}>
           Primary stack
         </p>
@@ -38,7 +38,7 @@ export default function StackTile() {
       </div>
 
       {/* On hover */}
-      <div className="absolute inset-0 flex flex-col gap-3 p-5 transition-opacity duration-300 opacity-0 group-hover:opacity-100">
+      <div className="stack-detail absolute inset-0 flex flex-col gap-3 p-5 transition-opacity duration-300 opacity-0 group-hover:opacity-100">
         <p className="text-xs tracking-[0.06em] uppercase flex-shrink-0" style={{ ...mono, color: "var(--text-dim)" }}>
           Primary stack
         </p>

@@ -140,7 +140,7 @@ export default async function CaseStudyPage({ params }: { params: Params }) {
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_260px] gap-10 lg:gap-16 max-w-[1200px]">
 
           {/* Prose — last on mobile (sidebar floats above), first col on desktop */}
-          <div className="order-last lg:order-none">
+          <div className="order-last lg:order-none min-w-0">
             <Content />
           </div>
 
