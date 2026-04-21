@@ -17,9 +17,9 @@ export default function Hero() {
         <HeroMobile />
       </div>
 
-      {/* Desktop: static full-width wordmark */}
-      <div className="hidden md:block">
-        <InversionCursor>
+      <InversionCursor>
+        {/* Desktop: static full-width wordmark */}
+        <div className="hidden md:block">
           <svg
             viewBox="0 0 760 130"
             preserveAspectRatio="xMidYMid meet"
@@ -37,34 +37,34 @@ export default function Hero() {
               KASPER SIMONSEN
             </text>
           </svg>
-        </InversionCursor>
-      </div>
-
-      <div className="mt-6 space-y-4 px-6 md:px-10">
-        <p
-          className="max-w-xl text-base leading-relaxed"
-          style={{ color: "var(--text-muted)", fontFamily: "var(--font-body)" }}
-        >
-          12 years getting things to work. I build custom web, iPhone and
-          Android apps for startups and operators. Multi-tenant SaaS,
-          LLM-powered tools, and the occasional multi-agent system that writes
-          industrial PLC code. Based in Melbourne. Taking on selective contract
-          work —{" "}
-          <a href="/contact" style={{ color: "var(--accent)", textDecoration: "none" }}>
-            get in touch
-          </a>
-          .
-        </p>
-        <div
-          className="flex items-center gap-8 text-xs tracking-widest uppercase"
-          style={{
-            color: "var(--text-dim)",
-            fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
-          }}
-        >
-          <span>Melbourne · AEST · UTC+10</span>
         </div>
-      </div>
+
+        <div className="mt-6 space-y-4 px-6 md:px-10">
+          <p
+            className="max-w-xl text-base leading-relaxed"
+            style={{ color: "var(--text-muted)", fontFamily: "var(--font-body)" }}
+          >
+            12 years getting things to work. I build custom web, iPhone and
+            Android apps for startups and operators. Multi-tenant SaaS,
+            LLM-powered tools, and the occasional multi-agent system that writes
+            industrial PLC code. Based in Melbourne. Taking on selective contract
+            work —{" "}
+            <a href="/contact" style={{ color: "var(--accent)", textDecoration: "none" }}>
+              get in touch
+            </a>
+            .
+          </p>
+          <div
+            className="flex items-center gap-8 text-xs tracking-widest uppercase"
+            style={{
+              color: "var(--text-dim)",
+              fontFamily: "var(--font-geist-mono), ui-monospace, monospace",
+            }}
+          >
+            <span>Melbourne · AEST · UTC+10</span>
+          </div>
+        </div>
+      </InversionCursor>
     </section>
   );
 }
