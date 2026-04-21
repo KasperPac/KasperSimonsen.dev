@@ -32,10 +32,26 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
+const SITE_TITLE = "Kasper Simonsen — Independent Software Engineering";
+const SITE_DESCRIPTION =
+  "Custom web, iPhone and Android apps for startups and operators. Multi-tenant SaaS, LLM-powered tools, and the occasional multi-agent system that writes industrial PLC code. Based in Melbourne.";
+
 export const metadata: Metadata = {
-  title: "Kasper Simonsen — Independent Software Engineering",
-  description:
-    "Multi-tenant SaaS, LLM pipelines, and the occasional seven-agent system that writes PLC code. Taking on selective contract work from Melbourne.",
+  metadataBase: new URL("https://kaspersimonsen.dev"),
+  title: SITE_TITLE,
+  description: SITE_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    url: "https://kaspersimonsen.dev",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+    siteName: "Kasper Simonsen",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SITE_TITLE,
+    description: SITE_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({
