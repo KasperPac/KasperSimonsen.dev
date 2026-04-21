@@ -2,7 +2,7 @@ export type Project = {
   slug: string;
   // Work index
   statusLabel: string;
-  statusType: "building" | "rebuilding";
+  statusType: "building" | "rebuilding" | "shipped";
   yearRange: string;
   year: string;
   category: string;
@@ -32,17 +32,17 @@ export const currently: Project[] = [
     yearRange: "2025 → present",
     year: "2025",
     category: "LLM Systems",
-    headline: "Teaching seven agents to write PLC code.",
+    headline: "Code that stays in spec.",
     description:
-      "A multi-agent pipeline generates Siemens SCL, compiles it in TIA Portal via a .NET Openness bridge, and learns from every compile failure and engineer correction.",
+      "Eight AI agents for Siemens TIA Portal projects — turning functional specs into compiling SCL and HMI, and turning legacy projects back into editable specs. Pattern library grows with every correction.",
     pills: ["React 19", "Claude API", ".NET 4.8", "Supabase"],
     stackSummary: "React 19 · Claude API · .NET 4.8",
-    integration: "TIA Openness",
+    integration: "TIA Openness (V17–V20)",
     statusNote: "Primary focus",
     githubRepo: "pac-forge",
-    title: "TEACHING SEVEN AGENTS TO WRITE PLC CODE",
-    displayName: "Pac-Forge",
-    logo: "/PacTechnologiesEdit_White.png",
+    title: "CODE THAT STAYS IN SPEC",
+    displayName: "Forja",
+    logo: "/forja.svg",
     role: "Sole engineer",
     stack: [
       "React 19 + Vite 7",
@@ -51,23 +51,25 @@ export const currently: Project[] = [
       "Supabase (Postgres + Edge Functions + Auth)",
       "Claude API",
       ".NET Framework 4.8 / C#",
-      "TIA Openness",
-      "Zustand",
-      "TanStack Query",
-      "Monaco Editor",
+      "TIA Openness (V17–V20)",
+      "PLCsim (in-loop testing)",
+      "Zustand + TanStack Query",
+      "Monaco Editor (custom SCL tokenisation)",
     ],
     integrationPoints: [
       "Claude API via Supabase Edge Functions",
-      "TIA Portal (via .NET Openness bridge)",
-      "WebSocket job streaming",
-      "Supabase Realtime",
+      "TIA Portal V17–V20 via .NET Openness bridge",
+      "PLCsim for pre-deployment testing",
+      "WebSocket live status + Supabase Realtime",
+      "Session-level agent leasing on Supabase",
     ],
     notableDetails: [
-      "Bridge runs on port 5102, Windows-only",
-      "Lease TTL: 90s with keepalive renewal",
-      "Pattern library: WRONG/CORRECT pairs",
-      "Topological sort for agent ordering",
-      "RLS across all Supabase tables",
+      "Eight-agent pipeline: PM + 7 specialists",
+      "Pac-Audit: deterministic extract + AI only for inferential facts",
+      "Compile-in-the-loop via .NET 4.8 Openness bridge",
+      "Seven-level priority hierarchy for conflicting knowledge",
+      "Bidirectional: FDS Builder + Pac-Audit converge on same spec shape",
+      "Conformance Reviewer (in dev) for requirement↔code traceability",
     ],
   },
   {
@@ -113,4 +115,51 @@ export const currently: Project[] = [
   },
 ];
 
-export const previously: Project[] = [];
+export const previously: Project[] = [
+  {
+    slug: "silio",
+    statusLabel: "SHIPPED · RUNNING",
+    statusType: "shipped",
+    yearRange: "2023",
+    year: "2023",
+    category: "Industrial Automation",
+    headline: "Every gram, signed for.",
+    description:
+      "The software running Rabar's feed production facility — Tencia ERP orders in, Omron PLC on the floor, NFC-signed weighing, bulk-bag Android scanner, SQL audit log, live dashboard.",
+    pills: ["Omron PLC", "SQL", "React Native", "React"],
+    stackSummary: "Omron PLC · SQL · React Native · React",
+    integration: "Tencia ERP + Omron PLC",
+    statusNote: "In production",
+    githubRepo: "silio",
+    title: "EVERY GRAM, SIGNED FOR",
+    displayName: "Silio",
+    logo: "/silio.svg",
+    role: "Sole engineer (software)",
+    stack: [
+      "Omron Sysmac NJ/NX PLC (plant control layer)",
+      "SQL database (audit log + Tencia integration)",
+      "React Native Android app (bulk bag scanner)",
+      "React dashboard (office live view)",
+      "Order ingestion service (Tencia ↔ PLC)",
+      "Native Kotlin bridge (hardware scanner intents)",
+      "react-native-nfc-manager, react-native-tcp-socket, Vision Camera + MLKit",
+    ],
+    integrationPoints: [
+      "Tencia ERP ↔ Silio ingestion (order in, completion data out)",
+      "Silio ↔ Omron PLC (order buffer + SQL telemetry)",
+      "Android app ↔ PLC (raw binary TCP)",
+      "NFC tap as the sign-off primitive across all interfaces",
+      "Dashboard ↔ SQL (live reads)",
+    ],
+    notableDetails: [
+      "100-order working buffer on the PLC",
+      "Rush-order priority from office to plant floor",
+      "Atomic sign-off: scale tolerance + GIN validation + NFC tap",
+      "Fixed-field binary protocol between app and PLC (STX + length-prefix)",
+      "NFC tag UID is the operator ID",
+      "Up to 5 GINs per ingredient, up to 5 bags per GIN",
+      "Glove-friendly single-screen app UI",
+      "Replaces paper + isolated Tencia workflow",
+    ],
+  },
+];

@@ -1,10 +1,12 @@
+import type { ComponentType } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { currently } from "@/app/work/data";
+import { currently, previously } from "@/app/work/data";
 import { fetchRepoMeta } from "@/lib/github";
 import InversionCursor from "@/app/components/InversionCursor";
 import PacForgeContent from "./content/pac-forge";
 import AssemblioContent from "./content/assemblio";
+import SilioContent from "./content/silio";
 
 type Params = Promise<{ slug: string }>;
 
@@ -12,30 +14,36 @@ const display = { fontFamily: "var(--font-inter), 'Helvetica Neue', Helvetica, A
 const mono    = { fontFamily: "var(--font-geist-mono), ui-monospace, monospace" };
 const serif   = { fontFamily: "var(--font-fraunces), 'Instrument Serif', Georgia, serif" };
 
+const allProjects = [...currently, ...previously];
+
+const contentBySlug: Record<string, ComponentType> = {
+  "pac-forge": PacForgeContent,
+  "assemblio": AssemblioContent,
+  "silio":     SilioContent,
+};
+
 export async function generateStaticParams() {
-  return currently.map((p) => ({ slug: p.slug }));
+  return allProjects.map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: { params: Params }) {
   const { slug } = await params;
-  const project = currently.find((p) => p.slug === slug);
+  const project = allProjects.find((p) => p.slug === slug);
   if (!project) return {};
-  const shortTitle =
-    slug === "pac-forge" ? "Pac-Forge" : "Assemblio";
   return {
-    title: `${shortTitle} — Kasper Simonsen`,
+    title: `${project.displayName} — Kasper Simonsen`,
     description: project.headline,
   };
 }
 
 export default async function CaseStudyPage({ params }: { params: Params }) {
   const { slug } = await params;
-  const project = currently.find((p) => p.slug === slug);
+  const project = allProjects.find((p) => p.slug === slug);
   if (!project) notFound();
 
   const github = await fetchRepoMeta(project.githubRepo);
 
-  const Content = project.slug === "pac-forge" ? PacForgeContent : AssemblioContent;
+  const Content = contentBySlug[project.slug] ?? PacForgeContent;
 
   return (
     <article>

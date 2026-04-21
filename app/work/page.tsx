@@ -46,6 +46,23 @@ function StatusPill({ project }: { project: Project }) {
       </span>
     );
   }
+  if (project.statusType === "shipped") {
+    return (
+      <span style={pillStyle}>
+        <span
+          style={{
+            width: 6,
+            height: 6,
+            borderRadius: "50%",
+            background: "var(--accent)",
+            opacity: 0.55,
+            display: "inline-block",
+          }}
+        />
+        {project.statusLabel}
+      </span>
+    );
+  }
   return (
     <div className="flex items-center gap-3 flex-wrap">
       <span style={pillStyle}>↻ {project.statusLabel}</span>
@@ -166,9 +183,10 @@ function ProjectBlock({ project, github }: { project: Project; github: RepoMeta 
 }
 
 export default async function WorkPage() {
-  const githubResults = await Promise.all(
-    currently.map((p) => fetchRepoMeta(p.githubRepo))
-  );
+  const [githubResults, previouslyGithubResults] = await Promise.all([
+    Promise.all(currently.map((p) => fetchRepoMeta(p.githubRepo))),
+    Promise.all(previously.map((p) => fetchRepoMeta(p.githubRepo))),
+  ]);
 
   return (
     <main>
@@ -237,31 +255,8 @@ export default async function WorkPage() {
               Shipped and moved on
             </p>
           </div>
-          {previously.map((project) => (
-            <Link
-              key={project.slug}
-              href={`/work/${project.slug}`}
-              className="group flex items-center justify-between px-6 md:px-10 py-4 transition-colors duration-150 hover:bg-[#0f0f0f]"
-              style={{ borderBottom: "0.5px solid var(--border)" }}
-            >
-              <div className="flex items-baseline gap-6 min-w-0">
-                <span className="text-sm flex-shrink-0" style={{ ...mono, color: "var(--text-primary)" }}>
-                  {project.slug}
-                </span>
-                <span className="text-xs flex-shrink-0" style={{ ...mono, color: "var(--text-dim)" }}>
-                  {project.year}
-                </span>
-                <span className="text-xs truncate" style={{ ...body, color: "var(--text-muted)" }}>
-                  {project.headline}
-                </span>
-              </div>
-              <span
-                className="text-xs uppercase tracking-wider flex-shrink-0 ml-4 opacity-0 group-hover:opacity-100 transition-opacity duration-150"
-                style={{ ...mono, color: "var(--accent)" }}
-              >
-                →
-              </span>
-            </Link>
+          {previously.map((project, i) => (
+            <ProjectBlock key={project.slug} project={project} github={previouslyGithubResults[i]!} />
           ))}
         </section>
       )}

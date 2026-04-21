@@ -1,37 +1,13 @@
 import Link from "next/link";
+import { currently } from "@/app/work/data";
 
 const mono   = { fontFamily: "var(--font-geist-mono), ui-monospace, monospace" };
 const serif  = { fontFamily: "var(--font-fraunces), 'Instrument Serif', Georgia, serif" };
 const body   = { fontFamily: "var(--font-instrument-sans), system-ui, -apple-system, sans-serif" };
 
-const projects = [
-  {
-    href: "/work/pac-forge",
-    slug: "pac-forge",
-    status: "Production",
-    version: "v0.4",
-    years: "2024 → present",
-    category: "LLM Systems",
-    headline: "Teaching seven agents to write PLC code.",
-    description:
-      "A multi-agent pipeline generates Siemens SCL, compiles it in TIA Portal via a .NET Openness bridge, and learns from every compile failure and engineer correction.",
-    pills: ["React 19", "Claude API", ".NET 4.8", "Supabase"],
-  },
-  {
-    href: "/work/assemblio",
-    slug: "assemblio",
-    status: "Production",
-    version: "v0.3",
-    years: "2024 → present",
-    category: "Multi-tenant SaaS",
-    headline: "Inventory that never drifts.",
-    description:
-      "A Shopify-connected BOM and component inventory system. Append-only movement ledger, tenant-scoped from the schema up, reconciliation audits baked in.",
-    pills: ["Next.js 16", "Supabase", "Shopify API", "Postgres"],
-  },
-];
-
 export default function WorkCards() {
+  const count = String(currently.length).padStart(2, "0");
+
   return (
     <section>
       {/* Section label */}
@@ -44,16 +20,16 @@ export default function WorkCards() {
         </span>
         <div className="flex-1 h-px" style={{ background: "#2a2a2a" }} />
         <span className="text-xs flex-shrink-0" style={{ ...mono, color: "var(--text-dim)" }}>
-          02 projects
+          {count} projects
         </span>
       </div>
 
       {/* Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2">
-        {projects.map((project, i) => (
+        {currently.map((project, i) => (
           <Link
             key={project.slug}
-            href={project.href}
+            href={`/work/${project.slug}`}
             className="group flex flex-col gap-5 p-8 transition-colors duration-200 hover:bg-[#0f0f0f]"
             style={{
               borderRight: i === 0 ? "0.5px solid var(--border)" : "none",
@@ -68,11 +44,11 @@ export default function WorkCards() {
                   style={{ background: "var(--health)" }}
                 />
                 <span className="text-xs tracking-wide uppercase" style={{ ...mono, color: "var(--text-dim)" }}>
-                  {project.status} · {project.version}
+                  {project.statusLabel}
                 </span>
               </div>
               <span className="text-xs" style={{ ...mono, color: "var(--text-dim)" }}>
-                {project.years}
+                {project.yearRange}
               </span>
             </div>
 
