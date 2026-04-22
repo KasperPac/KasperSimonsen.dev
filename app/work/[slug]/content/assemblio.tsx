@@ -2,33 +2,102 @@ const serif = { fontFamily: "var(--font-fraunces), 'Instrument Serif', Georgia, 
 const body  = { fontFamily: "var(--font-instrument-sans), system-ui, -apple-system, sans-serif" };
 const mono  = { fontFamily: "var(--font-geist-mono), ui-monospace, monospace" };
 
+const nodeStyle = {
+  ...mono,
+  color: "var(--text-muted)",
+  fontSize: 11,
+  whiteSpace: "nowrap" as const,
+};
+
+const hubNodeStyle = {
+  ...mono,
+  color: "var(--text-primary)",
+  fontSize: 11,
+  padding: "0.5rem 0.75rem",
+  border: "0.5px solid rgba(255,90,31,0.4)",
+  background: "rgba(255,90,31,0.05)",
+  textAlign: "center" as const,
+  whiteSpace: "nowrap" as const,
+};
+
+const arrow = <span style={{ color: "var(--accent)", fontSize: 10, ...mono }}>→</span>;
+
+function ShapeDiagram() {
+  const nodeBase = { ...nodeStyle, flexShrink: 0 } as const;
+  const hubBase = { ...hubNodeStyle, flexShrink: 0 } as const;
+  const segment = (
+    <div className="flex items-center gap-1 flex-1 mx-2">
+      <div className="flex-1 h-[0.5px]" style={{ background: "var(--border)" }} />
+      <span style={{ color: "var(--accent)", fontSize: 10, ...mono, flexShrink: 0 }}>→</span>
+    </div>
+  );
+
+  return (
+    <div
+      className="p-5 overflow-x-auto"
+      style={{ background: "#0f0f0f", border: "0.5px solid var(--border)" }}
+    >
+      <div className="flex items-center" style={{ minWidth: 660 }}>
+        <span style={nodeBase}>Shopify order</span>
+        {segment}
+        <span style={nodeBase}>Active BOM</span>
+        {segment}
+        <span style={nodeBase}>Reservation</span>
+        {segment}
+        <span style={hubBase}>Movement + Balance</span>
+        {segment}
+        <span style={nodeBase}>Availability</span>
+      </div>
+
+      {/* Edge legend */}
+      <div
+        className="mt-5 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2"
+        style={{ borderTop: "0.5px solid var(--border)" }}
+      >
+        <p className="text-[11px] leading-snug" style={{ ...mono, color: "var(--text-dim)" }}>
+          Shopify order → Active BOM — webhook resolves the variant
+        </p>
+        <p className="text-[11px] leading-snug" style={{ ...mono, color: "var(--text-dim)" }}>
+          Active BOM → Reservation — recursive explode down to components
+        </p>
+        <p className="text-[11px] leading-snug" style={{ ...mono, color: "var(--text-dim)" }}>
+          Reservation → Movement + Balance — append-only, transactional
+        </p>
+        <p className="text-[11px] leading-snug" style={{ ...mono, color: "var(--text-dim)" }}>
+          Movement + Balance → Availability — derived, refreshed on a short tick
+        </p>
+      </div>
+    </div>
+  );
+}
+
 const hardBits = [
   {
-    title: "Append-only ledger design",
+    title: "Keeping inventory truthful",
     paras: [
-      "Moving from 'update the stock count' to an event-sourced ledger meant dropping the obvious approach. The database has no current_quantity column. There's no mutable number to decrement. Every stock movement — receipt, commitment, allocation, return — is an immutable event. Availability is always computed from the ledger. Nothing is read from a cached number that might be stale.",
-      "Current availability comes from a materialised view that rolls up recent events and refreshes on a short interval. Reads are fast, and correctness still holds even if the refresh lags a few seconds, because the underlying events are always right. The view is the cache. The ledger is the truth.",
+      "Supabase is the inventory source of truth. Shopify stays the sales channel, but operational availability lives in Assemblio. Every receipt, stocktake variance, manual adjustment, and reservation writes an append-only movement record and updates the derived balance for that component and location.",
+      "That invariant matters because the app has to hold up under audit, reconciliation, and recovery. If a balance ever changes without a movement behind it, the system is lying. The rebuild has one code path for inventory math. No side doors.",
     ],
   },
   {
-    title: "BOM explosion for multi-level assemblies",
+    title: "Allocating components from live Shopify demand",
     paras: [
-      "Some products are assembled from sub-components that are themselves assembled from lower-level parts. A recursive BOM explosion walks the full tree to work out what raw components an order actually consumes. With deep trees and high SKU counts, this gets expensive fast.",
-      "Assemblio uses a recursive CTE in Postgres to traverse the tree in a single query, and caches results for BOMs that haven't changed. The cache invalidates on BOM edits via a simple structural hash.",
+      "Orders sync in from Shopify and land as local orders and order lines. Each line immediately drives component reservations through the active BOM for the ordered variant. Availability stops being \"how many finished goods are left\" and becomes \"are the required components on hand once already-reserved stock is taken out.\"",
+      "That turns Assemblio into a planning surface. Missing BOMs, weak component coverage, and over-reservation all show up before the floor feels them.",
     ],
   },
   {
-    title: "Shopify webhook reliability",
+    title: "Stocktake and goods inwards on the same ledger",
     paras: [
-      "Shopify webhooks are at-least-once. Duplicate deliveries happen, and if you don't handle them you get double-deductions in your ledger. Every webhook carries an X-Shopify-Webhook-Id header. Assemblio stores processed IDs in a dedupe table and rejects duplicates before they reach the ledger.",
-      "The dedupe check and the ledger write happen in the same Postgres transaction, so no duplicate can slip through between the check and the write. HMAC verification runs on every delivery, so spoofed payloads never reach application code.",
+      "Stocktake sessions run by location. They capture expected vs counted quantities, move through approval states, and apply the variance back into the ledger. Purchase orders and goods inwards receiving use the same model, including partial receipts line by line.",
+      "There's no side channel for warehouse ops. Receiving, counting, and manual corrections all land on the same balances and movement history. Reports and audits read from one source.",
     ],
   },
   {
-    title: "Tenant isolation under load",
+    title: "Financial planning tied to the job",
     paras: [
-      "Tenants are logically isolated but share a Postgres database. One busy tenant shouldn't slow down the others. Row Level Security runs on every query, so tenant boundaries are enforced at the database level, not in application code where a missing WHERE clause leaks data.",
-      "Supabase's managed PgBouncer caps concurrent connections per tenant and stops one tenant from starving the rest. The kind of constraint that only matters at scale, and gets painful to retrofit if it's not there from day one.",
+      "Inventory isn't the end of the model. Open order lines can generate frozen cost snapshots pulled from the active BOM, labour routing, rate schedules, admin load, utilities, and overhead. The snapshot is the estimate the job was quoted against.",
+      "Actual time entries roll back into actual labour cost, margin, and department utilisation. That ties customer demand, material consumption, and shop-floor capacity into one model, where before they lived in three disconnected spreadsheets.",
     ],
   },
 ];
@@ -40,10 +109,10 @@ export default function AssemblioContent() {
       {/* Opening */}
       <div className="space-y-4 max-w-[68ch]">
         <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-          Assemblio plugs into a Shopify store and solves one problem: inventory counts drift. Shopify's inventory tracks units sold. It doesn't understand Bills of Materials. It doesn't track committed stock. It can't handle components that are mid-assembly. A merchant building products that share sub-components will run out of those sub-components faster than Shopify predicts, and Shopify won't flag it until the order is already in.
+          Assemblio started as a fix for inventory drift in Shopify stores that assemble products from components. The rebuild is broader. It runs BOMs, component inventory, purchasing, goods inwards, stocktake, costing, staffing, and capacity — against Shopify as the sales channel.
         </p>
         <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-          The gap between what Shopify thinks you have and what you actually have is inventory drift. It compounds with order volume, and it costs real money the first time a customer places an order for something you can't actually fulfil.
+          Shopify still owns the catalog and the demand signal. Everything else lives in Assemblio: which components are on hand, which are reserved, what came in from suppliers, what got counted on the floor, what a job should cost, how loaded each department is on a given day.
         </p>
       </div>
 
@@ -53,49 +122,30 @@ export default function AssemblioContent() {
           The problem
         </h2>
         <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-          Every Shopify merchant running a manufacturing or assembly workflow hits the same wall. Their store has products with Bills of Materials, where each finished good is assembled from a set of components. Shopify doesn't know about BOMs. It tracks finished goods, not components. When an order comes in, Shopify decrements the finished good count, but if you're building to order (pulling components from a bin to assemble the product), Shopify never tracked the components in the first place.
+          A manufacturer selling through Shopify has two systems pretending to be enough. Shopify knows orders. The floor knows components, receipts, cycle counts, and labour. The moment products share sub-components, buy-to-build timing matters, or margin depends on who did the work, that split gets expensive.
         </p>
         <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-          Spreadsheets fill the gap until they don't. Assemblio is the replacement: a system that understands BOMs, tracks components, and stays accurate without manual reconciliation.
+          Assemblio sits between them. Variants tie to BOMs, orders to component reservations, purchase orders to goods inwards. Stocktakes apply variance back into the same ledger. Planned work rolls up into costing and capacity.
         </p>
       </section>
 
       {/* Shape of the system */}
-      <section className="space-y-6">
+      <section className="space-y-6 max-w-[68ch]">
         <h2 className="text-[2rem] italic leading-tight mb-5" style={{ ...serif, color: "var(--text-primary)" }}>
           The shape of the system
         </h2>
 
-        {/* System diagram */}
-        <div
-          className="p-5 space-y-3 overflow-x-auto"
-          style={{ background: "#0f0f0f", border: "0.5px solid var(--border)" }}
-        >
-          {[
-            { from: "Shopify order", to: "Assemblio webhook handler", note: "at-least-once delivery" },
-            { from: "Webhook handler", to: "BOM explosion", note: "recursive CTE" },
-            { from: "BOM explosion", to: "Ledger write", note: "append-only, transactional" },
-            { from: "Ledger", to: "Availability view", note: "materialized, short TTL" },
-          ].map(({ from, to, note }) => (
-            <div key={from} className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-              <span className="text-[11px] sm:w-[140px] flex-shrink-0" style={{ ...mono, color: "var(--text-muted)" }}>{from}</span>
-              <div className="flex items-center gap-1 sm:flex-1">
-                <div className="hidden sm:block flex-1 h-[0.5px]" style={{ background: "var(--border)" }} />
-                <span className="text-[10px] sm:px-2 flex-shrink-0" style={{ ...mono, color: "var(--text-dim)" }}>{note}</span>
-                <div className="hidden sm:block w-3 h-[0.5px]" style={{ background: "var(--border)" }} />
-                <span style={{ color: "var(--accent)", fontSize: 10 }}>→</span>
-              </div>
-              <span className="text-[11px] sm:w-[140px] flex-shrink-0 sm:text-right" style={{ ...mono, color: "var(--text-muted)" }}>{to}</span>
-            </div>
-          ))}
-        </div>
+        <ShapeDiagram />
 
-        <div className="space-y-4 max-w-[68ch]">
+        <div className="space-y-4">
           <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-            Assemblio installs into a Shopify store via OAuth and subscribes to order webhooks. When an order arrives, Assemblio intercepts it, explodes the BOM for each product, and records the committed quantities in its own ledger. Shopify's numbers aren't touched. The authoritative view of what's actually available lives in Assemblio.
+            Assemblio is the operational layer under the storefront, tenant-scoped from the schema up. A Shopify order lands via webhook, resolves its active BOM, and reserves components before Shopify's own counters have been touched. The reservation writes into an append-only movement ledger, and the derived availability view is what the rest of the app reads.
           </p>
           <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-            Multi-tenancy is enforced at the Postgres level with Row Level Security. Every query runs under the authenticated tenant's context. One tenant's data can't appear in another's queries, even if the application layer has a bug.
+            Goods inwards, stocktake variances, and manual adjustments all enter the same ledger through the same invariant. Every balance has a movement behind it.
+          </p>
+          <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
+            Shopify inventory is reference only. Assemblio doesn't write stock levels back. It keeps its own movement ledger and balance tables, so availability, reservations, receiving, and reconciliation all live in one place.
           </p>
         </div>
       </section>
@@ -125,32 +175,13 @@ export default function AssemblioContent() {
           The result
         </h2>
         <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-          v1 shipped in 2024. The append-only ledger and BOM explosion did what I hoped — inventory drift dropped noticeably against unmanaged Shopify. The architecture held up against real orders, real webhooks, and the edge cases that only show up in production.
+          The rebuild has working surfaces for components, products and variants, BOM management, orders, inventory, suppliers, purchasing, goods inwards, stocktake, costing, staffing, actual time, capacity, reports, and activity logging. Wider than an inventory-drift fix.
         </p>
         <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-          v1 also exposed what I'd built too fast. The multi-tenancy was application-level filtering, not real RLS. The BOM explosion was synchronous and got slow above a couple hundred SKUs. Webhook handlers lived in Next.js API routes that cold-started too slowly for time-sensitive inventory updates.
-        </p>
-      </section>
-
-      {/* v2 section */}
-      <section
-        className="space-y-4 max-w-[68ch] pt-10"
-        style={{ borderTop: "0.5px solid var(--accent)44" }}
-      >
-        <p className="text-xs tracking-[0.1em] uppercase mb-4" style={{ ...mono, color: "var(--accent)" }}>
-          Bringing it back: v2
-        </p>
-        <h2 className="text-[2rem] italic leading-tight mb-5" style={{ ...serif, color: "var(--text-primary)" }}>
-          What v1 taught v2
-        </h2>
-        <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-          v2 rebuilds tenant isolation on Postgres RLS from day one. Lesson from v1: application-level filtering works until it doesn't. A single missing WHERE clause in a new query is enough to leak data between tenants. RLS enforces the boundary in the database, where it can't be forgotten. The data model from v1 carries over. The application layer doesn't.
+          v1 proved the demand for component-aware inventory. v2 is the operating system built around it. One place for materials, inbound supply, counted stock, planned margin, actual labour, and department load.
         </p>
         <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-          Webhook handling moves to Supabase Edge Functions — always warm, no cold start, isolated from the Next.js request path. The BOM explosion becomes a proper recursive CTE with result caching keyed on a structural hash. The materialised view refresh interval gets tuned to what v1 actually showed in production: the 30-second default is too slow for high-volume merchants, and 5 seconds is fine with negligible database load.
-        </p>
-        <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-          The v2 target is simple: ship to more tenants without the operational overhead v1 needed. The architecture has to handle 50 concurrent tenants the same way it handles 5. Building that in now is cheaper than retrofitting it when the user count demands it.
+          Tenant isolation runs in Postgres with RLS. Shopify ingest is idempotent. Every inventory mutation rides the movement-plus-balance invariant.
         </p>
       </section>
 

@@ -44,11 +44,11 @@ export default function Hero() {
             className="max-w-xl text-base leading-relaxed"
             style={{ color: "var(--text-muted)", fontFamily: "var(--font-body)" }}
           >
-            12 years getting things to work. I build custom web, iPhone and
-            Android apps for startups and operators. Multi-tenant SaaS,
-            LLM-powered tools, and the occasional multi-agent system that writes
-            industrial PLC code. Based in Melbourne. Taking on selective contract
-            work —{" "}
+            12 years getting things to work. I build custom software for businesses when
+            the off-the-shelf tools don&apos;t fit. Web, iPhone, Android. Apps that run
+            factory floors, Shopify backends that handle the awkward bits, AI agents that
+            write industrial control code. Based in Melbourne. Taking on selective
+            contract work —{" "}
             <a href="/contact" style={{ color: "var(--accent)", textDecoration: "none" }}>
               get in touch
             </a>

@@ -73,7 +73,7 @@ export default function SilioContent() {
       </section>
 
       {/* Shape of the system */}
-      <section className="space-y-6">
+      <section className="space-y-6 max-w-[68ch]">
         <h2 className="text-[2rem] italic leading-tight mb-5" style={{ ...serif, color: "var(--text-primary)" }}>
           The shape of the system
         </h2>

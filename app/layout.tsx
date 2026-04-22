@@ -35,7 +35,7 @@ const geistMono = Geist_Mono({
 
 const SITE_TITLE = "Kasper Simonsen — Independent Software Engineering";
 const SITE_DESCRIPTION =
-  "Custom web, iPhone and Android apps for startups and operators. Multi-tenant SaaS, LLM-powered tools, and the occasional multi-agent system that writes industrial PLC code. Based in Melbourne.";
+  "Custom software for businesses when the off-the-shelf tools don't fit. Web, iPhone, Android. Operational tools, Shopify backends, AI agents that write industrial code. Independent engineer based in Melbourne.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://kaspersimonsen.dev"),

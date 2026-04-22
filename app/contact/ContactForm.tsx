@@ -86,7 +86,7 @@ export default function ContactForm() {
           </h1>
         </InversionCursor>
         <p className="text-sm leading-relaxed max-w-[52ch]" style={{ ...body, color: "var(--text-muted)" }}>
-          Describe what you&apos;re building or what you need done. I read every message and reply within 24 hours.
+          Tell me what you&apos;re building, or what you need done. I read every message and reply within a day — usually faster.
         </p>
       </div>
 
@@ -210,7 +210,7 @@ export default function ContactForm() {
               <span className="text-sm font-black uppercase" style={{ ...display, letterSpacing: "-0.02em", color: "var(--text-primary)" }}>Available Q2 2026</span>
             </div>
             <p className="text-xs leading-relaxed" style={{ ...body, color: "var(--text-dim)" }}>
-              Accepting new projects now. Selective — I take on work I can do well, not everything that comes in.
+              Taking new projects now. Selective — I only take on work I can do well, not everything that comes through the door.
             </p>
           </div>
 
@@ -221,8 +221,8 @@ export default function ContactForm() {
               {[
                 "What you're building or trying to fix",
                 "Rough timeline or deadline",
-                "Your existing stack, if relevant",
-                "Budget range (optional but useful)",
+                "What you're already running, if anything",
+                "Budget range — optional but useful",
               ].map(item => (
                 <li key={item} className="flex items-start gap-2">
                   <span style={{ ...mono, color: "var(--accent)", fontSize: 10, marginTop: 3 }}>—</span>
@@ -236,7 +236,7 @@ export default function ContactForm() {
           <div className="px-8 py-8" style={{ borderBottom: "0.5px solid var(--border)" }}>
             <p className="text-[10px] tracking-[0.1em] uppercase mb-3" style={{ ...mono, color: "var(--accent)" }}>Response</p>
             <p className="text-xs leading-relaxed mb-4" style={{ ...body, color: "var(--text-dim)" }}>
-              I read every message and reply within 24 hours — usually much faster. If it&apos;s not a fit I&apos;ll say so and point you somewhere useful.
+              Every message gets read. Reply within a day, usually faster. If it&apos;s not a fit I&apos;ll say so and point you somewhere useful.
             </p>
             <div className="flex items-center gap-2">
               <span className="text-[10px] tracking-[0.06em] uppercase" style={{ ...mono, color: "var(--text-dim)" }}>Based in</span>
@@ -248,7 +248,7 @@ export default function ContactForm() {
           <div className="px-8 py-8">
             <p className="text-[10px] tracking-[0.1em] uppercase mb-3" style={{ ...mono, color: "var(--text-dim)" }}>Not currently taking on</p>
             <p className="text-xs leading-relaxed" style={{ ...body, color: "var(--text-dim)" }}>
-              WordPress / Webflow work · front-end-only design · short-term staff aug through recruiters · anything under a few days of scope.
+              WordPress or Webflow builds · front-end-only design · short-term staff aug through recruiters · anything under a few days of work. Happy to point you somewhere for those.
             </p>
           </div>
 

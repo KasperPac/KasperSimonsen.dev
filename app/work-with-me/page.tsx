@@ -651,42 +651,60 @@ export default function WorkWithMePage() {
         </InversionCursor>
       </div>
 
+      {/* What I actually do — plain-English intro */}
+      <div
+        className="px-6 md:px-10 py-10 md:py-12"
+        style={{ borderBottom: "0.5px solid var(--border)" }}
+      >
+        <div className="space-y-4 max-w-[68ch]">
+          <p className="text-base md:text-lg leading-relaxed" style={{ ...body, color: "var(--text-primary)" }}>
+            I build custom software for businesses when the off-the-shelf tools don&apos;t fit.
+          </p>
+          <p className="text-sm leading-relaxed" style={{ ...body, color: "var(--text-muted)" }}>
+            Sometimes that&apos;s a small internal tool. Sometimes a proper platform. Either way, start to finish — you get me, not a project manager forwarding emails to a developer.
+          </p>
+          <p className="text-sm leading-relaxed" style={{ ...body, color: "var(--text-muted)" }}>
+            The work tends to be the stuff off-the-shelf software won&apos;t touch. Stock counts that drift between systems, industrial plants still running on spreadsheets, Shopify stores that assemble products from components. Things where the answer has to be built, because nobody sells it.
+          </p>
+        </div>
+      </div>
+
       <section>
         <div
           className="px-6 md:px-10 py-6"
           style={{ borderBottom: "0.5px solid var(--border)", background: "#161616" }}
         >
           <h2 className="font-black uppercase tracking-tight" style={{ ...display, fontSize: 22, letterSpacing: "-0.02em", color: "var(--text-primary)" }}>
-            Engagements
+            Two kinds of engagement
           </h2>
           <p className="text-xs tracking-[0.06em] uppercase mt-1" style={{ ...mono, color: "var(--text-dim)" }}>
-            Two kinds — pick the one that fits
+            Pick the one that fits
           </p>
         </div>
 
         <Offering
-          number="01" meta="Scoped & Fixed" timeline="1–3 Weeks"
+          number="01" meta="Fixed Scope" timeline="1–3 Weeks"
           headline="Tools & Dashboards"
-          description="Small, tightly-scoped builds for teams who need something specific done properly. Usually one problem, one interface, one backend. Priced per project, delivered in days or weeks rather than months."
+          description="Small builds for teams that need something specific done properly. One problem, one interface, and whatever has to happen underneath it. Priced per project. Delivered in weeks, not months."
           fitsLabel="Typically fits"
-          fitsBody="Admin panels · internal workflow tools · custom reporting views · client portals · small Shopify or Supabase-backed apps · bespoke integrations between two existing systems."
-          requiresLabel="You provide"
-          requiresBody="A clear description of what the thing needs to do, access to any existing systems it needs to talk to, and someone who can answer questions as they come up."
-          replyHint="— typical reply within 24 hours"
-          ctaLabel="Start a tool or dashboard" ctaHref="/contact?topic=tools"
+          fitsBody="Internal tools only your team uses. Workflow apps you can't buy off the shelf. Custom reporting views. Client portals. Small Shopify add-ons. Making two systems that don't speak to each other start speaking."
+          requiresLabel="What I need from you"
+          requiresBody="A clear description of what it should do. Access to any existing systems it has to talk to. Someone who can answer questions as they come up — ideally not by committee."
+          replyHint="— I reply within 24 hours. Usually faster."
+          ctaLabel="Start a small build" ctaHref="/contact?topic=tools"
           Wireframe={WireframeDashboard}
         />
 
         <Offering
-          number="02" meta="Custom & Scaled" timeline="6–16 Weeks"
+          number="02" meta="Per Project" timeline="6–16 Weeks"
           headline="Platforms & Systems"
-          description="Larger engagements where the thing being built doesn't yet exist. Multi-tenant SaaS, LLM-driven tooling, integrations with systems software doesn't usually touch. Architecture, schema, API, UI — the whole stack. Priced per project after a scoping conversation."
+          description="Longer builds. The whole thing — how it's put together, where the data lives, what users interact with, what operators interact with. Usually something that doesn't exist yet, for a business that needs it to. Priced per project after we've talked it through."
           fitsLabel="Typically fits"
-          fitsBody="Multi-tenant SaaS with real data-integrity requirements · LLM pipelines and agent systems · Shopify and e-commerce backend integrations · bespoke internal platforms for manufacturing or industrial ops · anything with strict audit or reconciliation needs."
+          fitsBody="Apps that serve many companies at once and absolutely can't leak data between them. AI-powered tools that do real work, not a wrapper around ChatGPT. Shopify stores with something unusual going on behind them. Software running a factory floor, a warehouse, or a production plant. Anything where the numbers have to reconcile and the audit trail has to hold up."
           requiresLabel="How it usually goes"
-          requiresBody="A short scoping conversation, then a written proposal with milestones, timeline, and fixed or staged pricing. I build in weekly visible increments — you see real progress every week, not a reveal at the end."
+          requiresBody="A short scoping call first. Then a written proposal with scope, milestones, timeline, and price. I build in weekly visible chunks — you see real progress every week, not a demo at the end after months of silence."
           replyHint="— expect a scoping call within the week"
-          ctaLabel="Start a platform or system" ctaHref="/contact?topic=platforms"
+          ctaLabel="Start a platform" ctaHref="/contact?topic=platforms"
           Wireframe={WireframePlatform}
         />
       </section>
@@ -705,9 +723,9 @@ export default function WorkWithMePage() {
             Not currently taking on:
           </h2>
           <p className="text-sm leading-relaxed max-w-[60ch]" style={{ ...body, color: "var(--text-dim)" }}>
-            WordPress or Webflow work · e-commerce theme customisation · front-end-only design
-            projects · short-term staff augmentation through recruiters · anything under a few
-            days of scope. For those, happy to refer — just ask.
+            WordPress or Webflow builds. E-commerce theme customisation. Front-end-only design
+            work. Short-term staff aug through recruiters. Anything under a few days of work.
+            For those, happy to point you somewhere useful — just ask.
           </p>
         </div>
       </div>
@@ -722,10 +740,10 @@ export default function WorkWithMePage() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[
-            { step: "01", title: "A short reply.",      desc: "Usually within 24 hours. A yes with next steps or a clear no with a referral where possible." },
-            { step: "02", title: "A scoping call.",     desc: "30–45 minutes. Understand what you need, what you've tried, what constraints exist. Free." },
-            { step: "03", title: "A written proposal.", desc: "Scope, milestones, timeline, price. Either fixed or staged. No surprises later." },
-            { step: "04", title: "We build.",           desc: "Weekly visible progress. Real check-ins. Shipped at the end, not thrown over a fence." },
+            { step: "01", title: "A short reply.",      desc: "Within 24 hours, usually sooner. Either a yes with next steps, or a clear no with somewhere useful to try instead." },
+            { step: "02", title: "A scoping call.",     desc: "30–45 minutes. Understand what you're trying to do, what you've already tried, and what has to be true by the end. Free." },
+            { step: "03", title: "A written proposal.", desc: "Scope, milestones, timeline, price. Fixed or staged. No surprises later." },
+            { step: "04", title: "We build.",           desc: "Weekly visible progress. Actual check-ins. Shipped at the end, not thrown over a fence and forgotten." },
           ].map(({ step, title, desc }) => (
             <div key={step} className="p-5 space-y-3" style={{ border: "0.5px solid #1f1f1f", background: "rgba(255,255,255,0.015)" }}>
               <p className="text-[10px] tracking-[0.1em] uppercase" style={{ ...mono, color: "var(--accent)" }}>{step}</p>

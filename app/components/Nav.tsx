@@ -8,6 +8,7 @@ const links = [
   { href: "/work",          label: "Work"          },
   { href: "/work-with-me", label: "Work With Me"   },
   { href: "/contact",      label: "Contact"        },
+  { href: "/login",        label: "Sign In"        },
 ];
 
 const LOGO_FONT = "var(--font-inter), 'Helvetica Neue', Helvetica, Arial, sans-serif";

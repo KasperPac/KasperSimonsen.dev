@@ -41,6 +41,189 @@ const specNodeStyle = {
 
 const arrow = <span style={{ color: "var(--accent)", fontSize: 10, ...mono }}>→</span>;
 
+function FDSBuilderShape() {
+  return (
+    <div
+      className="p-5 overflow-x-auto"
+      style={{ background: "#0f0f0f", border: "0.5px solid var(--border)" }}
+    >
+      <div
+        className="grid items-center"
+        style={{
+          gridTemplateColumns: "auto 64px auto 64px auto",
+          gridTemplateRows: "1.75rem 1.75rem",
+          columnGap: 0,
+          rowGap: "1rem",
+          minWidth: 620,
+        }}
+      >
+        {/* Start */}
+        <span style={{ gridColumn: 1, gridRow: "1 / 3", ...nodeStyle }}>Instrument register</span>
+
+        {/* 1-to-2 Y-split */}
+        <div
+          style={{
+            gridColumn: 2,
+            gridRow: "1 / 3",
+            position: "relative",
+            width: 64,
+            height: 72,
+            alignSelf: "center",
+            justifySelf: "center",
+          }}
+        >
+          {/* horizontal in */}
+          <div style={{ position: "absolute", top: "50%", left: 0, width: "50%", borderBottom: "0.5px solid var(--border)" }} />
+          {/* vertical trunk */}
+          <div style={{ position: "absolute", top: "20%", height: "60%", left: "50%", borderLeft: "0.5px solid var(--border)" }} />
+          {/* top branch out */}
+          <div style={{ position: "absolute", top: "20%", left: "50%", right: 8, borderBottom: "0.5px solid var(--border)" }} />
+          {/* bottom branch out */}
+          <div style={{ position: "absolute", top: "80%", left: "50%", right: 8, borderBottom: "0.5px solid var(--border)" }} />
+          {/* arrowheads */}
+          <span style={{ position: "absolute", top: "20%", right: 0, transform: "translateY(-55%)", color: "var(--accent)", fontSize: 10, ...mono }}>→</span>
+          <span style={{ position: "absolute", top: "80%", right: 0, transform: "translateY(-55%)", color: "var(--accent)", fontSize: 10, ...mono }}>→</span>
+        </div>
+
+        {/* Parallel branches */}
+        <span style={{ gridColumn: 3, gridRow: 1, ...nodeStyle }}>Questionnaire</span>
+        <span style={{ gridColumn: 3, gridRow: 2, ...nodeStyle }}>Matrix generation</span>
+
+        {/* 2-to-1 Y-merge */}
+        <div
+          style={{
+            gridColumn: 4,
+            gridRow: "1 / 3",
+            position: "relative",
+            width: 64,
+            height: 72,
+            alignSelf: "center",
+            justifySelf: "center",
+          }}
+        >
+          {/* top branch in */}
+          <div style={{ position: "absolute", top: "20%", left: 0, width: "50%", borderBottom: "0.5px solid var(--border)" }} />
+          {/* bottom branch in */}
+          <div style={{ position: "absolute", top: "80%", left: 0, width: "50%", borderBottom: "0.5px solid var(--border)" }} />
+          {/* vertical trunk */}
+          <div style={{ position: "absolute", top: "20%", height: "60%", left: "50%", borderLeft: "0.5px solid var(--border)" }} />
+          {/* horizontal out */}
+          <div style={{ position: "absolute", top: "50%", left: "50%", right: 8, borderTop: "0.5px solid var(--border)" }} />
+          {/* arrowhead */}
+          <span style={{ position: "absolute", top: "50%", right: 0, transform: "translateY(-55%)", color: "var(--accent)", fontSize: 10, ...mono }}>→</span>
+        </div>
+
+        {/* End */}
+        <span style={{ gridColumn: 5, gridRow: "1 / 3", ...specNodeStyle }}>Sequence Builder · per state</span>
+      </div>
+
+      {/* Edge legend */}
+      <div
+        className="mt-5 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2"
+        style={{ borderTop: "0.5px solid var(--border)" }}
+      >
+        <p className="text-[11px] leading-snug" style={{ ...mono, color: "var(--text-dim)" }}>
+          Instrument register — kicks every run off
+        </p>
+        <p className="text-[11px] leading-snug" style={{ ...mono, color: "var(--text-dim)" }}>
+          Questionnaire and/or Matrix — either path, or both
+        </p>
+        <p className="text-[11px] leading-snug" style={{ ...mono, color: "var(--text-dim)" }}>
+          Sequence Builder — invoked once per state
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function PacAuditShape() {
+  return (
+    <div
+      className="p-5 overflow-x-auto"
+      style={{ background: "#0f0f0f", border: "0.5px solid var(--border)" }}
+    >
+      <div
+        className="grid items-center"
+        style={{
+          gridTemplateColumns: "auto 64px auto 64px auto",
+          gridTemplateRows: "1.75rem 1.75rem",
+          columnGap: 0,
+          rowGap: "1rem",
+          minWidth: 620,
+        }}
+      >
+        {/* Start */}
+        <span style={{ gridColumn: 1, gridRow: "1 / 3", ...nodeStyle }}>TIA Portal import</span>
+
+        {/* 1-to-2 Y-split */}
+        <div
+          style={{
+            gridColumn: 2,
+            gridRow: "1 / 3",
+            position: "relative",
+            width: 64,
+            height: 72,
+            alignSelf: "center",
+            justifySelf: "center",
+          }}
+        >
+          <div style={{ position: "absolute", top: "50%", left: 0, width: "50%", borderBottom: "0.5px solid var(--border)" }} />
+          <div style={{ position: "absolute", top: "20%", height: "60%", left: "50%", borderLeft: "0.5px solid var(--border)" }} />
+          <div style={{ position: "absolute", top: "20%", left: "50%", right: 8, borderBottom: "0.5px solid var(--border)" }} />
+          <div style={{ position: "absolute", top: "80%", left: "50%", right: 8, borderBottom: "0.5px solid var(--border)" }} />
+          <span style={{ position: "absolute", top: "20%", right: 0, transform: "translateY(-55%)", color: "var(--accent)", fontSize: 10, ...mono }}>→</span>
+          <span style={{ position: "absolute", top: "80%", right: 0, transform: "translateY(-55%)", color: "var(--accent)", fontSize: 10, ...mono }}>→</span>
+        </div>
+
+        {/* Parallel branches */}
+        <span style={{ gridColumn: 3, gridRow: 1, ...nodeStyle }}>AI investigation</span>
+        <span style={{ gridColumn: 3, gridRow: 2, ...nodeStyle }}>Questionnaire</span>
+
+        {/* 2-to-1 Y-merge */}
+        <div
+          style={{
+            gridColumn: 4,
+            gridRow: "1 / 3",
+            position: "relative",
+            width: 64,
+            height: 72,
+            alignSelf: "center",
+            justifySelf: "center",
+          }}
+        >
+          <div style={{ position: "absolute", top: "20%", left: 0, width: "50%", borderBottom: "0.5px solid var(--border)" }} />
+          <div style={{ position: "absolute", top: "80%", left: 0, width: "50%", borderBottom: "0.5px solid var(--border)" }} />
+          <div style={{ position: "absolute", top: "20%", height: "60%", left: "50%", borderLeft: "0.5px solid var(--border)" }} />
+          <div style={{ position: "absolute", top: "50%", left: "50%", right: 8, borderTop: "0.5px solid var(--border)" }} />
+          <span style={{ position: "absolute", top: "50%", right: 0, transform: "translateY(-55%)", color: "var(--accent)", fontSize: 10, ...mono }}>→</span>
+        </div>
+
+        {/* End */}
+        <span style={{ gridColumn: 5, gridRow: "1 / 3", ...specNodeStyle }}>Centralised Source of Truth</span>
+      </div>
+
+      {/* Edge legend */}
+      <div
+        className="mt-5 pt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2"
+        style={{ borderTop: "0.5px solid var(--border)" }}
+      >
+        <p className="text-[11px] leading-snug" style={{ ...mono, color: "var(--text-dim)" }}>
+          TIA Portal import — via .NET Openness C# bridge
+        </p>
+        <p className="text-[11px] leading-snug" style={{ ...mono, color: "var(--text-dim)" }}>
+          AI investigation — interpretive facts, evidence-cited
+        </p>
+        <p className="text-[11px] leading-snug" style={{ ...mono, color: "var(--text-dim)" }}>
+          Questionnaire — engineer fills residual gaps
+        </p>
+        <p className="text-[11px] leading-snug" style={{ ...mono, color: "var(--text-dim)" }}>
+          Source of Truth — same schema FDS Builder produces
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function ShapeDiagram() {
   return (
     <div
@@ -190,7 +373,7 @@ export default function PacForgeContent() {
       </section>
 
       {/* Shape of the system */}
-      <section className="space-y-6">
+      <section className="space-y-6 max-w-[68ch]">
         <h2 className="text-[2rem] italic leading-tight mb-5" style={{ ...serif, color: "var(--text-primary)" }}>
           The shape of the system
         </h2>
@@ -207,6 +390,22 @@ export default function PacForgeContent() {
           <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
             The fourth pillar is free. Because Pac-Audit and the FDS Builder produce the same shape of spec, a V15 project can be extracted, edited in structured form, and regenerated onto a current TIA version without starting from scratch. The engineer picks what to port verbatim and what to let Forge re-emit. The spec is the bridge between the project you inherited and the one you want to ship.
           </p>
+        </div>
+
+        {/* Sub-shape: FDS Builder */}
+        <div className="pt-4 space-y-4">
+          <h3 className="text-[1.2rem] italic leading-snug" style={{ ...serif, color: "var(--text-primary)" }}>
+            FDS Builder
+          </h3>
+          <FDSBuilderShape />
+        </div>
+
+        {/* Sub-shape: Pac-Audit */}
+        <div className="pt-4 space-y-4">
+          <h3 className="text-[1.2rem] italic leading-snug" style={{ ...serif, color: "var(--text-primary)" }}>
+            Pac-Audit
+          </h3>
+          <PacAuditShape />
         </div>
       </section>
 
