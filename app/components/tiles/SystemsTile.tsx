@@ -44,7 +44,7 @@ export default function SystemsTile() {
           Multi-agent pipeline → Siemens SCL. Auto-learns from compile errors.
         </p>
         <div className="h-[2px] w-full" style={{ background: "var(--border)" }}>
-          <div className="h-full" style={{ width: "99.9%", background: "var(--health)" }} />
+          <div className="h-full" style={{ width: "72%", background: "var(--health)" }} />
         </div>
       </div>
 
@@ -60,7 +60,7 @@ export default function SystemsTile() {
           Shopify-connected BOM + inventory. Append-only ledger, RLS from schema up.
         </p>
         <div className="h-[2px] w-full" style={{ background: "var(--border)" }}>
-          <div className="h-full" style={{ width: "99.7%", background: "var(--health)" }} />
+          <div className="h-full" style={{ width: "60%", background: "var(--health)" }} />
         </div>
       </div>
 
@@ -73,9 +73,9 @@ export default function SystemsTile() {
       >
         <div className="flex items-center gap-2">
           <span className="inline-block w-[5px] h-[5px] rounded-full flex-shrink-0" style={{ background: "var(--health)" }} />
-          <span className="text-sm" style={{ ...mono, color: "var(--text-muted)" }}>pac-forge</span>
+          <span className="text-sm" style={{ ...mono, color: "var(--text-muted)" }}>forja</span>
         </div>
-        <span className="text-xs" style={{ ...mono, color: "var(--health)" }}>99.9%</span>
+        <span className="text-xs" style={{ ...mono, color: "var(--health)" }}>72%</span>
       </div>
 
       {/* assemblio row — slides up below pac-forge's expanded state (Δ=100px) */}
@@ -89,7 +89,7 @@ export default function SystemsTile() {
           <span className="inline-block w-[5px] h-[5px] rounded-full flex-shrink-0" style={{ background: "var(--health)" }} />
           <span className="text-sm" style={{ ...mono, color: "var(--text-muted)" }}>assemblio</span>
         </div>
-        <span className="text-xs" style={{ ...mono, color: "var(--health)" }}>99.7%</span>
+        <span className="text-xs" style={{ ...mono, color: "var(--health)" }}>60%</span>
       </div>
     </div>
   );

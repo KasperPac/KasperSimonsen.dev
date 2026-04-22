@@ -172,7 +172,7 @@ export default async function CommitsTile() {
       <div className="flex items-center gap-5 transition-opacity duration-300 opacity-0 group-hover:opacity-100" style={{ marginTop: "-4px" }}>
         <span className="flex items-center gap-2 text-xs uppercase tracking-wider" style={{ ...mono, color: "var(--accent)" }}>
           <span className="inline-block w-4 h-[1.5px]" style={{ background: "var(--accent)" }} />
-          pac-forge
+          forja
         </span>
         <span className="flex items-center gap-2 text-xs uppercase tracking-wider" style={{ ...mono, color: "var(--health)" }}>
           <span className="inline-block w-4 h-[1.5px]" style={{ background: "var(--health)" }} />
