@@ -398,21 +398,6 @@ export default function PacForgeContent() {
             FDS Builder
           </h3>
           <FDSBuilderShape />
-          <div style={{ border: "0.5px solid var(--border)" }}>
-            <img
-              src="/forja-fds-builder.jpg"
-              alt="FDS Builder Co-Author — AI interview alongside a live sequence editor for a Fan Array Assembly"
-              className="w-full block"
-              width={1704}
-              height={837}
-            />
-            <p
-              className="px-4 py-2.5 text-[11px] leading-snug"
-              style={{ ...mono, color: "var(--text-dim)", borderTop: "0.5px solid var(--border)" }}
-            >
-              FDS Builder · Co-Author — AI interview on the left, structured sequence editor on the right. Sequence steps, branching logic, fault codes, and outputs built interactively from engineer answers.
-            </p>
-          </div>
         </div>
 
         {/* Sub-shape: Pac-Audit */}
@@ -491,37 +476,8 @@ export default function PacForgeContent() {
           ))}
         </div>
 
-        {/* Hard bit: Pac-Audit */}
-        <div className="space-y-4 max-w-[68ch]">
-          <h3 className="text-[1.4rem] italic leading-snug" style={{ ...serif, color: "var(--text-primary)" }}>
-            {hardBits[1]!.title}
-          </h3>
-          {hardBits[1]!.paras.map((para, i) => (
-            <p key={i} className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-              {para}
-            </p>
-          ))}
-        </div>
-
-        {/* Pac-Audit screenshot */}
-        <div style={{ border: "0.5px solid var(--border)" }}>
-          <img
-            src="/forja-pac-audit.jpg"
-            alt="Pac-Audit classify view — function blocks from a TIA Portal project classified by role"
-            className="w-full block"
-            width={2556}
-            height={1267}
-          />
-          <p
-            className="px-4 py-2.5 text-[11px] leading-snug"
-            style={{ ...mono, color: "var(--text-dim)", borderTop: "0.5px solid var(--border)" }}
-          >
-            Pac-Audit · Classify — function blocks extracted from a TIA Portal import, classified by role. Deterministic extractor first; AI only for intent and non-standard patterns.
-          </p>
-        </div>
-
         {/* Remaining hard bits */}
-        {hardBits.slice(2).map((section) => (
+        {hardBits.slice(1).map((section) => (
           <div key={section.title} className="space-y-4 max-w-[68ch]">
             <h3 className="text-[1.4rem] italic leading-snug" style={{ ...serif, color: "var(--text-primary)" }}>
               {section.title}
