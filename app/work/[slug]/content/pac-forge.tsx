@@ -403,8 +403,8 @@ export default function PacForgeContent() {
               src="/forja-fds-builder.jpg"
               alt="FDS Builder Co-Author — AI interview alongside a live sequence editor for a Fan Array Assembly"
               className="w-full block"
-              width={1920}
-              height={952}
+              width={1704}
+              height={837}
             />
             <p
               className="px-4 py-2.5 text-[11px] leading-snug"
