@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: Params }) {
   if (!project) return {};
   return {
     title: `${project.displayName} — Kasper Simonsen`,
-    description: project.headline,
+    description: project.description,
   };
 }
 

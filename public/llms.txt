@@ -1,0 +1,24 @@
+# Kasper Simonsen — Independent Software Engineer
+
+> Custom software built by a single engineer for businesses when off-the-shelf tools don't fit.
+
+Kasper Simonsen is an independent software engineer based in Melbourne, Australia. He builds custom web applications, mobile apps, and AI-powered systems for small to mid-size businesses. Specialises in Shopify integrations, industrial automation software, and multi-tenant SaaS platforms.
+
+## Services
+
+- **Tools & Dashboards** (Fixed Scope, 1–3 weeks): Internal tools, workflow apps, custom reporting, client portals, small Shopify add-ons, system integrations.
+- **Platforms & Systems** (Per Project, 6–16 weeks): Full-stack platform builds — multi-tenant SaaS, AI agent pipelines, industrial software, Shopify backends with complex operational requirements.
+
+## Notable Work
+
+- **Forja**: Eight-agent AI pipeline for Siemens TIA Portal — turns functional specs into compiling SCL/HMI code and back. Stack: React 19, Claude API, .NET 4.8, Supabase, TIA Openness.
+- **Assemblio**: Shopify-connected BOM, inventory, purchasing, stocktake, and capacity system for assembly teams. Multi-tenant SaaS with append-only ledger and RLS from schema up.
+- **Silio**: Industrial feed production software for Rabar's plant — Omron PLC integration, NFC-signed weighing, React Native Android scanner, SQL audit log. Replaced paper-based workflow.
+
+## Availability
+
+Taking on new projects. Based in Melbourne, Australia (AEST / UTC+10).
+
+## Contact
+
+https://kaspersimonsen.dev/contact

@@ -1,7 +1,14 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchRepoMeta, type RepoMeta } from "@/lib/github";
 import { currently, previously, type Project } from "./data";
 import InversionCursor from "@/app/components/InversionCursor";
+
+export const metadata: Metadata = {
+  title: "Work — Kasper Simonsen",
+  description:
+    "Case studies from Kasper Simonsen: AI agents for Siemens TIA Portal, a Shopify-connected operations platform, and an industrial feed production system.",
+};
 
 const mono    = { fontFamily: "var(--font-geist-mono), ui-monospace, monospace" };
 const body    = { fontFamily: "var(--font-instrument-sans), system-ui, -apple-system, sans-serif" };

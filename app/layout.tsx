@@ -35,7 +35,7 @@ const geistMono = Geist_Mono({
 
 const SITE_TITLE = "Kasper Simonsen — Independent Software Engineering";
 const SITE_DESCRIPTION =
-  "Custom software for businesses when the off-the-shelf tools don't fit. Web, iPhone, Android. Operational tools, Shopify backends, AI agents that write industrial code. Independent engineer based in Melbourne.";
+  "Independent software engineer in Melbourne. Custom web, mobile & AI systems when off-the-shelf won't do — Shopify, industrial automation, multi-tenant SaaS.";
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://kaspersimonsen.dev"),
@@ -55,6 +55,29 @@ export const metadata: Metadata = {
   },
 };
 
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": ["Person", "ProfessionalService"],
+  name: "Kasper Simonsen",
+  jobTitle: "Independent Software Engineer",
+  url: "https://kaspersimonsen.dev",
+  description: "Custom software for businesses when the off-the-shelf tools don't fit.",
+  address: {
+    "@type": "PostalAddress",
+    addressLocality: "Melbourne",
+    addressCountry: "AU",
+  },
+  knowsAbout: [
+    "Custom Software Development",
+    "Next.js",
+    "Supabase",
+    "AI Agents",
+    "Shopify Development",
+    "Industrial Automation Software",
+    "React Native",
+  ],
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
@@ -63,6 +86,12 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${fraunces.variable} ${instrumentSans.variable} ${geistMono.variable} h-full antialiased`}
     >
+      <head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-bg-primary text-text-primary">
         <Nav />
         {children}

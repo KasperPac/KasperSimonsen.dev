@@ -18,6 +18,9 @@ export default function Hero() {
       </div>
 
       <InversionCursor>
+        {/* Visually hidden H1 for SEO — the SVG wordmark is the visual representation */}
+        <h1 className="sr-only">Kasper Simonsen — Independent Software Engineer, Melbourne</h1>
+
         {/* Desktop: static full-width wordmark */}
         <div className="hidden md:block">
           <svg
