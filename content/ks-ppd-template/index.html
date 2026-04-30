@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <!-- TOKEN: document title shown in PDF metadata -->
+  <title>{{project-slug}} — project planning document</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+
+<!-- ============================================================
+     COVER · always page 1
+     ============================================================
+     Edit:  cover-hint, cover-eyebrow (project slug, lowercase),
+            cover-title (4-7 words max), cover-subtitle (one sentence),
+            cover-meta cells, cover-footer.
+     Style: title is Inter Black 80pt — keep headline punchy.
+            Subtitle is Fraunces italic — quieter, longer-form.
+     ============================================================ -->
+<section class="cover">
+  <div class="cover-mark">
+    <img src="assets/img/ks-monogram.png" alt="Kasper Simonsen">
+  </div>
+
+  <span class="cover-hint">Project Planning Document — v{{version}} · {{status}}</span>
+
+  <span class="cover-eyebrow">{{project-slug}}</span>
+
+  <h1 class="cover-title">{{Cover<br>headline.}}</h1>
+
+  <p class="cover-subtitle">
+    {{One-sentence description of what this project is and what it does for the client.}}
+  </p>
+
+  <div class="cover-meta">
+    <div class="cover-meta-cell">
+      <span class="label">Client</span>
+      <span class="value">{{Client name}}</span>
+    </div>
+    <div class="cover-meta-cell">
+      <span class="label">Author</span>
+      <span class="value">Kasper Simonsen</span>
+    </div>
+    <div class="cover-meta-cell">
+      <span class="label">Date</span>
+      <span class="value">{{YYYY-MM-DD}}</span>
+    </div>
+    <div class="cover-meta-cell">
+      <span class="label">Status</span>
+      <span class="value text-accent">{{Draft / Final}}</span>
+    </div>
+    <div class="cover-meta-cell">
+      <span class="label">Engagement</span>
+      <span class="value">{{Engagement type}}</span>
+    </div>
+    <div class="cover-meta-cell">
+      <span class="label">Stack</span>
+      <span class="value">{{Primary tech · stack · here}}</span>
+    </div>
+    <div class="cover-meta-cell">
+      <span class="label">Pages</span>
+      <span class="value">{{n}}</span>
+    </div>
+    <div class="cover-meta-cell">
+      <span class="label">Document ID</span>
+      <span class="value">ks-ppd-{{client-slug}}-v{{n}}</span>
+    </div>
+  </div>
+
+  <div class="cover-footer">
+    <a href="mailto:hello@kaspersimonsen.dev">hello@kaspersimonsen.dev</a>
+    <span>kaspersimonsen.dev / Melbourne · AEST · UTC+10</span>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     CONTENTS
+     ============================================================
+     Edit: toc-item rows. Group by phase (Brief, Discovery, Scope,
+           Architecture, Risk, Delivery, Appendix). Use leading-zero
+           numbering 01, 02, ... A, B for appendices.
+     ============================================================ -->
+<section>
+  <div class="section-opener">
+    <span class="section-num">00 · Contents</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">{{n}} sections</span>
+  </div>
+
+  <div class="toc">
+    <div class="toc-item"><span class="num">01</span><span class="label">Executive Summary</span><span class="meta">Brief</span></div>
+    <div class="toc-item"><span class="num">02</span><span class="label">Project Brief</span><span class="meta">Brief</span></div>
+    <div class="toc-item"><span class="num">03</span><span class="label">Users &amp; Personas</span><span class="meta">Discovery</span></div>
+    <div class="toc-item"><span class="num">04</span><span class="label">User Journey Map</span><span class="meta">Discovery</span></div>
+    <div class="toc-item"><span class="num">05</span><span class="label">Product Scope</span><span class="meta">Scope</span></div>
+    <div class="toc-item"><span class="num">06</span><span class="label">Module Specifications</span><span class="meta">Scope</span></div>
+    <div class="toc-item"><span class="num">07</span><span class="label">Cross-Module Integration</span><span class="meta">Architecture</span></div>
+    <div class="toc-item"><span class="num">08</span><span class="label">Non-Functional Requirements</span><span class="meta">Architecture</span></div>
+    <div class="toc-item"><span class="num">09</span><span class="label">Technical Architecture</span><span class="meta">Architecture</span></div>
+    <div class="toc-item"><span class="num">10</span><span class="label">Data Model Summary</span><span class="meta">Architecture</span></div>
+    <div class="toc-item"><span class="num">11</span><span class="label">Third-Party Dependencies</span><span class="meta">Risk</span></div>
+    <div class="toc-item"><span class="num">12</span><span class="label">Hosting &amp; Deployment Plan</span><span class="meta">Delivery</span></div>
+    <div class="toc-item"><span class="num">13</span><span class="label">Security, Privacy &amp; IP</span><span class="meta">Risk</span></div>
+    <div class="toc-item"><span class="num">14</span><span class="label">Testing &amp; Validation</span><span class="meta">Delivery</span></div>
+    <div class="toc-item"><span class="num">15</span><span class="label">Roadmap &amp; Milestones</span><span class="meta">Delivery</span></div>
+    <div class="toc-item"><span class="num">16</span><span class="label">Resource Plan</span><span class="meta">Delivery</span></div>
+    <div class="toc-item"><span class="num">17</span><span class="label">Risk Register</span><span class="meta">Risk</span></div>
+    <div class="toc-item"><span class="num">18</span><span class="label">Assumptions &amp; Open Questions</span><span class="meta">Risk</span></div>
+    <div class="toc-item"><span class="num">A</span><span class="label">Glossary</span><span class="meta">Appendix</span></div>
+    <div class="toc-item"><span class="num">B</span><span class="label">Out of Scope (MVP)</span><span class="meta">Appendix</span></div>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     SECTION TEMPLATE — copy this block for each new section.
+     Replace 01, BRIEF, "Section heading", and the body content.
+     The page-break div before each section keeps every section
+     starting on a fresh page.
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">01</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Brief</span>
+  </div>
+  <h1>{{Section heading}}</h1>
+
+  <p class="lead">
+    {{Lead paragraph — strong, declarative, no preamble. The first sentence is the thesis of the section. Keep under 60 words.}}
+  </p>
+
+  <p>
+    {{Body paragraph. Default voice: direct, em-dashes welcome, no marketing language. Lower-case project names (e.g. forja, not Forja). Em-dash for clauses — like this — rather than parentheses.}}
+  </p>
+
+  <p>
+    {{Optional second body paragraph.}}
+  </p>
+</section>
+
+
+<!-- ============================================================
+     PATTERN LIBRARY — copy/paste these as needed
+     ============================================================
+     Below this line is a reference of every brand component the
+     CSS supports. Copy the markup you need into your sections,
+     fill in real content, and delete the rest before rendering.
+
+     Run:   ./scripts/render.sh
+     Output: ./forja-ppd.pdf  (rename to your project)
+     ============================================================ -->
+
+
+<!-- ───── H2 with mono eyebrow ────────────────────────────── -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">02</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Pattern reference</span>
+  </div>
+
+  <h1>Pattern reference</h1>
+  <p class="lead">Copy what you need from below. Delete this whole section before final render.</p>
+
+  <!-- H2 alone -->
+  <h2>A standalone H2 heading</h2>
+  <p>Body paragraph after a plain H2.</p>
+
+  <!-- H2 with eyebrow above (preferred for major sub-sections) -->
+  <div class="h2-block">
+    <span class="eyebrow">Section · 01</span>
+    <h2>H2 with mono eyebrow above</h2>
+  </div>
+  <p>Use the <code>.h2-block</code> wrapper when you want a small mono uppercase tag introducing the heading. Especially good for ordered phases ("Stage 01 — Months 0–6").</p>
+
+  <!-- H3 — used as orange mono section labels inside a section -->
+  <h3>H3 — orange mono uppercase section label</h3>
+  <p>H3s are smaller and feel more like labels than headings. Use sparingly — they break up a long section without being heavy.</p>
+
+
+  <!-- ───── Lists ────────────────────────────────────── -->
+  <h3>Bullet list — em-dash bullets</h3>
+  <ul class="brand">
+    <li>The brand bullet is an em-dash in mono dim grey.</li>
+    <li>Don't use plain HTML bullets — they won't pick up the brand styling.</li>
+    <li>Always use <code>&lt;ul class="brand"&gt;</code>.</li>
+  </ul>
+
+  <h3>Numbered list — leading-zero counters</h3>
+  <ol class="brand">
+    <li>Numbered lists have mono leading-zero counters (01, 02, 03).</li>
+    <li>Use for sequential steps, ranked items, or open questions where order matters.</li>
+    <li>Don't mix numbered and bulleted lists in the same logical group.</li>
+  </ol>
+
+
+  <!-- ───── Tables ───────────────────────────────────── -->
+  <h3>Plain table — header + rows</h3>
+  <table class="brand">
+    <thead>
+      <tr>
+        <th style="width: 30%">Header A</th>
+        <th style="width: 20%">Header B</th>
+        <th>Header C — wider</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">Mono cell</td><td>Sans cell</td><td>Description text in this column.</td></tr>
+      <tr><td class="mono">Another row</td><td class="mono">Mono</td><td>Description.</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Row-label table — first column is the label</h3>
+  <table class="brand rowlabels">
+    <tbody>
+      <tr><td>Performance</td><td>Description for performance constraint.</td></tr>
+      <tr><td>Availability</td><td>Description for availability requirement.</td></tr>
+      <tr><td>Security</td><td>Use this pattern for non-functional requirements, constraints, or any "category : description" data.</td></tr>
+    </tbody>
+  </table>
+
+
+  <!-- ───── Callout (orange-bar block) ───────────────── -->
+  <div class="callout">
+    <span class="label">Callout label · mono uppercase</span>
+    <p>
+      This is the standard callout block. Orange left bar, dark surface fill, mono uppercase label in orange. Use for design insights, key risks, or single-sentence "this is the important bit" interjections.
+    </p>
+    <p>Multi-paragraph callouts are fine — paragraphs separate naturally.</p>
+  </div>
+
+
+  <!-- ───── Quote (Fraunces italic) ──────────────────── -->
+  <div class="quote">
+    "Pull quote in Fraunces italic. Use for a persona quote, a memorable line, or a designed moment."
+  </div>
+
+
+  <!-- ───── Status row ──────────────────────────────── -->
+  <p>Status indicators inline in body copy:</p>
+  <div class="status-row">PRIMARY FOCUS — 2025 → present</div>
+  <div class="status-row health">RUNNING — STAGE 02 LIVE</div>
+
+
+  <!-- ───── Pills ──────────────────────────────────── -->
+  <p>Tag pills (mono uppercase, hairline border):</p>
+  <div class="pills">
+    <span class="pill accent">React 19</span>
+    <span class="pill">Supabase</span>
+    <span class="pill">Claude API</span>
+    <span class="pill health">Live</span>
+  </div>
+
+
+  <!-- ───── Number-led tile ────────────────────────── -->
+  <p>Tiles for headline metrics or counts:</p>
+  <div class="tile">
+    <span class="tile-label">Systems in production</span>
+    <span class="tile-num">02</span>
+    <span class="tile-text">Multi-agent pipeline producing Siemens SCL. The second of two production systems.</span>
+  </div>
+
+
+  <!-- ───── Figure (image + caption) ───────────────── -->
+  <!--
+  <figure>
+    <img src="assets/img/your-diagram.png" alt="Description">
+    <figcaption>Fig. 01 — Caption text in mono uppercase</figcaption>
+  </figure>
+  -->
+
+
+  <!-- ───── Two-column ──────────────────────────────── -->
+  <div class="col-2">
+    <div>
+      <h3>Left column</h3>
+      <p>Use the <code>.col-2</code> grid for compact side-by-side layouts. Each side is a normal block — headings, lists, body.</p>
+    </div>
+    <div>
+      <h3>Right column</h3>
+      <p>Don't push too much into a two-column layout — it gets dense fast on A4.</p>
+    </div>
+  </div>
+
+
+  <!-- ───── Horizontal rule ─────────────────────────── -->
+  <hr class="hr">
+
+
+  <!-- ───── End-of-document marker ──────────────────── -->
+  <div class="endmark">— END OF DOCUMENT —</div>
+
+</section>
+
+</body>
+</html>

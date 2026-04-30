@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>forja — project planning document</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ============================================================
+     COVER
+     ============================================================ -->
+<section class="cover">
+  <div class="cover-mark">
+    <img src="assets/img/ks-monogram.png" alt="Kasper Simonsen">
+  </div>
+
+  <span class="cover-hint">Project Planning Document — v1.0 · Draft</span>
+
+  <span class="cover-eyebrow">forja</span>
+
+  <h1 class="cover-title">Code that<br>stays in spec.</h1>
+
+  <p class="cover-subtitle">
+    An AI-assisted automation engineering platform —
+    turning functional specs into compiling Siemens TIA Portal projects.
+  </p>
+
+  <div class="cover-meta">
+    <div class="cover-meta-cell">
+      <span class="label">Client</span>
+      <span class="value">Pac Technologies</span>
+    </div>
+    <div class="cover-meta-cell">
+      <span class="label">Author</span>
+      <span class="value">Kasper Simonsen</span>
+    </div>
+    <div class="cover-meta-cell">
+      <span class="label">Date</span>
+      <span class="value">2026-04-29</span>
+    </div>
+    <div class="cover-meta-cell">
+      <span class="label">Status</span>
+      <span class="value text-accent">Draft</span>
+    </div>
+    <div class="cover-meta-cell">
+      <span class="label">Engagement</span>
+      <span class="value">Internal tooling</span>
+    </div>
+    <div class="cover-meta-cell">
+      <span class="label">Stack</span>
+      <span class="value">React 19 · Supabase · Claude</span>
+    </div>
+    <div class="cover-meta-cell">
+      <span class="label">Pages</span>
+      <span class="value">29</span>
+    </div>
+    <div class="cover-meta-cell">
+      <span class="label">Document ID</span>
+      <span class="value">ks-ppd-forja-v1</span>
+    </div>
+  </div>
+
+  <div class="cover-footer">
+    <a href="mailto:hello@kaspersimonsen.dev">hello@kaspersimonsen.dev</a>
+    <span>kaspersimonsen.dev / Melbourne · AEST · UTC+10</span>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     CONTENTS
+     ============================================================ -->
+<section>
+  <div class="section-opener">
+    <span class="section-num">00 · Contents</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">22 sections</span>
+  </div>
+
+  <div class="toc">
+    <div class="toc-item"><span class="num">01</span><span class="label">Executive Summary</span><span class="meta">Brief</span></div>
+    <div class="toc-item"><span class="num">02</span><span class="label">Project Brief</span><span class="meta">Brief</span></div>
+    <div class="toc-item"><span class="num">03</span><span class="label">Users &amp; Personas</span><span class="meta">Discovery</span></div>
+    <div class="toc-item"><span class="num">04</span><span class="label">Engineer Journey Map</span><span class="meta">Discovery</span></div>
+    <div class="toc-item"><span class="num">05</span><span class="label">Product Scope</span><span class="meta">Scope</span></div>
+    <div class="toc-item"><span class="num">06</span><span class="label">Module Specifications</span><span class="meta">Scope</span></div>
+    <div class="toc-item"><span class="num">07</span><span class="label">Cross-Module Integration</span><span class="meta">Architecture</span></div>
+    <div class="toc-item"><span class="num">08</span><span class="label">Non-Functional Requirements</span><span class="meta">Architecture</span></div>
+    <div class="toc-item"><span class="num">09</span><span class="label">Technical Architecture</span><span class="meta">Architecture</span></div>
+    <div class="toc-item"><span class="num">10</span><span class="label">Data Model Summary</span><span class="meta">Architecture</span></div>
+    <div class="toc-item"><span class="num">11</span><span class="label">Third-Party Dependencies</span><span class="meta">Risk</span></div>
+    <div class="toc-item"><span class="num">12</span><span class="label">Hosting &amp; Deployment Plan</span><span class="meta">Delivery</span></div>
+    <div class="toc-item"><span class="num">13</span><span class="label">Security, Privacy &amp; IP</span><span class="meta">Risk</span></div>
+    <div class="toc-item"><span class="num">14</span><span class="label">Testing &amp; Validation</span><span class="meta">Delivery</span></div>
+    <div class="toc-item"><span class="num">15</span><span class="label">Roadmap &amp; Milestones</span><span class="meta">Delivery</span></div>
+    <div class="toc-item"><span class="num">16</span><span class="label">Resource Plan</span><span class="meta">Delivery</span></div>
+    <div class="toc-item"><span class="num">17</span><span class="label">Risk Register</span><span class="meta">Risk</span></div>
+    <div class="toc-item"><span class="num">18</span><span class="label">Assumptions &amp; Open Questions</span><span class="meta">Risk</span></div>
+    <div class="toc-item"><span class="num">A</span><span class="label">Glossary</span><span class="meta">Appendix</span></div>
+    <div class="toc-item"><span class="num">B</span><span class="label">Out of Scope (MVP)</span><span class="meta">Appendix</span></div>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     01 EXECUTIVE SUMMARY
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">01</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Brief</span>
+  </div>
+  <h1>Executive summary</h1>
+
+  <p class="lead">
+    Forja is an AI-assisted automation engineering platform that compresses the time required to design, specify, and code a Siemens TIA Portal project. It pairs a structured functional-spec authoring environment — the <strong>FDS Builder</strong> — with a guided code-generation wizard — the <strong>Forge Wizard</strong> — backed by a continuously-learning pattern library and a catalogue of pre-built, version-controlled function block templates.
+  </p>
+
+  <p>
+    Built initially as an internal tool for Pac Technologies engineers, the goal is to allow a single engineer to run multiple projects in parallel — turning the studio's capacity constraint from <em>engineer-hours per project</em> into <em>projects per engineer</em>. A licensing path to external automation firms is a secondary, longer-horizon objective once the tool is proven internally.
+  </p>
+
+  <p>
+    The MVP delivers four integrated modules: structured spec authoring, a fifteen-step code-generation wizard, a continuously-learning correction pattern library, and a versioned catalogue of pre-built function block templates. HMI screen generation, third-party robot vendor integration, and external licensing are explicitly out of scope for the MVP — see Appendix B.
+  </p>
+</section>
+
+
+<!-- ============================================================
+     02 PROJECT BRIEF
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">02</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Brief</span>
+  </div>
+  <h1>Project brief</h1>
+
+  <h2>Background</h2>
+  <p>
+    Pac Technologies delivers Siemens TIA Portal automation projects to industrial customers across Australia and New Zealand. A typical mid-sized project takes a senior engineer four to eight weeks — moving from a customer's functional brief through device specification, code authoring, HMI development, simulation testing, and on-site commissioning.
+  </p>
+  <p>
+    Most of that time is repetitive scaffolding. The same patterns of conveyor logic, motor sequencing, and alarm handling get written, by hand, project after project.
+  </p>
+  <p>
+    Modern AI tools can generate plausible PLC code from a prompt, but they make systematic mistakes the moment the project deviates from common patterns: incorrect IO mapping, missed safety interlocks, inconsistent naming, code that compiles but doesn't behave correctly. A general-purpose AI is not enough.
+  </p>
+  <p>
+    The engineering knowledge embedded in a senior engineer's head — house style, customer conventions, vendor quirks, hard-won corrections — needs a place to live and a way to influence every generation. Forja is that place.
+  </p>
+
+  <h2>Goals</h2>
+
+  <h3>Business</h3>
+  <ul class="brand">
+    <li>Compress the engineer-hours per project by 3× or more on representative work.</li>
+    <li>Run multiple concurrent projects without losing code quality.</li>
+    <li>Capture institutional knowledge in a form that survives staff turnover.</li>
+    <li>Establish a foundation that can be commercialised externally — without rebuilding from scratch.</li>
+  </ul>
+
+  <h3>Engineering</h3>
+  <ul class="brand">
+    <li>Reduce the cognitive load of switching between projects.</li>
+    <li>Eliminate the most common categories of repeated rework — naming, IO wiring, missed permissives.</li>
+    <li>Produce TIA-importable code that compiles first attempt for at least 80% of generated artefacts.</li>
+    <li>Make the engineer's review the primary act of value, not the typing.</li>
+  </ul>
+
+  <div class="h2-block">
+    <span class="eyebrow">Success metrics — three months post-launch</span>
+    <table class="brand">
+      <thead>
+        <tr>
+          <th style="width: 65%">Metric</th>
+          <th>Target</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Active engineer-users</td><td class="mono">2–3</td></tr>
+        <tr><td>Projects delivered using Forja end-to-end</td><td class="mono">≥ 3</td></tr>
+        <tr><td>Engineer-hour reduction per project (vs baseline)</td><td class="mono">≥ 50%</td></tr>
+        <tr><td>Generated SCL artefacts that compile first attempt</td><td class="mono">≥ 80%</td></tr>
+        <tr><td>Approved correction patterns in the library</td><td class="mono">≥ 100</td></tr>
+        <tr><td>Function block templates in the assembly catalogue</td><td class="mono">≥ 8 (V1)</td></tr>
+        <tr><td>Reference documents indexed</td><td class="mono">≥ 5</td></tr>
+        <tr><td>Critical regressions per week post-launch</td><td class="mono">&lt; 2</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Scope · MVP</h2>
+
+  <h3>In scope</h3>
+  <ul class="brand">
+    <li><strong>FDS Builder</strong> — structured functional spec authoring environment</li>
+    <li><strong>Forge Wizard</strong> — fifteen-step guided TIA Portal code generation</li>
+    <li><strong>Pattern Librarian</strong> — continuous learning system that captures and re-uses correction patterns</li>
+    <li><strong>Assembly FB Library</strong> — versioned catalogue of pre-built, parameterised function block templates</li>
+    <li><strong>Reference Library</strong> — uploadable Siemens documentation indexed for AI retrieval at generation time</li>
+    <li><strong>TIA Portal Openness Bridge</strong> — Windows-side integration for project import, compile, and export</li>
+    <li>Internal authentication and per-engineer state persistence</li>
+  </ul>
+
+  <h3>Not currently taking on</h3>
+  <p class="dim">Tracked for future phases. See Appendix B for the rationale on each.</p>
+  <ul class="brand">
+    <li>HMI screen generation — separate workstream</li>
+    <li>Third-party vendor integration — KUKA robots, ABB drives, custom OEM components</li>
+    <li>Automated unit-test generation</li>
+    <li>External licensing infrastructure — multi-tenancy, billing, customer onboarding</li>
+    <li>iOS / Android engineering apps</li>
+    <li>Live customer-site monitoring or runtime telemetry</li>
+  </ul>
+
+  <h2>Constraints</h2>
+  <table class="brand rowlabels">
+    <tbody>
+      <tr><td>Budget</td><td>Internal initiative — no external development spend. Operating costs (Supabase, Anthropic API, Vercel) budgeted separately.</td></tr>
+      <tr><td>Timeline</td><td>First useful version targeted within 6 months. Internal MVP at month 6, internal pilot at months 6–9, optional Vercel migration at month 9.</td></tr>
+      <tr><td>Team</td><td>One full-time engineer-developer (Kasper). No external contractors planned.</td></tr>
+      <tr><td>Platform</td><td>Siemens TIA Portal V17–V20 only. Windows-only for the TIA Bridge — a hard constraint of TIA Openness. Frontend is browser-based, cross-platform.</td></tr>
+      <tr><td>Regulatory</td><td>No safety certification claimed for AI-generated code at MVP. All generated artefacts pass through engineer review before deployment to customer sites. Non-negotiable.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+
+<!-- ============================================================
+     03 USERS & PERSONAS
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">03</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Discovery</span>
+  </div>
+  <h1>Users &amp; personas</h1>
+
+  <p class="lead">Three personas, in priority order.</p>
+
+  <div class="h2-block">
+    <span class="eyebrow">Primary user — 01</span>
+    <h2>Senior automation engineer</h2>
+  </div>
+  <ul class="brand">
+    <li>Ten-plus years on TIA Portal, fluent in SCL and LAD.</li>
+    <li>Currently runs one or two concurrent projects; wants to run three or four without dropping quality.</li>
+    <li>Has strong opinions about house style and naming conventions.</li>
+    <li>Sceptical of AI tools that produce plausible but subtly wrong code.</li>
+    <li>Wants the tool to disappear when it's working and surface clearly when it isn't.</li>
+    <li>Will not adopt anything that costs more time than it saves on day one.</li>
+  </ul>
+
+  <div class="quote">
+    "If I'm correcting the same mistake twice, the tool isn't doing its job."
+  </div>
+
+  <div class="h2-block">
+    <span class="eyebrow">Sponsor — 02</span>
+    <h2>Studio principal</h2>
+  </div>
+  <ul class="brand">
+    <li>Sets project pricing and capacity targets.</li>
+    <li>Watches engineer utilisation and project margin.</li>
+    <li>Cares about Forja's effect on throughput and quality, not its internals.</li>
+    <li>Holds the budget for ongoing operational costs.</li>
+    <li>Measures success by projects delivered and customer satisfaction — not by lines of code generated.</li>
+  </ul>
+
+  <div class="h2-block">
+    <span class="eyebrow">Secondary — 03 — post-MVP</span>
+    <h2>Junior automation engineer</h2>
+  </div>
+  <ul class="brand">
+    <li>Two to four years' experience.</li>
+    <li>Currently restricted to simpler projects or works under supervision.</li>
+    <li>Forja could let them deliver projects independently sooner — with the tool encoding the senior's review patterns.</li>
+    <li>Not a primary MVP user. Their needs shape Phase 2 design.</li>
+  </ul>
+
+  <div class="h2-block">
+    <span class="eyebrow">Jobs to be done</span>
+    <h2>What the engineer is trying to accomplish</h2>
+  </div>
+
+  <h3>Primary</h3>
+  <p>
+    <em>When I receive a functional brief from a customer, I want to author a structured functional specification in a form that drives downstream code generation — so I produce executable engineering rather than prose that has to be re-interpreted later.</em>
+  </p>
+  <p>
+    <em>When I have a structured spec, I want to generate a complete TIA Portal project that compiles on first import — so my time is spent on review and refinement rather than typing boilerplate.</em>
+  </p>
+  <p>
+    <em>When the AI makes a mistake I have to correct, I want that correction captured and applied to all future generations — so I never make the same fix twice.</em>
+  </p>
+
+  <h3>Secondary</h3>
+  <p>
+    <em>When I'm running multiple projects, I want each one to remember exactly where I left off — so context-switching costs are minimised.</em>
+  </p>
+  <p>
+    <em>When I encounter a structurally familiar machine — a conveyor, a pusher, a lift table — I want the tool to use a proven template rather than re-generate from scratch — so output quality is dictated by my best work, not the AI's average.</em>
+  </p>
+  <p>
+    <em>When I'm uncertain about a Siemens instruction or convention, I want the tool to retrieve the relevant section of the official documentation and use it — so I don't have to break flow to look things up.</em>
+  </p>
+</section>
+
+
+<!-- ============================================================
+     04 ENGINEER JOURNEY MAP
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">04</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Discovery</span>
+  </div>
+  <h1>Engineer journey map</h1>
+
+  <p class="lead">End-to-end journey for a senior engineer on a representative project — a five-station conveyor and lift line.</p>
+
+  <figure>
+    <img src="assets/img/journey.png" alt="Engineer emotional journey">
+    <figcaption>Fig. 01 — Engineer emotional journey through a typical Forja-assisted project</figcaption>
+  </figure>
+
+  <table class="brand">
+    <thead>
+      <tr>
+        <th style="width: 22%">Stage</th>
+        <th style="width: 38%">Action</th>
+        <th style="width: 18%">Emotion</th>
+        <th style="width: 22%">Touchpoint</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">Brief received</td><td>Customer sends a functional brief and IO list</td><td>Mild fatigue</td><td class="mono text-dim">—</td></tr>
+      <tr><td class="mono">Spec authoring</td><td>Uploads IO register, defines machine hierarchy, walks assembly-by-assembly behavioural review</td><td>Engaged</td><td class="mono">FDS Builder</td></tr>
+      <tr><td class="mono">Spec review</td><td>Reviews the composed spec, generates DOCX for customer sign-off</td><td>Satisfied</td><td class="mono">FDS Builder export</td></tr>
+      <tr><td class="mono">Project setup</td><td>Links the approved spec to a new Forge session</td><td>Relief</td><td class="mono">Wizard 01–03</td></tr>
+      <tr><td class="mono">Hardware &amp; IO</td><td>Confirms rack/module config, reviews AI-matched device templates</td><td>Confident</td><td class="mono">Wizard 04</td></tr>
+      <tr><td class="mono">Code generation</td><td>Generates device FBs, assembly FBs, process logic</td><td>Mixed</td><td class="mono">Wizard 06–12</td></tr>
+      <tr><td class="mono">Review &amp; correct</td><td>Edits the wrong artefact; correction is captured as a pattern</td><td>Quiet satisfaction</td><td class="mono">Pattern Librarian</td></tr>
+      <tr><td class="mono">TIA upload</td><td>Bridge pushes to TIA, compile runs, errors surface in chat</td><td>Focused</td><td class="mono">TIA Bridge · compile-fix</td></tr>
+      <tr><td class="mono">PLCSim</td><td>Runs simulation tests</td><td>Confident</td><td class="mono">Wizard 11, 14</td></tr>
+      <tr><td class="mono">Handover</td><td>Exports the project, sends to customer, archives session</td><td>Pride</td><td class="mono">Wizard 15</td></tr>
+    </tbody>
+  </table>
+
+  <div class="callout">
+    <span class="label">Design insight</span>
+    <p>
+      The pattern-capture moment is the tool's main retention mechanism. If the engineer doesn't see the learning happen, the tool feels like a worse version of writing it themselves.
+    </p>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     05 PRODUCT SCOPE
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">05</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Scope</span>
+  </div>
+  <h1>Product scope</h1>
+
+  <p class="lead">Five integrated modules in the MVP. Each is described in detail in §06.</p>
+
+  <table class="brand">
+    <thead>
+      <tr>
+        <th style="width: 22%">Module</th>
+        <th style="width: 28%">Purpose</th>
+        <th>MVP scope</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="mono">FDS Builder</td>
+        <td>Author structured functional specifications</td>
+        <td>All six phases — instrument register, hierarchy wizard, co-authoring, system orchestration, structured editor, DOCX export</td>
+      </tr>
+      <tr>
+        <td class="mono">Forge Wizard</td>
+        <td>Generate TIA Portal projects from a spec</td>
+        <td>All fifteen steps, except HMI generation (Step 13 stubbed)</td>
+      </tr>
+      <tr>
+        <td class="mono">Pattern Librarian</td>
+        <td>Capture and re-use correction patterns</td>
+        <td>Auto-capture on rewrite, compile-fix, manual fix; admin review queue</td>
+      </tr>
+      <tr>
+        <td class="mono">Assembly FB Library</td>
+        <td>Catalogue of pre-built FB templates</td>
+        <td>V1 catalogue of 8 templates with full interface contracts</td>
+      </tr>
+      <tr>
+        <td class="mono">Reference Library</td>
+        <td>Indexed authoritative documentation</td>
+        <td>Upload + section + tag, two-pass AI lookup at generation time</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+
+<!-- ============================================================
+     06 MODULE SPECIFICATIONS
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">06</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Scope</span>
+  </div>
+  <h1>Module specifications</h1>
+
+  <p class="lead">Feature definition with acceptance criteria. Implementation detail lives in the technical architecture and per-module engineering notes alongside the codebase.</p>
+
+  <div class="h2-block">
+    <span class="eyebrow">06.1</span>
+    <h2>FDS Builder — Functional Description Specification authoring</h2>
+  </div>
+  <p>
+    The FDS Builder is the engineering side of Forja. It produces the same functional specification document a senior engineer would write by hand — but as structured, machine-readable data rather than prose.
+  </p>
+
+  <h3>Phases</h3>
+  <ol class="brand">
+    <li>Instrument Register Upload — upload an IO spreadsheet (CSV or Excel). The system classifies each tag and stores it as the authoritative tag source for all subsequent phases.</li>
+    <li>Spec Skeleton Wizard — six-step guided form to define the machine hierarchy: System / Subsystem / Assembly / Device, plus operating states and alarm tiers.</li>
+    <li>FDS Co-Authoring — per-assembly behavioural specification, conducted as a structured AI interview. Static device states are auto-filled deterministically; sequential states are co-authored with an AI agent.</li>
+    <li>System Orchestration — subsystem-to-subsystem coordination: ordering, shared permissives, inter-subsystem interlocks.</li>
+    <li>Structured Spec Editor — document tree navigation, section-by-section approval flow.</li>
+    <li>DOCX Export — formatted Word output in the Pac Technologies house style.</li>
+  </ol>
+
+  <h3>Acceptance criteria</h3>
+  <ul class="brand">
+    <li>An engineer can produce a complete behavioural specification for a 5-station, 25-device machine in under a working day.</li>
+    <li>The spec is the authoritative source of truth for downstream code generation — no re-interpretation.</li>
+    <li>For structurally identical assemblies, behavioural data can be cloned and tag-remapped automatically.</li>
+    <li>DOCX output is presentable to a customer without manual reformatting.</li>
+  </ul>
+
+  <div class="h2-block">
+    <span class="eyebrow">06.2</span>
+    <h2>Forge Wizard — TIA Portal code generation</h2>
+  </div>
+  <p>
+    The coding side of Forja. Takes a functional specification (from the FDS Builder, or a manually uploaded document) and runs it through a fifteen-step pipeline that ends with a complete, compiled TIA Portal project.
+  </p>
+
+  <h3>Steps</h3>
+  <table class="brand">
+    <thead>
+      <tr>
+        <th style="width: 8%">#</th>
+        <th style="width: 24%">Name</th>
+        <th>Output</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">01</td><td class="mono">Spec</td><td>Auto-loaded from FDS Builder, or manual document upload</td></tr>
+      <tr><td class="mono">02</td><td class="mono">Q&amp;A Review</td><td>Clarifying interview by AI Project Manager</td></tr>
+      <tr><td class="mono">03</td><td class="mono">Project Setup</td><td>CPU, TIA version, design profile, language preferences</td></tr>
+      <tr><td class="mono">04</td><td class="mono">Hardware &amp; IO</td><td>Rack and module config; AI device template matching</td></tr>
+      <tr><td class="mono">05</td><td class="mono">Interface Contracts</td><td>Per-assembly exposed/consumed signals</td></tr>
+      <tr><td class="mono">06</td><td class="mono">Device FBs</td><td>Per-device function block — library match preferred</td></tr>
+      <tr><td class="mono">07</td><td class="mono">Assembly FBs</td><td>Per-assembly state machine — library match preferred</td></tr>
+      <tr><td class="mono">08</td><td class="mono">Logic Check</td><td>Deterministic validation against FDS spec across 10 categories</td></tr>
+      <tr><td class="mono">09</td><td class="mono">Matrix Review</td><td>Device linkage matrix and process sequence generation</td></tr>
+      <tr><td class="mono">10</td><td class="mono">Device Code</td><td>Device call FCs, IO linking FC, OB1 main scaffold</td></tr>
+      <tr><td class="mono">11</td><td class="mono">Device Tests</td><td>PLCSim-based tests for individual device FBs</td></tr>
+      <tr><td class="mono">12</td><td class="mono">Process Code</td><td>Process-layer FCs, step/action DBs, fault handling</td></tr>
+      <tr><td class="mono">13</td><td class="mono text-dim">HMI Screens</td><td class="text-dim">Deferred — stubbed in MVP</td></tr>
+      <tr><td class="mono">14</td><td class="mono">System Tests</td><td>PLCSim-based full-program tests</td></tr>
+      <tr><td class="mono">15</td><td class="mono">TIA Export</td><td>Final import and compile in TIA Portal</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Acceptance criteria</h3>
+  <ul class="brand">
+    <li>A wizard session can be paused and resumed at any step without state loss.</li>
+    <li>Each step exposes its outputs for engineer review before the next step proceeds.</li>
+    <li>Generation is parameterised by the engineer's chosen design profile — naming, language, conventions.</li>
+    <li>Library-matched artefacts are copied verbatim with no AI involvement; AI generation is a fallback for novel cases.</li>
+    <li>The deterministic logic checker (Step 08) provides actionable, FDS-grounded findings — not generic advice.</li>
+  </ul>
+
+  <div class="h2-block">
+    <span class="eyebrow">06.3</span>
+    <h2>Pattern Librarian — Continuous learning</h2>
+  </div>
+  <p>
+    Every code correction in Forja — whether from compile-fix, manual TIA fix, pipeline review, or engineer chat — is captured as a structured WRONG/CORRECT pattern. Approved patterns are injected into every future generation prompt so the same mistake is never repeated.
+  </p>
+
+  <h3>Capture sources</h3>
+  <ul class="brand">
+    <li>Forge Wizard rewrite loop (per artefact)</li>
+    <li>Forge Wizard compile-fix cycles — auto-approved on successful compile</li>
+    <li>Manual TIA fix panel</li>
+    <li>Direct engineer teaching via chat</li>
+    <li>Document-extraction teaching dialogs</li>
+  </ul>
+
+  <h3>Classification</h3>
+  <p>
+    Patterns are classified into one of six types — <span class="mono">NAMING</span> · <span class="mono">IO_MAPPING</span> · <span class="mono">STATE_LOGIC</span> · <span class="mono">ALARM</span> · <span class="mono">SAFETY</span> · <span class="mono">TIMING</span>. AI classification is the primary path; a regex-based classifier is the deterministic fallback.
+  </p>
+
+  <h3>Lifecycle</h3>
+  <p>
+    <span class="mono">PENDING</span> &nbsp;—&nbsp; <span class="mono">APPROVED</span> or <span class="mono">REJECTED</span>, with revoke and delete actions. Only approved patterns are injected into future generation prompts.
+  </p>
+
+  <h3>Acceptance criteria</h3>
+  <ul class="brand">
+    <li>Pattern capture is fire-and-forget — never blocks the main generation flow.</li>
+    <li>Admin review queue defaults to PENDING — engineers see new patterns first.</li>
+    <li>Patterns are scoped to a PLC brand (currently SIEMENS_TIA), allowing future expansion without contamination.</li>
+    <li>An approved pattern visibly affects future generations — verifiable by re-running a previously failed generation.</li>
+  </ul>
+
+  <div class="h2-block">
+    <span class="eyebrow">06.4</span>
+    <h2>Assembly FB Library — Versioned function block catalogue</h2>
+  </div>
+  <p>
+    Replaces greenfield AI-generated assembly code with a catalogue of typed, versioned, instance-parameterised templates. When a spec contains an assembly of a known type, Forja uses the library template directly. AI generation becomes the fallback for novel assembly types.
+  </p>
+
+  <h3>V1 Catalogue — 8 templates</h3>
+  <table class="brand">
+    <thead>
+      <tr>
+        <th style="width: 36%">Template</th>
+        <th>Description</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">ConveyorStandardVsd</td><td>Conveyor with variable speed drive</td></tr>
+      <tr><td class="mono">ConveyorStandardDol</td><td>Conveyor with direct-on-line motor</td></tr>
+      <tr><td class="mono">TransferTable2Axis</td><td>Two-axis transfer table</td></tr>
+      <tr><td class="mono">TurntableSingleStop</td><td>Single-stop turntable</td></tr>
+      <tr><td class="mono">PusherLinearCylinder</td><td>Linear pusher cylinder</td></tr>
+      <tr><td class="mono">DiverterSwingGate</td><td>Swing-gate diverter</td></tr>
+      <tr><td class="mono">LiftStationVertical</td><td>Vertical lift station</td></tr>
+      <tr><td class="mono">AccumulatorBufferConveyor</td><td>Buffer accumulator conveyor</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Acceptance criteria</h3>
+  <ul class="brand">
+    <li>A new template can be authored in under a working day by a senior engineer.</li>
+    <li>A spec assembly that matches a template is wired automatically; the engineer confirms or overrides.</li>
+    <li>Library template versions are pinned at the time of binding — later library edits do not silently retrofit existing specs.</li>
+    <li>Each template's body SCL is validated by compiling in TIA Portal V18 before being marked production-ready.</li>
+  </ul>
+
+  <div class="h2-block">
+    <span class="eyebrow">06.5</span>
+    <h2>Reference Library — Indexed authoritative documentation</h2>
+  </div>
+  <p>
+    Engineers upload Siemens manuals, instruction references, style guides, and customer conventions. Forja splits each document into searchable sections with topic tags. At generation time, a two-pass AI retrieval pulls the most relevant sections into the prompt as authoritative context.
+  </p>
+
+  <h3>Two-pass retrieval</h3>
+  <ol class="brand">
+    <li>The user's request — or generated code, or compile errors — is analysed by AI to extract relevant topic keywords.</li>
+    <li>A Postgres full-text + tag-overlap search returns the matching reference sections.</li>
+    <li>The sections are formatted and injected into the system prompt for the generation step.</li>
+  </ol>
+
+  <h3>Acceptance criteria</h3>
+  <ul class="brand">
+    <li>A 500-page manual can be uploaded and indexed in under fifteen minutes.</li>
+    <li>Engineers can browse, search, and tag sections through a UI.</li>
+    <li>Reference results are filtered by programming language (LAD / SCL / general) — an SCL generation doesn't get LAD documentation.</li>
+    <li>All four AI generation paths consume the reference library uniformly.</li>
+  </ul>
+</section>
+
+
+<!-- ============================================================
+     07 CROSS-MODULE INTEGRATION
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">07</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Architecture</span>
+  </div>
+  <h1>Cross-module integration</h1>
+
+  <p class="lead">Forja's modules are loosely coupled and clearly bounded. The integration map below documents how data flows between them.</p>
+
+  <figure>
+    <img src="assets/img/integration.png" alt="Module integration diagram">
+    <figcaption>Fig. 02 — Module integration. Spec data flows orange; knowledge injection flows green; corrections flow back.</figcaption>
+  </figure>
+
+  <div class="callout">
+    <span class="label">The handoff that matters most</span>
+    <p>
+      The handoff from FDS Builder to Forge Wizard is the single most important integration in the system. It's implemented as a Postgres function — <span class="mono">_build_contract_snapshot()</span> — that returns a complete spec contract as a JSON snapshot.
+    </p>
+    <p>
+      Forge Wizard reads from the snapshot, never from the FDS Builder's internal tables. This boundary protects both modules from one another's internal evolution.
+    </p>
+  </div>
+
+  <p>
+    The Reference Library and Pattern Librarian are read-only services consumed by all generation paths uniformly through a single shared service layer. This is deliberately designed to avoid the trap of "four generation paths each with their own context-building logic" — a known anti-pattern in AI-driven systems.
+  </p>
+
+  <p>
+    The Assembly FB Library is consumed at two points — at FDS Builder time (template selection per assembly during the hierarchy phase) and at Forge Wizard time (artefact emission during assembly FB generation). Both consumption points read from the same <span class="mono">fb_templates</span> table.
+  </p>
+</section>
+
+
+<!-- ============================================================
+     08 NON-FUNCTIONAL REQUIREMENTS
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">08</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Architecture</span>
+  </div>
+  <h1>Non-functional requirements</h1>
+
+  <table class="brand rowlabels">
+    <tbody>
+      <tr><td>Performance</td><td>Wizard step transitions under 500ms. AI generation latency dominated by model response time; UI must remain responsive throughout.</td></tr>
+      <tr><td>Availability</td><td>99% target for internal use during business hours. Planned maintenance permitted with 24-hour notice.</td></tr>
+      <tr><td>Concurrency</td><td>Support 3 simultaneous engineer-users at MVP, with clean session isolation. Architected to scale to 20+ without redesign.</td></tr>
+      <tr><td>Security</td><td>Supabase auth with per-engineer accounts. Row-level security on all engineer-scoped tables. No customer project data leaves the studio's infrastructure.</td></tr>
+      <tr><td>Data integrity</td><td>All structured artefacts (specs, FBs, patterns) are versioned. Destructive operations require explicit confirmation.</td></tr>
+      <tr><td>Auditability</td><td>Every AI generation persists its full prompt, response, model, and token count. Every approved pattern records its source.</td></tr>
+      <tr><td>Reproducibility</td><td>A spec contract snapshot, plus the pinned library and pattern versions, is sufficient to re-run a generation deterministically.</td></tr>
+      <tr><td>Cost ceiling</td><td>AI provider spend monitored monthly. Per-engineer alerts at $200/month, hard cap at $500/month at MVP scale.</td></tr>
+      <tr><td>Browser support</td><td>Latest two versions of Chrome and Edge. No mobile support targeted at MVP.</td></tr>
+      <tr><td>Offline behaviour</td><td>Read-only access to existing specs and artefacts when AI provider is unreachable. Generation requires connection.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+
+<!-- ============================================================
+     09 TECHNICAL ARCHITECTURE
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">09</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Architecture</span>
+  </div>
+  <h1>Technical architecture</h1>
+
+  <h2>Stack</h2>
+  <table class="brand">
+    <thead>
+      <tr>
+        <th style="width: 18%">Layer</th>
+        <th style="width: 32%">Choice</th>
+        <th>Rationale</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">Frontend</td><td>React 19 + Vite + TypeScript</td><td>Modern, fast iteration; strong typing essential for a structured-data-heavy app</td></tr>
+      <tr><td class="mono">UI</td><td>shadcn/ui (Radix) + Tailwind</td><td>Engineer-tool aesthetic — dense, dark-first, no airy SaaS look</td></tr>
+      <tr><td class="mono">State</td><td>TanStack Query + Zustand</td><td>Server state via Query, UI state via Zustand. Avoids the trap of one giant store.</td></tr>
+      <tr><td class="mono">Editor</td><td>Monaco Editor</td><td>Industry-standard, custom SCL language definition</td></tr>
+      <tr><td class="mono">Backend</td><td>Supabase</td><td>Postgres + Edge Functions + Auth in one. Minimises operational surface for a solo developer.</td></tr>
+      <tr><td class="mono">AI provider</td><td>Anthropic Claude</td><td>Sonnet for generation and review; Haiku for classification and tag inference</td></tr>
+      <tr><td class="mono">TIA bridge</td><td>.NET Framework 4.8 console app</td><td>Required by TIA Openness; runs locally on the engineer's Windows machine</td></tr>
+      <tr><td class="mono">File storage</td><td>Dropbox (shared workspace)</td><td>Engineers already use it; avoids re-architecting team file flow</td></tr>
+      <tr><td class="mono">Hosting · initial</td><td>Local server inside the studio</td><td>Simplifies the early phase — no public exposure</td></tr>
+      <tr><td class="mono">Hosting · post-MVP</td><td>Vercel + Supabase</td><td>Standard, low-ops, scales for internal team size</td></tr>
+    </tbody>
+  </table>
+
+  <h2>System diagram</h2>
+  <figure>
+    <img src="assets/img/architecture.png" alt="System architecture diagram">
+    <figcaption>Fig. 03 — System architecture. Three execution environments connected by HTTPS and a local WebSocket bridge.</figcaption>
+  </figure>
+
+  <h2>Architectural principles</h2>
+  <p>Non-negotiable in MVP design and review.</p>
+  <ol class="brand">
+    <li><strong>Module boundaries are honoured.</strong> The five modules communicate through a small set of well-typed contracts. No module reaches across into another module's tables.</li>
+    <li><strong>Deterministic over generative wherever possible.</strong> AI is used where structure cannot be derived; everything else is deterministic and auditable.</li>
+    <li><strong>Generation context is centralised.</strong> All AI generation paths consume a single shared service that assembles patterns, knowledge, reference sections, design profiles, and platform rules.</li>
+    <li><strong>Spec contracts are immutable snapshots.</strong> The handoff between modules is a versioned snapshot, not a live reference. This protects each module from the others' internal evolution.</li>
+    <li><strong>Every artefact is auditable.</strong> Generated outputs carry their lineage — which prompt produced them, which patterns were active, which reference sections were retrieved.</li>
+    <li><strong>Engineer review is the value gate.</strong> Forja generates; engineers approve. The tool never deploys directly to customer systems.</li>
+  </ol>
+</section>
+
+
+<!-- ============================================================
+     10 DATA MODEL SUMMARY
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">10</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Architecture</span>
+  </div>
+  <h1>Data model summary</h1>
+
+  <p class="lead">Six entity groups. Field-level detail lives in the migration files.</p>
+
+  <table class="brand">
+    <thead>
+      <tr>
+        <th style="width: 28%">Group</th>
+        <th>Tables / entities</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">Identity &amp; auth</td><td class="mono">users, sessions, agent_leases</td></tr>
+      <tr><td class="mono">Specs</td><td class="mono">spec_projects, spec_sections, fds_assembly_sessions, fds_subsystem_orchestrations, fds_system_orchestrations, spec_alarms</td></tr>
+      <tr><td class="mono">Forge sessions</td><td class="mono">forge_sessions, forge_artifacts</td></tr>
+      <tr><td class="mono">Knowledge</td><td class="mono">fb_templates, fb_template_versions, pattern_candidates, reference_library_docs, reference_library_sections, agent_knowledge_docs, prompt_sections</td></tr>
+      <tr><td class="mono">Configuration</td><td class="mono">design_profiles, knowledge_priority_overrides</td></tr>
+      <tr><td class="mono">Audit</td><td class="mono">audit_log</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Two design choices worth noting</h3>
+  <ul class="brand">
+    <li>JSONB is used liberally for structured-but-evolving payloads — interface contracts, sequence steps, behavioural state tables. Each JSONB column has a documented schema and a TypeScript type derived from a Zod schema in the frontend.</li>
+    <li>Spec contracts are assembled by a Postgres function — <span class="mono">_build_contract_snapshot</span> — rather than reconstructed in application code. This guarantees the FDS Builder's view of a spec and the Forge Wizard's view are identical.</li>
+  </ul>
+</section>
+
+
+<!-- ============================================================
+     11 THIRD-PARTY DEPENDENCIES
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">11</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Risk</span>
+  </div>
+  <h1>Third-party dependencies</h1>
+
+  <table class="brand">
+    <thead>
+      <tr>
+        <th style="width: 22%">Dependency</th>
+        <th style="width: 28%">Purpose</th>
+        <th>Risk profile</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">TIA Openness</td><td>Bridge to TIA Portal for import, compile, export</td><td>High coupling, but stable across V17–V20. Each new TIA version requires bridge re-test.</td></tr>
+      <tr><td class="mono">Anthropic API</td><td>Primary AI provider</td><td>Cost monitored monthly. Pricing changes possible but historically gentle.</td></tr>
+      <tr><td class="mono">Supabase</td><td>Database, auth, edge functions, storage</td><td>Single-vendor risk; Postgres portability is a mitigation.</td></tr>
+      <tr><td class="mono">Dropbox</td><td>Shared file storage for design docs and library blocks</td><td>Already used by the studio; low integration risk.</td></tr>
+      <tr><td class="mono">Vercel</td><td>Frontend hosting (post-MVP)</td><td>Standard for Vite apps; trivially replaceable.</td></tr>
+      <tr><td class="mono">Monaco Editor</td><td>In-browser code editing</td><td>Microsoft-maintained, stable, widely used.</td></tr>
+      <tr><td class="mono">shadcn/ui</td><td>UI primitives</td><td>Source-included rather than vendored — no upgrade lock-in.</td></tr>
+    </tbody>
+  </table>
+
+  <p class="dim">Future-phase dependencies — out of MVP scope:</p>
+  <ul class="brand">
+    <li>KUKA / ABB / vendor-specific protocol libraries — for third-party robot and drive integration. Deliberately deferred. The MVP design does not assume their absence will require structural changes.</li>
+  </ul>
+</section>
+
+
+<!-- ============================================================
+     12 HOSTING & DEPLOYMENT
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">12</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Delivery</span>
+  </div>
+  <h1>Hosting &amp; deployment plan</h1>
+
+  <p class="lead">The hosting plan evolves in three stages.</p>
+
+  <div class="h2-block">
+    <span class="eyebrow">Stage 01 — Months 0–6</span>
+    <h2>Local server</h2>
+  </div>
+  <p>
+    Forja is hosted on a single workstation inside the studio LAN. Supabase runs via Docker locally for development and against a hosted Supabase project for shared state. Minimises operational complexity while the tool is in active development.
+  </p>
+
+  <div class="h2-block">
+    <span class="eyebrow">Stage 02 — Months 6–9</span>
+    <h2>Hosted Supabase, local frontend</h2>
+  </div>
+  <p>
+    Supabase moves to its hosted offering. The frontend continues to run from the engineer's machine via <span class="mono">npm run dev</span> for the initial pilot period. Validates the cloud database under real use before exposing the frontend.
+  </p>
+
+  <div class="h2-block">
+    <span class="eyebrow">Stage 03 — Months 9+</span>
+    <h2>Vercel-hosted frontend</h2>
+  </div>
+  <p>
+    The frontend deploys to Vercel with environment-based access controls. The TIA Bridge continues to run locally on each engineer's Windows machine — this cannot be hosted, by design.
+  </p>
+
+  <p>
+    External-customer hosting is not addressed in this document and would require a separate architecture review — multi-tenancy, customer data isolation, and pricing model.
+  </p>
+</section>
+
+
+<!-- ============================================================
+     13 SECURITY, PRIVACY & IP
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">13</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Risk</span>
+  </div>
+  <h1>Security, privacy &amp; IP protection</h1>
+
+  <h2>Customer project data</h2>
+  <p>
+    Customer functional specs may contain commercially sensitive information about the customer's process, equipment, and IP. Treatment of this data is non-negotiable.
+  </p>
+  <ul class="brand">
+    <li>All customer project data is stored in Supabase under row-level security policies scoped to the originating engineer.</li>
+    <li>Customer data is never shared with the AI provider beyond the immediate generation context, and is never used to train the AI provider's models. Anthropic's API terms support this — explicit verification at sign-up.</li>
+    <li>Customer files (DOCX, PDF, Excel) are stored in Supabase Storage with signed URLs and a default expiry.</li>
+    <li>Engineers can export and delete a project's full data on request.</li>
+  </ul>
+
+  <h2>Pac Technologies IP</h2>
+  <p>
+    The function block library, reference documents, correction patterns, design profiles, and prompt sections collectively constitute Pac Technologies' engineering IP.
+  </p>
+  <ul class="brand">
+    <li>These artefacts live in Supabase, backed up daily.</li>
+    <li>The catalogue is versioned — destructive changes are recoverable.</li>
+    <li>A planned Phase 2 capability is "library export" — a portable bundle of the studio's IP that can be migrated, backed up offsite, or, eventually, licensed to external customers.</li>
+  </ul>
+
+  <h2>Authentication</h2>
+  <p>
+    Supabase email-and-password authentication for MVP. SSO via the studio's existing identity provider considered for a future phase if user count grows.
+  </p>
+</section>
+
+
+<!-- ============================================================
+     14 TESTING
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">14</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Delivery</span>
+  </div>
+  <h1>Testing &amp; validation strategy</h1>
+
+  <p class="lead">Three layers of testing, in order of priority.</p>
+
+  <div class="h2-block">
+    <span class="eyebrow">01 — Authoritative</span>
+    <h2>Compile validation against TIA Portal</h2>
+  </div>
+  <p>
+    The most authoritative test for generated code is whether TIA Portal accepts it. Every Forge Wizard run ends with an automated compile pass. Compile failures surface and route into the compile-fix loop.
+  </p>
+
+  <div class="h2-block">
+    <span class="eyebrow">02 — Coverage</span>
+    <h2>Deterministic output tests</h2>
+  </div>
+  <p>
+    The deterministic generators — process compiler, IO linking, OB1 scaffold, type-conversion FCs — have unit tests in Vitest covering representative inputs. They run on every commit. Target coverage at MVP: 70% line coverage on the deterministic libraries, 0% on the AI-driven paths.
+  </p>
+
+  <div class="h2-block">
+    <span class="eyebrow">03 — Specification</span>
+    <h2>Structured logic checks</h2>
+  </div>
+  <p>
+    The Step 08 logic check — generated FB code validated against the FDS spec across ten categories — is itself a deterministic test layer. It catches the highest-impact category of error: AI generates code that compiles but doesn't behave per spec.
+  </p>
+
+  <h3>Not tested at MVP</h3>
+  <ul class="brand">
+    <li>AI-generated outputs are not unit-tested. The AI is non-deterministic and asserting on its outputs costs more than it's worth at MVP scale. Engineer review is the gate.</li>
+    <li>HMI generation — deferred to a future phase.</li>
+    <li>Multi-engineer concurrent editing — the MVP user count makes this low-priority.</li>
+  </ul>
+</section>
+
+
+<!-- ============================================================
+     15 ROADMAP
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">15</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Delivery</span>
+  </div>
+  <h1>Roadmap &amp; milestones</h1>
+
+  <p class="lead">Six phases over approximately six months of full-time solo development.</p>
+
+  <table class="brand">
+    <thead>
+      <tr>
+        <th style="width: 30%">Phase</th>
+        <th style="width: 14%">Duration</th>
+        <th>Deliverables</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">00 · Foundation</td><td class="mono">Wks 1–4</td><td>Project skeleton, Supabase schema for shared concerns, auth, design profile management, reference library, Pattern Librarian skeleton</td></tr>
+      <tr><td class="mono">01 · FDS Builder MVP</td><td class="mono">Wks 5–10</td><td>Instrument register, hierarchy wizard, co-authoring (per-assembly), system orchestration, structured spec editor, DOCX export</td></tr>
+      <tr><td class="mono">02 · Forge core path</td><td class="mono">Wks 11–16</td><td>Wizard steps 01–05, hardware/IO config, design profile-driven generation, FDS handoff</td></tr>
+      <tr><td class="mono">03 · Forge generation</td><td class="mono">Wks 17–20</td><td>Steps 06–10 (device FBs, assembly FBs, logic check, matrix review, device code), Pattern Librarian wired in</td></tr>
+      <tr><td class="mono">04 · Forge process &amp; test</td><td class="mono">Wks 21–24</td><td>Steps 11, 12, 14 (PLCSim tests, process code), HMI step stubbed, TIA export (Step 15)</td></tr>
+      <tr><td class="mono">05 · Internal pilot</td><td class="mono">Wks 25–28</td><td>Two real customer projects delivered through Forja; bug fixes; documentation; backup procedures</td></tr>
+    </tbody>
+  </table>
+
+  <p>
+    Milestone gates require engineer-developer sign-off before the next phase begins. The most likely points of slip are:
+  </p>
+  <ul class="brand">
+    <li>End of Phase 01 — FDS Builder co-authoring is the most behaviourally complex module.</li>
+    <li>The Phase 03-to-04 transition — process code generation has the most edge cases.</li>
+  </ul>
+
+  <div class="callout">
+    <span class="label">Realistic delivery range</span>
+    <p>
+      24 to 32 weeks for solo full-time work. The schedule above is the optimistic-but-honest case.
+    </p>
+  </div>
+</section>
+
+
+<!-- ============================================================
+     16 RESOURCE PLAN
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">16</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Delivery</span>
+  </div>
+  <h1>Resource plan</h1>
+
+  <h2>People</h2>
+  <ul class="brand">
+    <li>One full-time engineer-developer (Kasper) — design, build, deploy, document.</li>
+    <li>Studio Principal — milestone reviews, strategic input, no operational involvement.</li>
+  </ul>
+
+  <h2>Operating costs · monthly · MVP scale</h2>
+  <table class="brand">
+    <thead>
+      <tr>
+        <th style="width: 50%">Item</th>
+        <th>Estimate (AUD/month)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">Supabase Pro</td><td class="mono">$40</td></tr>
+      <tr><td class="mono">Anthropic API</td><td class="mono">$300–$800 (varies with usage)</td></tr>
+      <tr><td class="mono">Vercel · post-Stage 03</td><td class="mono">$30</td></tr>
+      <tr><td class="mono">Dropbox · already in place</td><td class="mono text-dim">—</td></tr>
+      <tr><td class="mono"><strong>Subtotal</strong></td><td class="mono"><strong>$370–$870</strong></td></tr>
+    </tbody>
+  </table>
+  <p class="dim">Operating costs only; capital costs (development time) are absorbed internally.</p>
+
+  <h2>Knowledge inputs</h2>
+  <ul class="brand">
+    <li>Pac Technologies house style guide — existing.</li>
+    <li>Two to three completed historical projects, used as test cases for the FDS Builder and Forge Wizard.</li>
+    <li>Siemens manuals — Programming Style Guide V2.1, SCL reference, instruction reference.</li>
+    <li>One or two customer projects for the internal pilot phase.</li>
+  </ul>
+</section>
+
+
+<!-- ============================================================
+     17 RISK REGISTER
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">17</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Risk</span>
+  </div>
+  <h1>Risk register</h1>
+
+  <table class="brand">
+    <thead>
+      <tr>
+        <th style="width: 7%">#</th>
+        <th style="width: 26%">Risk</th>
+        <th style="width: 9%">Likely</th>
+        <th style="width: 9%">Impact</th>
+        <th>Mitigation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">R-01</td><td>AI generates incorrect safety-critical logic that passes engineer review</td><td class="mono">Low</td><td class="mono text-accent">Very High</td><td>Engineer review is mandatory before any artefact reaches a customer site. Safety-classified specs trigger additional structured checks.</td></tr>
+      <tr><td class="mono">R-02</td><td>TIA Openness API breaks between versions</td><td class="mono">Medium</td><td class="mono">High</td><td>Bridge tested against each new TIA version before production use. Frontend tolerates bridge unavailability with read-only mode.</td></tr>
+      <tr><td class="mono">R-03</td><td>Solo developer bus factor — single point of knowledge failure</td><td class="mono text-accent">High</td><td class="mono">High</td><td>All architectural decisions documented inline and in module READMEs. Code is conventionally structured.</td></tr>
+      <tr><td class="mono">R-04</td><td>Engineer adoption resistance — habits resist new workflows</td><td class="mono">Medium</td><td class="mono">High</td><td>Internal pilot uses real customer projects, not toy examples. Tool must save time on day one.</td></tr>
+      <tr><td class="mono">R-05</td><td>Scope creep into HMI / vendor integrations</td><td class="mono text-accent">High</td><td class="mono">Medium</td><td>Out-of-scope items listed explicitly in Appendix B. Reintroduction requires written change request.</td></tr>
+      <tr><td class="mono">R-06</td><td>AI provider cost scales faster than expected</td><td class="mono">Low</td><td class="mono">Medium</td><td>Monthly monitoring with alert thresholds. Haiku used for cheap classification work; Sonnet reserved for generation.</td></tr>
+      <tr><td class="mono">R-07</td><td>Code quality regressions undetected without tests</td><td class="mono">Medium</td><td class="mono">High</td><td>Vitest test infrastructure in Phase 00 covers deterministic generators. Manual smoke-test checklist for AI-driven paths.</td></tr>
+      <tr><td class="mono">R-08</td><td>Customer-facing project quality issues attributable to AI-generated code</td><td class="mono">Low</td><td class="mono text-accent">Very High</td><td>All artefacts are reviewed and TIA-compiled before delivery. Customer-facing project quality is owned by the engineer, not the tool.</td></tr>
+      <tr><td class="mono">R-09</td><td>Database schema evolution fails to preserve existing data</td><td class="mono">Low</td><td class="mono">High</td><td>All migrations are forward-only and tested against a copy of production. Backups taken before every schema change.</td></tr>
+      <tr><td class="mono">R-10</td><td>Third-party vendor integration becomes urgent before architecturally addressed</td><td class="mono">Medium</td><td class="mono">Medium</td><td>Pattern: future-phase work, deliberately deferred. Manual workaround acceptable in the interim.</td></tr>
+      <tr><td class="mono">R-11</td><td>AI provider rate limits or outages disrupt active engineering work</td><td class="mono">Medium</td><td class="mono">Low</td><td>Generations are resumable from the last completed step. Read-only access remains during outage.</td></tr>
+      <tr><td class="mono">R-12</td><td>Reference library content quality is poor — outdated or contradictory documents</td><td class="mono">Medium</td><td class="mono">Medium</td><td>Conflict detection runs across reference sources. Engineers can prioritise sources per project. Periodic library review every six months.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+
+<!-- ============================================================
+     18 ASSUMPTIONS & OPEN QUESTIONS
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">18</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Risk</span>
+  </div>
+  <h1>Assumptions &amp; open questions</h1>
+
+  <h2>Assumptions</h2>
+  <ul class="brand">
+    <li>The studio's two to three engineers are willing to use Forja on real projects from the pilot phase onward.</li>
+    <li>The TIA Portal Openness API remains stable across V17–V20 for the duration of MVP development.</li>
+    <li>Anthropic's API pricing remains within an order of magnitude of current rates.</li>
+    <li>No regulatory regime — functional safety certification, customer-imposed code review process — blocks AI-generated code from reaching TIA Portal in customer projects.</li>
+    <li>Pac Technologies has the right to use historical projects as training inputs to the pattern library and reference library.</li>
+  </ul>
+
+  <h2>Open questions</h2>
+  <p class="dim">Require resolution before, or during, Phase 00.</p>
+  <ol class="brand">
+    <li><strong>Pilot project selection.</strong> Which two real customer projects will be delivered through Forja during the pilot phase? Choice affects which assembly templates are prioritised in V1 catalogue.</li>
+    <li><strong>Code review policy for generated artefacts.</strong> Does AI-generated code require a second engineer's sign-off before TIA upload, or is the generating engineer's review sufficient?</li>
+    <li><strong>Library contribution policy.</strong> Who can author new function block templates and reference library entries — any engineer, or only the principal? Affects governance design.</li>
+    <li><strong>Pattern approval policy.</strong> Are patterns auto-approved by the engineer who generated them, or do they queue for principal review? Trade-off between learning velocity and quality control.</li>
+    <li><strong>Backup and disaster recovery scope.</strong> What's the studio's tolerance for data loss? Affects backup frequency and retention policy.</li>
+    <li><strong>Failure-mode policy.</strong> When Forja cannot handle a project segment — a third-party vendor controller — what's the documented fallback?</li>
+    <li><strong>External licensing direction.</strong> What's the target window for considering external licensing — twelve months, twenty-four? Affects whether multi-tenant architecture should influence MVP design choices.</li>
+    <li><strong>Customer disclosure.</strong> Do customers need to know AI was used in producing their project code? Affects contracts, liability, and marketing.</li>
+  </ol>
+</section>
+
+
+<!-- ============================================================
+     APPENDIX A — GLOSSARY
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">A</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Appendix</span>
+  </div>
+  <h1>Glossary</h1>
+
+  <table class="brand rowlabels">
+    <tbody>
+      <tr><td>Assembly</td><td>A coordinated group of devices working together — a conveyor, a lift table, a pusher.</td></tr>
+      <tr><td>Device</td><td>A single physical thing with IO signals — a motor, a limit switch, a solenoid.</td></tr>
+      <tr><td>DOL</td><td>Direct-on-line motor — uncontrolled start, contactor only.</td></tr>
+      <tr><td>FB</td><td>Function Block (Siemens). Reusable block of code with internal state, instantiated as instance DBs.</td></tr>
+      <tr><td>FC</td><td>Function (Siemens). Stateless block of code.</td></tr>
+      <tr><td>FDS</td><td>Functional Description Specification. The structured behavioural document produced by the FDS Builder.</td></tr>
+      <tr><td>HMI</td><td>Human-Machine Interface — the operator screens.</td></tr>
+      <tr><td>LAD</td><td>Ladder Diagram. One of the IEC 61131-3 PLC programming languages.</td></tr>
+      <tr><td>OB</td><td>Organization Block (Siemens). Top-level entry point.</td></tr>
+      <tr><td>PLC</td><td>Programmable Logic Controller.</td></tr>
+      <tr><td>PLCSim</td><td>Siemens' PLC simulator. Used for offline testing without physical hardware.</td></tr>
+      <tr><td>SCL</td><td>Structured Control Language. Pascal-like PLC language; one of the IEC 61131-3 standards.</td></tr>
+      <tr><td>Subsystem</td><td>A functional station within a machine — infeed conveyor station, hydraulic lift station.</td></tr>
+      <tr><td>TIA Portal</td><td>Siemens' integrated engineering environment for Siemens controllers and HMIs.</td></tr>
+      <tr><td>TIA Openness</td><td>Siemens' API for programmatic interaction with TIA Portal projects.</td></tr>
+      <tr><td>UDT</td><td>User-Defined Type. A struct-like typed record in TIA Portal.</td></tr>
+      <tr><td>VSD</td><td>Variable Speed Drive — controlled motor speed via drive electronics.</td></tr>
+    </tbody>
+  </table>
+</section>
+
+
+<!-- ============================================================
+     APPENDIX B — OUT OF SCOPE
+     ============================================================ -->
+<section class="page-break"></section>
+<section>
+  <div class="section-opener">
+    <span class="section-num">B</span>
+    <span class="section-rule"></span>
+    <span class="section-meta">Appendix</span>
+  </div>
+  <h1>Not currently taking on</h1>
+
+  <p class="lead">Out of scope for the MVP. Each item is recorded with the rationale for deferral and the trigger to revisit it.</p>
+
+  <table class="brand">
+    <thead>
+      <tr>
+        <th style="width: 26%">Item</th>
+        <th style="width: 38%">Rationale for deferral</th>
+        <th>Trigger to reconsider</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td class="mono">HMI screen generation</td><td>Substantial workstream of its own; PLC-side work is the higher-leverage starting point</td><td>Two MVP customer projects delivered; HMI becomes the next bottleneck</td></tr>
+      <tr><td class="mono">KUKA / robot integration</td><td>Deep vendor-specific knowledge; prone to spec changes; would consume disproportionate MVP capacity</td><td>First customer project that requires it</td></tr>
+      <tr><td class="mono">ABB / non-Siemens drives</td><td>Same as above</td><td>First customer project that requires it</td></tr>
+      <tr><td class="mono">Multi-tenant external hosting</td><td>Architecturally significant; only justified once internal use is proven</td><td>External licensing decision made</td></tr>
+      <tr><td class="mono">Mobile clients</td><td>No use case identified for an engineer working away from a workstation</td><td>If field commissioning workflow emerges as a need</td></tr>
+      <tr><td class="mono">Live runtime telemetry</td><td>Outside Forja's design-time scope</td><td>Separate product investigation</td></tr>
+      <tr><td class="mono">Auto unit-test generation</td><td>Research-grade problem; immature tooling industry-wide</td><td>Industry-standard tools mature</td></tr>
+      <tr><td class="mono">Customer-facing portals</td><td>Out of scope for an internal tool</td><td>External licensing decision made</td></tr>
+    </tbody>
+  </table>
+
+  <div class="endmark">— END OF DOCUMENT —</div>
+</section>
+
+</body>
+</html>

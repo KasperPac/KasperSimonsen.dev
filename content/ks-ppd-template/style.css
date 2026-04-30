@@ -1,0 +1,581 @@
+/* ===========================================================================
+   KS Design System — Forja PPD
+   ===========================================================================
+   Embedded fonts via @font-face (TTFs in ./assets/fonts/)
+   Dark theme (#0B0B0B ground, #FAFAFA ink)
+   Page geometry: A4, generous margins, mono running header, mono page numbers
+   =========================================================================== */
+
+@font-face { font-family: "Inter"; font-weight: 400; src: url("assets/fonts/Inter-Regular.ttf"); }
+@font-face { font-family: "Inter"; font-weight: 700; src: url("assets/fonts/Inter-Bold.ttf"); }
+@font-face { font-family: "Inter"; font-weight: 900; src: url("assets/fonts/Inter-Black.ttf"); }
+@font-face { font-family: "Instrument Sans"; font-weight: 400; src: url("assets/fonts/InstrumentSans-Regular.ttf"); }
+@font-face { font-family: "Instrument Sans"; font-weight: 500; src: url("assets/fonts/InstrumentSans-Medium.ttf"); }
+@font-face { font-family: "Fraunces"; font-style: italic; src: url("assets/fonts/Fraunces-Italic.ttf"); }
+@font-face { font-family: "Geist Mono"; font-weight: 400; src: url("assets/fonts/GeistMono-Regular.ttf"); }
+@font-face { font-family: "Geist Mono"; font-weight: 500; src: url("assets/fonts/GeistMono-Medium.ttf"); }
+
+/* ─── Tokens ─── */
+:root {
+  --ink:        #FAFAFA;
+  --muted:      #AAAAAA;
+  --dim:        #666666;
+  --bg:         #0B0B0B;
+  --surface:    #161616;
+  --border:     #1F1F1F;
+  --border-2:   #2A2A2A;
+  --accent:     #FF5A1F;
+  --health:     #7A9B6E;
+
+  --display: "Inter", "Helvetica Neue", Arial, sans-serif;
+  --body:    "Instrument Sans", system-ui, sans-serif;
+  --serif:   "Fraunces", Georgia, serif;
+  --mono:    "Geist Mono", "IBM Plex Mono", Consolas, monospace;
+}
+
+/* ─── Page ─── */
+@page {
+  size: A4;
+  margin: 22mm 18mm 22mm 18mm;
+  background: var(--bg);
+
+  @top-left {
+    content: "forja  ·  project planning document";
+    font-family: var(--mono);
+    font-size: 8pt;
+    letter-spacing: 0.05em;
+    color: var(--dim);
+    margin-bottom: 8mm;
+  }
+  @top-right {
+    content: "v1.0 · draft";
+    font-family: var(--mono);
+    font-size: 8pt;
+    letter-spacing: 0.05em;
+    color: var(--dim);
+    margin-bottom: 8mm;
+  }
+  @bottom-center {
+    content: counter(page, decimal-leading-zero) "  /  " counter(pages, decimal-leading-zero);
+    font-family: var(--mono);
+    font-size: 8pt;
+    letter-spacing: 0.05em;
+    color: var(--dim);
+    margin-top: 8mm;
+  }
+}
+
+/* Cover page has different chrome */
+@page :first {
+  margin: 0;
+  @top-left { content: ""; }
+  @top-right { content: ""; }
+  @bottom-center { content: ""; }
+}
+
+/* ─── Base ─── */
+* { box-sizing: border-box; }
+
+html, body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--body);
+  font-size: 10pt;
+  line-height: 1.55;
+  margin: 0;
+  padding: 0;
+}
+
+p {
+  font-family: var(--body);
+  font-size: 10.5pt;
+  color: var(--muted);
+  line-height: 1.55;
+  margin: 0 0 8pt 0;
+}
+
+p.lead {
+  color: var(--ink);
+  font-size: 11.5pt;
+  line-height: 1.5;
+}
+
+p.dim {
+  color: var(--dim);
+  font-size: 9.5pt;
+  font-style: italic;
+}
+
+a { color: var(--accent); text-decoration: none; }
+
+strong, b { color: var(--ink); font-weight: 500; }
+em, i { font-style: italic; }
+
+code, .mono {
+  font-family: var(--mono);
+  font-size: 9.5pt;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
+/* ─── Cover ─── */
+.cover {
+  page-break-after: always;
+  background: var(--bg);
+  height: 297mm;
+  padding: 22mm 18mm;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.cover-mark {
+  position: absolute;
+  top: 18mm;
+  right: 18mm;
+  width: 56px;
+  height: 56px;
+}
+.cover-mark img { width: 100%; height: 100%; display: block; }
+
+.cover-hint {
+  font-family: var(--mono);
+  font-size: 9pt;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--dim);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin-bottom: 16mm;
+}
+.cover-hint::before {
+  content: "";
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.cover-eyebrow {
+  font-family: var(--mono);
+  font-size: 9pt;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--dim);
+  margin-bottom: 6mm;
+}
+
+.cover-title {
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 80pt;
+  line-height: 0.92;
+  letter-spacing: -0.04em;
+  color: var(--ink);
+  text-transform: uppercase;
+  margin: 0 0 10mm 0;
+}
+
+.cover-subtitle {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 22pt;
+  line-height: 1.2;
+  color: var(--muted);
+  margin: 0 0 auto 0;
+  max-width: 90%;
+}
+
+/* Cover metadata block */
+.cover-meta {
+  margin-top: auto;
+  border-top: 0.5pt solid var(--border);
+  padding-top: 8mm;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8mm 6mm;
+}
+.cover-meta-cell .label {
+  font-family: var(--mono);
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--dim);
+  margin-bottom: 4pt;
+  display: block;
+}
+.cover-meta-cell .value {
+  font-family: var(--mono);
+  font-size: 9.5pt;
+  color: var(--ink);
+  display: block;
+}
+
+.cover-footer {
+  margin-top: 6mm;
+  border-top: 0.5pt solid var(--border);
+  padding-top: 5mm;
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--mono);
+  font-size: 8pt;
+  color: var(--dim);
+  letter-spacing: 0.05em;
+}
+.cover-footer a { color: var(--ink); }
+
+/* ─── Section opener ─── */
+.section-opener {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 4mm;
+  margin: 0 0 6mm 0;
+  page-break-after: avoid;
+}
+.section-opener .section-num {
+  font-family: var(--mono);
+  font-size: 9pt;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+.section-opener .section-rule {
+  height: 0.5pt;
+  background: var(--border);
+}
+.section-opener .section-meta {
+  font-family: var(--mono);
+  font-size: 9pt;
+  letter-spacing: 0.15em;
+  color: var(--dim);
+  text-transform: uppercase;
+}
+
+/* ─── Headings ─── */
+h1, h2, h3 { color: var(--ink); margin: 0 0 6mm 0; page-break-after: avoid; }
+h1 {
+  font-family: var(--display);
+  font-weight: 900;
+  font-size: 32pt;
+  line-height: 1;
+  letter-spacing: -0.025em;
+}
+h2 {
+  font-family: var(--display);
+  font-weight: 700;
+  font-size: 14pt;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin-top: 8mm;
+  margin-bottom: 3mm;
+}
+h3 {
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 9pt;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin: 6mm 0 2mm 0;
+}
+
+/* H2 styled version with mono-eyebrow above */
+.h2-block {
+  margin-top: 6mm;
+  page-break-after: avoid;
+}
+.h2-block .eyebrow {
+  font-family: var(--mono);
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--dim);
+  margin-bottom: 1mm;
+  display: block;
+}
+
+/* ─── Page breaks ─── */
+.page-break { page-break-after: always; }
+section { page-break-inside: auto; }
+section h1 { page-break-after: avoid; }
+.cover + section { page-break-before: always; }
+
+/* ─── Lists ─── */
+ul.brand, ol.brand {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 4mm 0;
+}
+ul.brand li, ol.brand li {
+  padding: 1mm 0 1mm 6mm;
+  position: relative;
+  color: var(--muted);
+  font-size: 10pt;
+  line-height: 1.5;
+}
+ul.brand li::before {
+  content: "—";
+  position: absolute;
+  left: 0;
+  color: var(--dim);
+  font-family: var(--mono);
+}
+ol.brand {
+  counter-reset: olc;
+}
+ol.brand li {
+  counter-increment: olc;
+  padding-left: 9mm;
+}
+ol.brand li::before {
+  content: counter(olc, decimal-leading-zero);
+  position: absolute;
+  left: 0;
+  font-family: var(--mono);
+  font-size: 9pt;
+  color: var(--dim);
+  letter-spacing: 0.05em;
+}
+
+/* ─── Tables ─── */
+table.brand {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 4mm 0 6mm 0;
+  font-size: 9.5pt;
+  border-top: 0.5pt solid var(--border-2);
+  border-bottom: 0.5pt solid var(--border-2);
+}
+table.brand thead th {
+  font-family: var(--mono);
+  font-size: 8pt;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--dim);
+  text-align: left;
+  padding: 3mm 3mm 3mm 0;
+  border-bottom: 0.5pt solid var(--border-2);
+}
+table.brand thead th:not(:last-child) { padding-right: 4mm; }
+table.brand tbody td {
+  padding: 2.5mm 3mm 2.5mm 0;
+  vertical-align: top;
+  color: var(--muted);
+  border-bottom: 0.5pt solid var(--border);
+}
+table.brand tbody td:not(:last-child) { padding-right: 4mm; }
+table.brand tbody tr:last-child td { border-bottom: none; }
+
+/* Mono table cells (for keys / numeric / technical) */
+table.brand td.mono, table.brand td.tag {
+  font-family: var(--mono);
+  font-size: 9pt;
+  color: var(--ink);
+}
+
+/* Row labels (first column) sometimes get the mono treatment */
+table.brand.rowlabels tbody td:first-child {
+  font-family: var(--mono);
+  font-size: 9pt;
+  color: var(--ink);
+  white-space: nowrap;
+  padding-right: 6mm;
+  width: 1%;
+}
+
+/* ─── Status pills ─── */
+.pill {
+  font-family: var(--mono);
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 1mm 2mm;
+  border: 0.5pt solid var(--border-2);
+  color: var(--dim);
+  display: inline-block;
+}
+.pill.accent { color: var(--accent); border-color: rgba(255,90,31,0.3); background: rgba(255,90,31,0.05); }
+.pill.health { color: var(--health); border-color: rgba(122,155,110,0.3); background: rgba(122,155,110,0.05); }
+
+.pills { display: flex; flex-wrap: wrap; gap: 2mm; margin: 2mm 0 4mm 0; }
+
+/* Status row pattern */
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 3mm;
+  font-family: var(--mono);
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--dim);
+  margin: 2mm 0 4mm 0;
+}
+.status-row::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+}
+.status-row.health::before { background: var(--health); }
+
+/* ─── Callout (left orange bar + dark surface) ─── */
+.callout {
+  border-left: 4pt solid var(--accent);
+  background: var(--surface);
+  padding: 4mm 5mm;
+  margin: 4mm 0 4mm 0;
+  page-break-inside: avoid;
+}
+.callout .label {
+  font-family: var(--mono);
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: var(--accent);
+  margin-bottom: 1mm;
+  display: block;
+}
+.callout p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 10.5pt;
+  line-height: 1.5;
+}
+.callout p + p { margin-top: 2mm; }
+
+/* Quote callout — Fraunces italic, no orange bar, just a serif feel */
+.quote {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 16pt;
+  line-height: 1.3;
+  color: var(--ink);
+  border-left: 0.5pt solid var(--border-2);
+  padding-left: 5mm;
+  margin: 4mm 0;
+}
+
+/* ─── Figures ─── */
+figure {
+  margin: 6mm 0 8mm 0;
+  page-break-inside: avoid;
+}
+figure img {
+  width: 100%;
+  display: block;
+}
+figcaption {
+  font-family: var(--mono);
+  font-size: 8pt;
+  letter-spacing: 0.05em;
+  color: var(--dim);
+  text-transform: uppercase;
+  margin-top: 2mm;
+  text-align: center;
+}
+
+/* ─── TOC ─── */
+.toc {
+  margin: 6mm 0 0 0;
+}
+.toc-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: baseline;
+  gap: 3mm;
+  padding: 1.5mm 0;
+  border-bottom: 0.5pt solid var(--border);
+}
+.toc-item .num {
+  font-family: var(--mono);
+  font-size: 9pt;
+  color: var(--dim);
+  letter-spacing: 0.05em;
+  width: 8mm;
+}
+.toc-item .label {
+  font-family: var(--body);
+  font-size: 11pt;
+  color: var(--ink);
+}
+.toc-item .meta {
+  font-family: var(--mono);
+  font-size: 8pt;
+  color: var(--dim);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+/* ─── Two-column layout for definition lists / compact info ─── */
+.col-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4mm 8mm;
+  margin: 4mm 0;
+}
+
+/* ─── Number-led tile (for metrics or counts) ─── */
+.tile {
+  border: 0.5pt solid var(--border);
+  padding: 5mm;
+  page-break-inside: avoid;
+}
+.tile .tile-label {
+  font-family: var(--mono);
+  font-size: 8pt;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--dim);
+  display: block;
+  margin-bottom: 2mm;
+}
+.tile .tile-num {
+  font-family: var(--mono);
+  font-size: 28pt;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1;
+  letter-spacing: -0.02em;
+  display: block;
+  margin-bottom: 2mm;
+}
+.tile .tile-text {
+  font-family: var(--body);
+  font-size: 10pt;
+  color: var(--muted);
+  line-height: 1.4;
+  display: block;
+}
+
+/* ─── Utility ─── */
+.hr {
+  border: none;
+  border-top: 0.5pt solid var(--border);
+  margin: 6mm 0;
+}
+.hr-2 { border-top: 0.5pt solid var(--border-2); }
+
+.spacer-1 { height: 4mm; }
+.spacer-2 { height: 8mm; }
+.spacer-3 { height: 12mm; }
+
+.text-accent { color: var(--accent); }
+.text-health { color: var(--health); }
+.text-dim    { color: var(--dim); }
+
+/* End-of-document marker */
+.endmark {
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 8pt;
+  color: var(--dim);
+  letter-spacing: 0.2em;
+  margin-top: 14mm;
+}

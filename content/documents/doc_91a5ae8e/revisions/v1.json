@@ -1,0 +1,23 @@
+{
+  "revision": 1,
+  "documentType": "ppd",
+  "cover": {
+    "eyebrow": "personal-project",
+    "title": "",
+    "subtitle": "",
+    "hint": "Project Planning Document — v1.0 · Draft",
+    "meta": {
+      "client": "Personal Project",
+      "author": "Kasper Simonsen",
+      "date": "2026-04-29",
+      "status": "Draft",
+      "engagement": "",
+      "stack": "",
+      "pages": "—",
+      "documentId": "ks-ppd-personal-project-v1"
+    }
+  },
+  "contents": [],
+  "sections": [],
+  "createdAt": "2026-04-29T23:31:14.306Z"
+}

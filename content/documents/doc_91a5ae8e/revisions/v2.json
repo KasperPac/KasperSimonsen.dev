@@ -1,0 +1,23 @@
+{
+  "revision": 2,
+  "documentType": "ppd",
+  "cover": {
+    "eyebrow": "personal-project",
+    "title": "KEEP YOUR RIVALRIES IN CHECK",
+    "subtitle": "A pub friendly score keeping app",
+    "hint": "Project Planning Document — v1.0 · Draft",
+    "meta": {
+      "client": "Personal Project",
+      "author": "Kasper Simonsen",
+      "date": "2026-04-29",
+      "status": "Draft",
+      "engagement": "External Use",
+      "stack": "",
+      "pages": "—",
+      "documentId": "ks-ppd-personal-project-v1"
+    }
+  },
+  "contents": [],
+  "sections": [],
+  "createdAt": "2026-04-30T00:32:29.578Z"
+}
