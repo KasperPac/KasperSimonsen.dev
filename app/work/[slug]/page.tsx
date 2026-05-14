@@ -105,12 +105,6 @@ export default async function CaseStudyPage({ params }: { params: Params }) {
                 opacity: 0.85,
               }}
             />
-            <p
-              className="text-xs tracking-[0.14em] uppercase"
-              style={{ ...mono, color: "var(--text-dim)" }}
-            >
-              {project.displayName}
-            </p>
             {project.liveUrl && (
               <a
                 href={project.liveUrl}
