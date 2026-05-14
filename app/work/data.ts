@@ -18,6 +18,7 @@ export type Project = {
   title: string;
   displayName: string;
   logo: string;
+  liveUrl?: string;
   role: string;
   stack: string[];
   integrationPoints: string[];
@@ -91,6 +92,7 @@ export const currently: Project[] = [
     title: "MANUFACTURING OPERATIONS UNDER THE STOREFRONT",
     displayName: "Manuva",
     logo: "/manuva.svg",
+    liveUrl: "https://manuva.app",
     role: "Sole engineer",
     stack: [
       "Next.js 16 (App Router)",
@@ -137,6 +139,7 @@ export const previously: Project[] = [
     title: "EVERY GRAM, SIGNED FOR",
     displayName: "Silio",
     logo: "/silio.svg",
+    liveUrl: "https://pac-technologies.com.au/products/silio",
     role: "Sole engineer (software)",
     stack: [
       "Omron Sysmac NJ/NX PLC (plant control layer)",

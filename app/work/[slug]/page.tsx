@@ -111,6 +111,17 @@ export default async function CaseStudyPage({ params }: { params: Params }) {
             >
               {project.displayName}
             </p>
+            {project.liveUrl && (
+              <a
+                href={project.liveUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs tracking-[0.06em] uppercase transition-opacity duration-150 opacity-80 hover:opacity-100"
+                style={{ ...mono, color: "var(--accent)" }}
+              >
+                {project.liveUrl.replace(/^https?:\/\//, "")} ↗
+              </a>
+            )}
           </div>
 
           {/* Metadata table */}

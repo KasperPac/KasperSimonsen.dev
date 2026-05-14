@@ -5,7 +5,7 @@ import { availability } from "@/lib/availability";
 import { WorkWithMeOfferings } from "./Offerings";
 
 export const metadata: Metadata = {
-  title: "Work With Me — Kasper Simonsen",
+  title: "Collab? — Kasper Simonsen",
   description:
     "Hire an independent software engineer in Melbourne. Fixed-scope tools in 1–3 weeks, or full platform builds in 6–16 weeks. Custom web, mobile, and AI systems.",
 };
