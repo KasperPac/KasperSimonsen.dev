@@ -218,6 +218,39 @@ export default async function CaseStudyPage({ params }: { params: Params }) {
                 </div>
               </div>
 
+              {/* Platforms */}
+              {project.platforms && project.platforms.length > 0 && (
+                <div
+                  className="space-y-2"
+                  style={{
+                    borderTop: "0.5px solid var(--border)",
+                    paddingTop: "1.25rem",
+                  }}
+                >
+                  <p
+                    className="text-[10px] tracking-[0.06em] uppercase"
+                    style={{ ...mono, color: "var(--text-dim)" }}
+                  >
+                    Platforms
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {project.platforms.map((item) => (
+                      <span
+                        key={item}
+                        className="text-[11px] px-2 py-0.5"
+                        style={{
+                          ...mono,
+                          color: "var(--text-muted)",
+                          border: "0.5px solid var(--border)",
+                        }}
+                      >
+                        {item}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Notable details */}
               {project.notableDetails.length > 0 && (
                 <div

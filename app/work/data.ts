@@ -22,6 +22,7 @@ export type Project = {
   role: string;
   stack: string[];
   integrationPoints: string[];
+  platforms?: string[];
   notableDetails: string[];
 };
 
@@ -107,6 +108,16 @@ export const currently: Project[] = [
       "Real-time webhook sync for products, variants, orders, locations",
       "Supabase RPCs for allocation, receiving, costing, and stocktake",
       "Built-in integrity audit (drift, over-reservation, over-receipt, duplicates)",
+    ],
+    platforms: [
+      "Shopify",
+      "WooCommerce",
+      "Amazon",
+      "Etsy",
+      "eBay",
+      "Xero",
+      "MYOB",
+      "QuickBooks",
     ],
     notableDetails: [
       "Append-only movement ledger + derived balance per location",
