@@ -92,7 +92,7 @@ export const currently: Project[] = [
     githubRepo: "assemblio",
     title: "MANUFACTURING OPERATIONS UNDER THE STOREFRONT",
     displayName: "Manuva",
-    logo: "/manuva.svg",
+    logo: "/manuva.png",
     liveUrl: "https://manuva.app",
     role: "Sole engineer",
     stack: [
