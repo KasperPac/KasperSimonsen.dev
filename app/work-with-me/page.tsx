@@ -29,7 +29,7 @@ export default function WorkWithMePage() {
             className="font-black uppercase leading-none"
             style={{ ...display, fontSize: "clamp(52px, 8vw, 100px)", letterSpacing: "-0.06em", color: "var(--text-primary)" }}
           >
-            WORK WITH ME
+            COLLAB?
           </h1>
         </InversionCursor>
       </div>

@@ -7,7 +7,12 @@ const mono = { fontFamily: "var(--font-geist-mono), ui-monospace, monospace" };
 
 const REPO_COLOR: Record<string, string> = {
   "pac-forge": "var(--accent)",
-  "assemblio": "var(--health)",
+  "manuva":    "var(--health)",
+};
+
+// Internal GitHub repo name → display label
+const REPO_DISPLAY: Record<string, string> = {
+  "assemblio": "manuva",
 };
 
 type Commit = {
@@ -35,7 +40,7 @@ async function fetchRepoCommits(repo: string): Promise<Commit[]> {
     const data: any[] = await r.json();
     return data.map((c) => ({
       sha:     c.sha.slice(0, 7),
-      repo,
+      repo:    REPO_DISPLAY[repo] ?? repo,
       message: c.commit.message.split("\n")[0]!,
       date:    new Date(c.commit.author.date).toLocaleDateString("en-AU", {
         day:   "2-digit",
@@ -49,9 +54,9 @@ async function fetchRepoCommits(repo: string): Promise<Commit[]> {
 
 const FALLBACK: Commit[] = [
   { sha: "a1c4f8e", repo: "pac-forge", message: "feat: safety-auditor agent prompt revision",   date: "20 Apr" },
-  { sha: "f7d22b9", repo: "assemblio", message: "fix: HMAC verification edge case",              date: "18 Apr" },
+  { sha: "f7d22b9", repo: "manuva",    message: "fix: HMAC verification edge case",              date: "18 Apr" },
   { sha: "3e8a107", repo: "pac-forge", message: "perf: shared cache across agent pipeline",      date: "12 Apr" },
-  { sha: "9bb4e02", repo: "assemblio", message: "feat: drift detection scheduled job",           date: "09 Apr" },
+  { sha: "9bb4e02", repo: "manuva",    message: "feat: drift detection scheduled job",           date: "09 Apr" },
 ];
 
 export default async function ActivityLog() {

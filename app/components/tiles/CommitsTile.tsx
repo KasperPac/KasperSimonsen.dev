@@ -176,7 +176,7 @@ export default async function CommitsTile() {
         </span>
         <span className="flex items-center gap-2 text-xs uppercase tracking-wider" style={{ ...mono, color: "var(--health)" }}>
           <span className="inline-block w-4 h-[1.5px]" style={{ background: "var(--health)" }} />
-          assemblio
+          manuva
         </span>
       </div>
 

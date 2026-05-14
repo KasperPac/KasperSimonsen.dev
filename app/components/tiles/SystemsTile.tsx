@@ -48,7 +48,7 @@ export default function SystemsTile() {
         </div>
       </div>
 
-      {/* assemblio desc — materialises from below where "2" was, slight stagger */}
+      {/* manuva desc — materialises from below where "2" was, slight stagger */}
       <div
         className="absolute transition-all duration-300 ease-out
                    opacity-0 translate-y-3 blur-sm
@@ -57,7 +57,7 @@ export default function SystemsTile() {
         style={{ top: 122, left: 20, right: 20, transitionDelay: "170ms" }}
       >
         <p className="text-xs leading-relaxed" style={{ ...body, color: "var(--text-muted)" }}>
-          Shopify-connected BOM + inventory. Append-only ledger, RLS from schema up.
+          Shopify-native manufacturing ops — BOMs, inventory, purchasing, capacity. Tenant-scoped, append-only ledger.
         </p>
         <div className="h-[2px] w-full" style={{ background: "var(--border)" }}>
           <div className="h-full" style={{ width: "60%", background: "var(--health)" }} />
@@ -78,7 +78,7 @@ export default function SystemsTile() {
         <span className="text-xs" style={{ ...mono, color: "var(--health)" }}>72%</span>
       </div>
 
-      {/* assemblio row — slides up below pac-forge's expanded state (Δ=100px) */}
+      {/* manuva row — slides up below pac-forge's expanded state (Δ=100px) */}
       <div
         className="absolute flex items-center justify-between z-10
                    transition-transform duration-500 ease-out
@@ -87,7 +87,7 @@ export default function SystemsTile() {
       >
         <div className="flex items-center gap-2">
           <span className="inline-block w-[5px] h-[5px] rounded-full flex-shrink-0" style={{ background: "var(--health)" }} />
-          <span className="text-sm" style={{ ...mono, color: "var(--text-muted)" }}>assemblio</span>
+          <span className="text-sm" style={{ ...mono, color: "var(--text-muted)" }}>manuva</span>
         </div>
         <span className="text-xs" style={{ ...mono, color: "var(--health)" }}>60%</span>
       </div>

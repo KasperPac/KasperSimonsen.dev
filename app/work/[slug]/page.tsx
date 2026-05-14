@@ -5,7 +5,7 @@ import { currently, previously } from "@/app/work/data";
 import { fetchRepoMeta } from "@/lib/github";
 import InversionCursor from "@/app/components/InversionCursor";
 import PacForgeContent from "./content/pac-forge";
-import AssemblioContent from "./content/assemblio";
+import ManuvaContent from "./content/manuva";
 import SilioContent from "./content/silio";
 
 type Params = Promise<{ slug: string }>;
@@ -18,7 +18,7 @@ const allProjects = [...currently, ...previously];
 
 const contentBySlug: Record<string, ComponentType> = {
   "pac-forge": PacForgeContent,
-  "assemblio": AssemblioContent,
+  "manuva":    ManuvaContent,
   "silio":     SilioContent,
 };
 
