@@ -13,7 +13,7 @@ Kasper Simonsen is an independent software engineer based in Melbourne, Australi
 
 - **Forja**: Eight-agent AI pipeline for Siemens TIA Portal — turns functional specs into compiling SCL/HMI code and back. Stack: React 19, Claude API, .NET 4.8, Supabase, TIA Openness.
 - **Assemblio**: Shopify-connected BOM, inventory, purchasing, stocktake, and capacity system for assembly teams. Multi-tenant SaaS with append-only ledger and RLS from schema up.
-- **Silio**: Industrial feed production software for Rabar's plant — Omron PLC integration, NFC-signed weighing, React Native Android scanner, SQL audit log. Replaced paper-based workflow.
+- **Silio**: Full-stack batching management for food and feed manufacturers — ERP integration, Omron PLC control, NFC-signed weighing, dribble-feed dosing, loss-in-weight silos, mid-batch substitution with ERP reporting, multi-zone concurrent operation, React Native Android scanner, SQL audit log, live React dashboard. Sold by PAC Technologies; in production at a Beaudesert QLD feed plant since 2023.
 
 ## Availability
 

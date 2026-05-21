@@ -6,16 +6,18 @@ const hardBits = [
   {
     title: "Buffering orders between Tencia and the plant",
     paras: [
-      "Tencia is Rabar's existing ERP — products, recipes, customers, and work orders all live there. Silio doesn't replace Tencia, it reads from it. The ingestion layer pulls orders out in priority order and queues them onto the PLC. The PLC keeps a working buffer of up to 100 active orders, and refills it as orders complete.",
+      "Tencia is the plant's existing ERP — products, recipes, customers, and work orders all live there. Silio doesn't replace it, it reads from it. The ingestion layer pulls orders out in priority order and queues them onto the PLC. The PLC keeps a working buffer of up to 100 active orders, and refills it as orders complete. Up to 99 batches can be in flight at once, with up to 99 ingredients each.",
       "Rush orders are the tricky part. When the office flags an order as urgent, it jumps the queue in Tencia. The ingestion layer picks it up on the next refresh. The PLC promotes it to the top of the working buffer. The relevant station's interface surfaces it immediately. None of this can disrupt whatever's already in progress — you can't yank an in-flight ingredient out of an operator's hand. Silio slots the rush order as the next thing up, not the current thing, and the working buffer makes that safe.",
-      "The ingestion layer also owns the trip back. When a batch completes, the actual weights and the signed audit trail get written to Tencia so Rabar's reporting and stock systems stay current. Tencia knows what was planned. Silio reports what actually happened.",
+      "Sometimes the plant has to substitute an ingredient mid-batch — a specific SKU is short, an alternative passes spec, the operator picks it. Silio doesn't pretend that didn't happen. The substitution is recorded against the batch with its own GIN and weight, and the ingestion layer reports it back to Tencia so stock and recipe variance stay accurate. What was planned and what actually happened are both first-class records — never the same row overwritten twice.",
+      "The ingestion layer owns the trip back too. When a batch completes, the actual weights and the signed audit trail get written to Tencia so reporting and stock systems stay current. Tencia knows what was planned. Silio reports what actually happened.",
     ],
   },
   {
     title: "Weighing to tolerance, signed by the operator",
     paras: [
       "Weighing is the core of the plant. Each measured ingredient has a target weight and an adjustable tolerance. The PLC reads the scale live and tells the operator's interface when the weight is in tolerance. Only then can the operator accept the ingredient. And only an NFC tap commits it. The tag's UID is the operator's identity.",
-      "Three conditions have to agree for a sign-off to commit: the scale is in tolerance, the scanned GIN matches the ingredient the recipe expects next, and the operator's NFC tag is tapped. The PLC validates all three together. If any one fails — wrong ingredient, weight out of tolerance, unauthorised tag — the sign-off is rejected and nothing hits SQL. The audit log only contains entries where all three conditions agreed at the same moment in time.",
+      "Dosing isn't a single cutoff — it's a profile. For ingredients that need fine accuracy, the PLC runs a dribble-feed: full speed until close to the target, then a slow trickle to land cleanly inside tolerance without overshoot. Threshold and trickle rate are configurable per ingredient. The largest dry ingredients come from silos sitting on their own load cells — loss-in-weight control, where the discharge is measured as weight lost from the silo rather than weight gained at the scale. Different shape, same audit guarantee.",
+      "Four conditions have to agree for a sign-off to commit: the scale is in tolerance, the scanned GIN matches the ingredient the recipe expects next, the GIN is a live stock record in the ERP (not already consumed, not unreceived), and the operator's NFC tag is tapped. The PLC validates all four together. If any one fails — wrong ingredient, weight out of tolerance, stock record stale, unauthorised tag — the sign-off is rejected and nothing hits SQL. The audit log only contains entries where all four conditions agreed at the same moment in time.",
       "This matters because the audit log is the record of who weighed what into which batch. Partial writes, drift between the PLC and SQL, sign-offs without a weight check — any one of those breaks the guarantee. A bag of finished feed shipping to a customer needs to tie unambiguously to a set of NFC-signed events in SQL.",
     ],
   },
@@ -52,10 +54,10 @@ export default function SilioContent() {
       {/* Opening */}
       <div className="space-y-4 max-w-[68ch]">
         <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-          Silio runs Rabar's animal-nutrition feed facility in Beaudesert, Queensland. It pulls work orders from Rabar's existing Tencia ERP, drives weighing and blending through an Omron PLC, validates every ingredient that enters a batch, and writes every operator action to a SQL audit log. Operators carry an Android scanner so they can sign off bulk bags where they sit on the floor, without dragging them to a station. The office watches the plant through a live web dashboard.
+          Silio is full-stack batching management for food and feed manufacturers. It plugs into an existing ERP, drives weighing and blending through an industrial PLC, validates every ingredient that enters a batch, and writes every operator action to a SQL audit log. Operators carry an Android scanner so they can sign off bulk bags where they sit on the floor, without dragging them to a station. The office watches the plant through a live web dashboard. Silio ships as a complete bundle — PLC and remote I/O, load cells, NFC readers, touchscreen HMI panels, rugged Android devices, and the software that ties them together.
         </p>
         <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-          The original Rabar plant down the road still runs on handwritten work orders and end-of-shift operator signatures. Silio replaces that paper trail with a typed, signed digital workflow. Every weight, every scan, every bag, every action is recorded in real time against the person who did it.
+          The case study below covers an animal-nutrition feed facility in Beaudesert, Queensland that has run on Silio since 2023. The plant previously worked from handwritten work orders and end-of-shift operator signatures. Silio replaced that paper trail with a typed, signed digital workflow across four concurrent production zones. Every weight, every scan, every bag, every action is recorded in real time against the person who did it.
         </p>
       </div>
 
@@ -68,7 +70,7 @@ export default function SilioContent() {
           A feed mill blends dry ingredients into nutritional mixes for livestock. Some ingredients are measured by hand (trace elements, premixes, specific weights of specific flours). Some arrive in bulk bags pre-measured by the supplier and dropped in whole. A single batch can pull 20+ ingredients from both workflows. Traditionally the operator works from a printed work order: weigh each measured ingredient, pick the bulk bags from the warehouse, write it down, sign the sheet at the end. The paperwork gets filed against the batch number. If anyone needs it later, someone walks to the filing cabinet.
         </p>
         <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-          This works until it doesn't. Handwritten weights drift from actual weights. Bag counts get off by one. End-of-shift signatures tell you very little about who did what and when. And when an animal gets sick from a specific batch, the chain back through the paperwork is slow and fragile. Rabar wanted the traceability the paper trail pretends to give — actually delivered, in real time, for every ingredient in every batch.
+          This works until it doesn't. Handwritten weights drift from actual weights. Bag counts get off by one. End-of-shift signatures tell you very little about who did what and when. And when an animal gets sick from a specific batch, the chain back through the paperwork is slow and fragile. The customer wanted the traceability the paper trail pretends to give — actually delivered, in real time, for every ingredient in every batch.
         </p>
       </section>
 
@@ -98,10 +100,13 @@ export default function SilioContent() {
 
         <div className="space-y-4 max-w-[68ch]">
           <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-            Silio is five pieces of software. An <em>ingestion layer</em> reads Tencia work orders and feeds them into a 100-order buffer on the PLC. An <em>Omron Sysmac PLC program</em> drives the plant hardware (load cells, valves, motors, scales) and enforces the weighing and tolerance logic for every ingredient. An <em>Android scanner app</em> runs on rugged devices so operators can scan bulk-bag GINs and sign off with an NFC tap without moving the bag. A <em>SQL backbone</em> captures every operator action — every weight, every scan, every sign-off — as an immutable event. A <em>React dashboard</em> reads SQL live for the office.
+            Silio is five pieces of software. An <em>ingestion layer</em> reads work orders from the ERP and feeds them into a 100-order buffer on the PLC. An <em>Omron Sysmac PLC program</em> drives the plant hardware (load cells, valves, motors, scales, and the loss-in-weight silos for the largest dry ingredients) and enforces the weighing and tolerance logic for every ingredient. An <em>Android scanner app</em> runs on rugged devices so operators can scan bulk-bag GINs and sign off with an NFC tap without moving the bag. A <em>SQL backbone</em> captures every operator action — every weight, every scan, every sign-off — as an immutable event. A <em>React dashboard</em> reads SQL live for the office.
           </p>
           <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-            Tencia owns orders. The PLC is where real-time control lives. SQL is the audit log. The Android app and the dashboard are two windows into the same running system. Every piece has a single job, and the wiring between them is typed and checked at every hop.
+            The plant runs up to four zones concurrently — each with its own stations, scales, scanners, HMI panels, and operators — and the PLC schedules across all of them. The 100-order buffer is shared. As many as 99 batches can be in flight at once, with up to 99 ingredients each. The dashboard renders every zone side by side.
+          </p>
+          <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
+            The ERP owns orders. The PLC is where real-time control lives. SQL is the audit log. The Android app and the dashboard are two windows into the same running system. Every piece has a single job, and the wiring between them is typed and checked at every hop.
           </p>
         </div>
       </section>
@@ -131,10 +136,10 @@ export default function SilioContent() {
           The result
         </h2>
         <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-          Silio has run Rabar's Beaudesert plant since 2023. The paper trail is gone. Every gram weighed into every batch — measured or bulk — is recorded in SQL against the operator who handled it and the NFC tap that confirmed it. Tracing a customer complaint back to the batch, then to the ingredients, then to the operators who signed each one, is one query. Not a walk to a filing cabinet.
+          Silio has run the Beaudesert plant since 2023. The paper trail is gone. Every gram weighed into every batch — measured or bulk — is recorded in SQL against the operator who handled it and the NFC tap that confirmed it. Tracing a customer complaint back to the batch, then to the ingredients, then to the operators who signed each one, is one query. Not a walk to a filing cabinet.
         </p>
         <p className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
-          Tencia stays in charge of orders and reporting. The plant stays in charge of weighing and blending. Silio wires them together so what Tencia plans is what the plant does, and what the plant does is what Tencia reports. The dashboard has become the office's default view of the day — a live feed, not a report run after the fact. And because every commit needs a physical NFC tap, the audit log records human actions, not claims the software made on someone's behalf.
+          The ERP stays in charge of orders and reporting. The plant stays in charge of weighing and blending. Silio wires them together so what the ERP plans is what the plant does, and what the plant does is what the ERP reports. The dashboard has become the office's default view of the day — a live feed, not a report run after the fact. And because every commit needs a physical NFC tap, the audit log records human actions, not claims the software made on someone's behalf.
         </p>
       </section>
 

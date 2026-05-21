@@ -141,7 +141,7 @@ export const previously: Project[] = [
     category: "Industrial Automation",
     headline: "Every gram, signed for.",
     description:
-      "The software running Rabar's feed production facility — Tencia ERP orders in, Omron PLC on the floor, NFC-signed weighing, bulk-bag Android scanner, SQL audit log, live dashboard.",
+      "Full-stack batching for food and feed manufacturers — ERP orders in, Omron PLC on the floor, NFC-signed weighing, bulk-bag Android scanner, SQL audit log, live dashboard. Case study: a feed plant running on Silio since 2023.",
     pills: ["Omron PLC", "SQL", "React Native", "React"],
     stackSummary: "Omron PLC · SQL · React Native · React",
     integration: "Tencia ERP + Omron PLC",
