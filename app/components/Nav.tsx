@@ -36,6 +36,26 @@ function KSLogo({ hovered }: { hovered: boolean }) {
   );
 }
 
+function Wordmark({ hovered }: { hovered: boolean }) {
+  return (
+    <span
+      style={{
+        fontFamily: LOGO_FONT,
+        fontWeight: 900,
+        fontSize: 26,
+        letterSpacing: "-0.055em",
+        lineHeight: 1,
+        color: hovered ? "var(--accent)" : "var(--text-primary)",
+        display: "block",
+        textTransform: "uppercase",
+        transition: "color 120ms ease",
+      }}
+    >
+      KASPERSIMONSEN
+    </span>
+  );
+}
+
 export default function Nav() {
   const pathname = usePathname();
   const [logoHovered, setLogoHovered] = useState(false);
@@ -48,6 +68,8 @@ export default function Nav() {
   const isActive = (href: string) =>
     pathname === href || pathname.startsWith(href + "/");
 
+  const isHome = pathname === "/";
+
   return (
     <>
       <nav
@@ -59,8 +81,9 @@ export default function Nav() {
           style={{ display: "block", lineHeight: 0 }}
           onMouseEnter={() => setLogoHovered(true)}
           onMouseLeave={() => setLogoHovered(false)}
+          aria-label="Kasper Simonsen — home"
         >
-          <KSLogo hovered={logoHovered} />
+          {isHome ? <KSLogo hovered={logoHovered} /> : <Wordmark hovered={logoHovered} />}
         </Link>
 
         {/* Desktop links */}

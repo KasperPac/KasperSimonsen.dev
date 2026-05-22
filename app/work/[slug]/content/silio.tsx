@@ -61,6 +61,25 @@ export default function SilioContent() {
         </p>
       </div>
 
+      {/* Hero screenshot */}
+      <figure className="space-y-2">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src="/silio-dashboard.png"
+          alt="Silio production dashboard — live PLC state, daily throughput, orders completed, productive hours, and room volume"
+          loading="lazy"
+          style={{
+            width: "100%",
+            height: "auto",
+            display: "block",
+            border: "0.5px solid var(--border)",
+          }}
+        />
+        <figcaption className="text-[11px] tracking-[0.05em] uppercase" style={{ ...mono, color: "var(--text-dim)" }}>
+          Production dashboard — live PLC state, throughput, productive hours, room volume
+        </figcaption>
+      </figure>
+
       {/* The problem */}
       <section className="space-y-4 max-w-[68ch]">
         <h2 className="text-[2rem] italic leading-tight mb-5" style={{ ...serif, color: "var(--text-primary)" }}>
@@ -128,6 +147,25 @@ export default function SilioContent() {
             ))}
           </div>
         ))}
+
+        {/* Active-batch detail screenshot */}
+        <figure className="space-y-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/silio-batch.png"
+            alt="Silio active batch detail — overall completion, batch status, room status by zone, and the ingredient table with target weight, actual weight, and operator sign-off"
+            loading="lazy"
+            style={{
+              width: "100%",
+              height: "auto",
+              display: "block",
+              border: "0.5px solid var(--border)",
+            }}
+          />
+          <figcaption className="text-[11px] tracking-[0.05em] uppercase" style={{ ...mono, color: "var(--text-dim)" }}>
+            Active batch view — ingredient-level tracking with operator sign-off per row
+          </figcaption>
+        </figure>
       </section>
 
       {/* The result */}
