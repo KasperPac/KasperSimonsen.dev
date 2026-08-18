@@ -1,11 +1,15 @@
 import Link from "next/link";
 import { currently, previously } from "@/app/(main)/work/data";
 import { availability } from "@/lib/availability";
+import type { CSSProperties } from "react";
 import Reveal from "./Reveal";
 import Arrow from "./components/Arrow";
 import V2Nav from "./components/V2Nav";
 import Marquee from "./components/Marquee";
 import Parallax from "./components/Parallax";
+import Scrub from "./components/Scrub";
+
+const cardDrifts = ["26px", "-34px", "46px"];
 
 const projects = [...currently, ...previously];
 
@@ -50,10 +54,11 @@ const steps = [
 export default function V2Page() {
   return (
     <main>
+      <div className="v2-page-above">
       <V2Nav />
 
       {/* ── Hero ── */}
-      <header className="v2-hero" id="top">
+      <Scrub mode="exit" className="v2-hero" id="top">
         <Parallax speed={0.12} className="v2-hero-texture-wrap">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/v2/hero-texture.jpg" alt="" className="v2-hero-texture" fetchPriority="high" />
@@ -98,7 +103,7 @@ export default function V2Page() {
             </a>
           </div>
         </div>
-      </header>
+      </Scrub>
 
       {/* ── Capability marquee ── */}
       <Marquee
@@ -118,53 +123,63 @@ export default function V2Page() {
 
       {/* ── Selected work ── */}
       <section className="v2-section" id="work">
-        <Reveal className="v2-section-head">
-          <p className="v2-caption">Selected work — 2023 to now</p>
-          <h2 className="v2-display">
-            <span className="v2-line">
-              <span>
-                Selected <em className="v2-it">work</em>
+        <Scrub>
+          <Reveal className="v2-section-head">
+            <p className="v2-caption">Selected work — 2023 to now</p>
+            <h2 className="v2-display">
+              <span className="v2-line">
+                <span>
+                  Selected <em className="v2-it">work</em>
+                </span>
               </span>
-            </span>
-          </h2>
-        </Reveal>
+            </h2>
+          </Reveal>
+        </Scrub>
 
-        <div className="v2-work-grid">
+        <Scrub className="v2-work-grid">
           {projects.map((project, i) => (
-            <Reveal key={project.slug} delay={i * 90}>
-              <Link
-                href={`/v2/work/${project.slug}`}
-                className={`v2-card${i === 0 ? " v2-card--featured" : ""}`}
-              >
-                <div className="v2-card-top">
-                  <span className="v2-caption">{project.category}</span>
-                  <span className="v2-caption">{project.yearRange}</span>
-                </div>
-                <h3 className="v2-card-name">{project.displayName}</h3>
-                <p className="v2-card-desc">{project.headline} {project.description}</p>
-                <div className="v2-card-foot">
-                  <span className="v2-card-stack">{project.stackSummary}</span>
-                  <Arrow />
-                </div>
-              </Link>
-            </Reveal>
+            <div
+              key={project.slug}
+              className="v2-drift"
+              style={{ "--drift": cardDrifts[i] ?? "0px" } as CSSProperties}
+            >
+              <Reveal delay={i * 90}>
+                <Link
+                  href={`/v2/work/${project.slug}`}
+                  className={`v2-card${i === 0 ? " v2-card--featured" : ""}`}
+                >
+                  <div className="v2-card-top">
+                    <span className="v2-caption">{project.category}</span>
+                    <span className="v2-caption">{project.yearRange}</span>
+                  </div>
+                  <h3 className="v2-card-name">{project.displayName}</h3>
+                  <p className="v2-card-desc">{project.headline} {project.description}</p>
+                  <div className="v2-card-foot">
+                    <span className="v2-card-stack">{project.stackSummary}</span>
+                    <Arrow />
+                  </div>
+                </Link>
+              </Reveal>
+            </div>
           ))}
-        </div>
+        </Scrub>
       </section>
 
       {/* ── Services — the linen page turn ── */}
       <section className="v2-linen" id="services">
         <div className="v2-section">
-          <Reveal className="v2-section-head">
-            <p className="v2-caption">Services</p>
-            <h2 className="v2-display">
-              <span className="v2-line">
-                <span>
-                  What I <em className="v2-it">actually</em> do
+          <Scrub>
+            <Reveal className="v2-section-head">
+              <p className="v2-caption">Services</p>
+              <h2 className="v2-display">
+                <span className="v2-line">
+                  <span>
+                    What I <em className="v2-it">actually</em> do
+                  </span>
                 </span>
-              </span>
-            </h2>
-          </Reveal>
+              </h2>
+            </Reveal>
+          </Scrub>
 
           <Reveal>
             <p className="v2-linen-intro">
@@ -187,16 +202,18 @@ export default function V2Page() {
 
       {/* ── Process ── */}
       <section className="v2-section" id="process">
-        <Reveal className="v2-section-head">
-          <p className="v2-caption">Process — what happens after you get in touch</p>
-          <h2 className="v2-display">
-            <span className="v2-line">
-              <span>
-                No <em className="v2-it">mystery</em>
+        <Scrub>
+          <Reveal className="v2-section-head">
+            <p className="v2-caption">Process — what happens after you get in touch</p>
+            <h2 className="v2-display">
+              <span className="v2-line">
+                <span>
+                  No <em className="v2-it">mystery</em>
+                </span>
               </span>
-            </span>
-          </h2>
-        </Reveal>
+            </h2>
+          </Reveal>
+        </Scrub>
 
         <div className="v2-process">
           {steps.map((step, i) => (
@@ -208,23 +225,20 @@ export default function V2Page() {
           ))}
         </div>
       </section>
+      </div>
 
-      {/* ── Contact / footer ── */}
-      <footer className="v2-footer" id="contact">
-        <Reveal>
+      {/* ── Contact / footer — revealed as the page lifts away ── */}
+      <footer className="v2-footer v2-footer--curtain" id="contact">
+        <div>
           <p className="v2-caption">Contact</p>
           <h2 className="v2-display-xl v2-footer-cta">
-            <span className="v2-line">
-              <span>
-                Let&apos;s <em className="v2-it">talk</em>
-                <span className="v2-dot v2-dot--period" />
-              </span>
-            </span>
+            Let&apos;s <em className="v2-it">talk</em>
+            <span className="v2-dot v2-dot--period" />
           </h2>
           <a href="mailto:hello@kaspersimonsen.dev" className="v2-hairline-link">
             hello@kaspersimonsen.dev
           </a>
-        </Reveal>
+        </div>
 
         <div className="v2-footer-meta">
           <div className="v2-footer-meta-col">

@@ -23,23 +23,29 @@ export default function Parallax({
     if (!el || !parent) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-    let raf = 0;
     const update = () => {
-      raf = 0;
       const rect = parent.getBoundingClientRect();
       const mid = rect.top + rect.height / 2 - window.innerHeight / 2;
       el.style.transform = `translate3d(0, ${(-mid * speed).toFixed(1)}px, 0)`;
     };
-    const schedule = () => {
-      if (!raf) raf = requestAnimationFrame(update);
+
+    // rAF-driven (recompute only when the scroll position moved) — scroll
+    // events are unreliable under Lenis for programmatic jumps.
+    let lastY = -1;
+    let raf = requestAnimationFrame(function loop() {
+      if (window.scrollY !== lastY) {
+        lastY = window.scrollY;
+        update();
+      }
+      raf = requestAnimationFrame(loop);
+    });
+    const onResize = () => {
+      lastY = -1;
     };
-    update();
-    window.addEventListener("scroll", schedule, { passive: true });
-    window.addEventListener("resize", schedule, { passive: true });
+    window.addEventListener("resize", onResize, { passive: true });
     return () => {
-      window.removeEventListener("scroll", schedule);
-      window.removeEventListener("resize", schedule);
-      if (raf) cancelAnimationFrame(raf);
+      window.removeEventListener("resize", onResize);
+      cancelAnimationFrame(raf);
     };
   }, [speed]);
 

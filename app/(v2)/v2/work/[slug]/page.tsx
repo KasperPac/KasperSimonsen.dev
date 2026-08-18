@@ -6,6 +6,7 @@ import V2Nav from "../../components/V2Nav";
 import Arrow from "../../components/Arrow";
 import Marquee from "../../components/Marquee";
 import Parallax from "../../components/Parallax";
+import Scrub from "../../components/Scrub";
 import Reveal from "../../Reveal";
 
 type Params = Promise<{ slug: string }>;
@@ -48,7 +49,7 @@ export default async function V2CaseStudyPage({ params }: { params: Params }) {
       <V2Nav />
 
       {/* ── Header ── */}
-      <header className="v2-case-hero">
+      <Scrub mode="exit" className="v2-case-hero">
         <Parallax speed={0.14} className="v2-case-texture">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={textureBySlug[slug] ?? "/v2/hero-texture.jpg"} alt="" fetchPriority="high" />
@@ -82,7 +83,7 @@ export default async function V2CaseStudyPage({ params }: { params: Params }) {
             ))}
           </div>
         </div>
-      </header>
+      </Scrub>
 
       {/* ── Body ── */}
       <section className="v2-section" style={{ paddingTop: 0 }}>
@@ -96,23 +97,25 @@ export default async function V2CaseStudyPage({ params }: { params: Params }) {
 
         <div style={{ marginTop: "clamp(48px, 8vh, 80px)" }}>
           {study.sections.map((section) => (
-            <Reveal key={section.title} className="v2-case-section">
-              <h3>{section.title}</h3>
-              <div>
-                <div className="v2-prose">
-                  {section.paras.map((para) => (
-                    <p key={para.slice(0, 32)}>{para}</p>
-                  ))}
+            <Scrub key={section.title}>
+              <Reveal className="v2-case-section">
+                <h3>{section.title}</h3>
+                <div>
+                  <div className="v2-prose">
+                    {section.paras.map((para) => (
+                      <p key={para.slice(0, 32)}>{para}</p>
+                    ))}
+                  </div>
+                  {section.image && (
+                    <figure className="v2-figure">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={section.image.src} alt={section.image.caption} loading="lazy" />
+                      <figcaption className="v2-caption">{section.image.caption}</figcaption>
+                    </figure>
+                  )}
                 </div>
-                {section.image && (
-                  <figure className="v2-figure">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={section.image.src} alt={section.image.caption} loading="lazy" />
-                    <figcaption className="v2-caption">{section.image.caption}</figcaption>
-                  </figure>
-                )}
-              </div>
-            </Reveal>
+              </Reveal>
+            </Scrub>
           ))}
         </div>
 

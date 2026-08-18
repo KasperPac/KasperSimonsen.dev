@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter_Tight, Instrument_Serif } from "next/font/google";
+import SmoothScroll from "./v2/components/SmoothScroll";
 import "./v2.css";
 
 const interTight = Inter_Tight({
@@ -31,7 +32,10 @@ export default function V2Layout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${interTight.variable} ${instrumentSerif.variable}`}>
-      <body className="v2-body">{children}</body>
+      <body className="v2-body">
+        <SmoothScroll />
+        {children}
+      </body>
     </html>
   );
 }

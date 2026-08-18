@@ -630,6 +630,74 @@ html {
   transform: none;
 }
 
+/* ── Lenis smooth scroll ── */
+
+html.lenis {
+  height: auto;
+  scroll-behavior: auto !important;
+}
+
+/* ── Scroll-scrubbed motion (CSS vars published by <Scrub>) ──
+   All consumers use var(--p, 0) / var(--pc, 0) so no-JS and
+   reduced-motion render at the neutral position. */
+
+.v2-hero .v2-line:nth-child(1) { translate: calc(var(--p, 0) * -7vw) 0; }
+.v2-hero .v2-line:nth-child(2) { translate: calc(var(--p, 0) * 5vw) 0; }
+.v2-hero .v2-line:nth-child(3) { translate: calc(var(--p, 0) * -4vw) 0; }
+
+.v2-hero h1 {
+  opacity: calc(1 - var(--p, 0) * 0.85);
+}
+
+.v2-hero-texture {
+  scale: calc(1 + var(--p, 0) * 0.12);
+}
+
+.v2-case-hero h1 {
+  translate: calc(var(--p, 0) * -5vw) 0;
+  opacity: calc(1 - var(--p, 0) * 0.8);
+}
+
+.v2-case-hero .v2-case-headline {
+  translate: calc(var(--p, 0) * 3vw) 0;
+  opacity: calc(1 - var(--p, 0) * 0.9);
+}
+
+.v2-case-texture img {
+  scale: calc(1 + var(--p, 0) * 0.12);
+}
+
+.v2-section-head .v2-display {
+  translate: calc(var(--pc, 0) * -2.5vw) 0;
+}
+
+.v2-case-section h3 {
+  translate: calc(var(--pc, 0) * -1.5vw) 0;
+}
+
+.v2-drift {
+  translate: 0 calc(var(--pc, 0) * var(--drift, 0px));
+}
+
+.v2-work-grid .v2-drift,
+.v2-work-grid .v2-drift .v2-reveal {
+  display: grid;
+}
+
+/* ── Curtain footer — content lifts away to reveal the contact panel ── */
+
+.v2-page-above {
+  position: relative;
+  z-index: 1;
+  background: var(--void);
+}
+
+.v2-footer--curtain {
+  position: sticky;
+  bottom: 0;
+  z-index: 0;
+}
+
 /* ── Marquee ── */
 
 .v2-marquee {
@@ -638,6 +706,11 @@ html {
   border-top: 1px solid var(--hairline-dark);
   border-bottom: 1px solid var(--hairline-dark);
   padding: 22px 0;
+}
+
+.v2-marquee-inner {
+  display: flex;
+  flex-shrink: 0;
 }
 
 .v2-marquee-track {
