@@ -2,21 +2,10 @@ import Link from "next/link";
 import { currently, previously } from "@/app/(main)/work/data";
 import { availability } from "@/lib/availability";
 import Reveal from "./Reveal";
-
-function Arrow({ size = 12 }: { size?: number }) {
-  return (
-    <svg
-      className="v2-arrow"
-      width={size}
-      height={size}
-      viewBox="0 0 12 12"
-      fill="none"
-      aria-hidden="true"
-    >
-      <path d="M1 11L11 1M11 1H3M11 1V9" stroke="currentColor" strokeWidth="1" />
-    </svg>
-  );
-}
+import Arrow from "./components/Arrow";
+import V2Nav from "./components/V2Nav";
+import Marquee from "./components/Marquee";
+import Parallax from "./components/Parallax";
 
 const projects = [...currently, ...previously];
 
@@ -61,32 +50,15 @@ const steps = [
 export default function V2Page() {
   return (
     <main>
-      {/* ── Nav ── */}
-      <nav className="v2-nav" aria-label="Main">
-        <a href="#top" className="v2-logo">
-          Kasper Simonsen
-        </a>
-        <div className="v2-nav-links">
-          <a href="#work">Work</a>
-          <a href="#services">Services</a>
-          <a href="#process">Process</a>
-          <a href="#contact">Contact</a>
-        </div>
-        <Link href="/contact" className="v2-outline-btn">
-          Discovery call <Arrow />
-        </Link>
-      </nav>
+      <V2Nav />
 
       {/* ── Hero ── */}
       <header className="v2-hero" id="top">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
-          src="/v2/hero-texture.jpg"
-          alt=""
-          className="v2-hero-texture"
-          fetchPriority="high"
-        />
-        <div className="v2-hero-shape" />
+        <Parallax speed={0.12} className="v2-hero-texture-wrap">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/v2/hero-texture.jpg" alt="" className="v2-hero-texture" fetchPriority="high" />
+        </Parallax>
+        <Parallax speed={0.24} className="v2-hero-shape" />
 
         <div className="v2-hero-inner">
           <p className="v2-hero-status">
@@ -97,14 +69,20 @@ export default function V2Page() {
           </p>
 
           <h1 className="v2-display-xl">
-            <span className="v2-hero-line">
-              I build <em className="v2-it">the</em>
+            <span className="v2-line">
+              <span>
+                I build <em className="v2-it">the</em>
+              </span>
             </span>
-            <span className="v2-hero-line">
-              software <em className="v2-it">that</em>
+            <span className="v2-line">
+              <span>
+                software <em className="v2-it">that</em>
+              </span>
             </span>
-            <span className="v2-hero-line">
-              nobody sells<em className="v2-it">.</em>
+            <span className="v2-line">
+              <span>
+                nobody sells<em className="v2-it">.</em>
+              </span>
             </span>
           </h1>
 
@@ -122,12 +100,32 @@ export default function V2Page() {
         </div>
       </header>
 
+      {/* ── Capability marquee ── */}
+      <Marquee
+        items={[
+          "Web platforms",
+          "&",
+          "Mobile apps",
+          "&",
+          "AI systems",
+          "&",
+          "Industrial software",
+          "for the",
+          "Real world",
+          "·",
+        ]}
+      />
+
       {/* ── Selected work ── */}
       <section className="v2-section" id="work">
         <Reveal className="v2-section-head">
           <p className="v2-caption">Selected work — 2023 to now</p>
           <h2 className="v2-display">
-            Selected <em className="v2-it">work</em>
+            <span className="v2-line">
+              <span>
+                Selected <em className="v2-it">work</em>
+              </span>
+            </span>
           </h2>
         </Reveal>
 
@@ -135,7 +133,7 @@ export default function V2Page() {
           {projects.map((project, i) => (
             <Reveal key={project.slug} delay={i * 90}>
               <Link
-                href={`/work/${project.slug}`}
+                href={`/v2/work/${project.slug}`}
                 className={`v2-card${i === 0 ? " v2-card--featured" : ""}`}
               >
                 <div className="v2-card-top">
@@ -160,7 +158,11 @@ export default function V2Page() {
           <Reveal className="v2-section-head">
             <p className="v2-caption">Services</p>
             <h2 className="v2-display">
-              What I <em className="v2-it">actually</em> do
+              <span className="v2-line">
+                <span>
+                  What I <em className="v2-it">actually</em> do
+                </span>
+              </span>
             </h2>
           </Reveal>
 
@@ -188,7 +190,11 @@ export default function V2Page() {
         <Reveal className="v2-section-head">
           <p className="v2-caption">Process — what happens after you get in touch</p>
           <h2 className="v2-display">
-            No <em className="v2-it">mystery</em>
+            <span className="v2-line">
+              <span>
+                No <em className="v2-it">mystery</em>
+              </span>
+            </span>
           </h2>
         </Reveal>
 
@@ -208,8 +214,12 @@ export default function V2Page() {
         <Reveal>
           <p className="v2-caption">Contact</p>
           <h2 className="v2-display-xl v2-footer-cta">
-            Let&apos;s <em className="v2-it">talk</em>
-            <span className="v2-dot v2-dot--period" />
+            <span className="v2-line">
+              <span>
+                Let&apos;s <em className="v2-it">talk</em>
+                <span className="v2-dot v2-dot--period" />
+              </span>
+            </span>
           </h2>
           <a href="mailto:hello@kaspersimonsen.dev" className="v2-hairline-link">
             hello@kaspersimonsen.dev
