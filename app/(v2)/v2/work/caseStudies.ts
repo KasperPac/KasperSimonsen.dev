@@ -74,6 +74,10 @@ export const caseStudies: CaseStudy[] = [
           "Every receipt, stocktake variance, manual adjustment, and reservation writes an append-only movement record and updates the derived balance for that component and location. If a balance ever changes without a movement behind it, the system is lying.",
           "There is one code path for inventory math. No side doors, no hidden writes, no Shopify-only updates leaking through. That invariant is what lets the app hold up under audit, reconciliation, and recovery.",
         ],
+        image: {
+          src: "/v2/manuva-live.jpg",
+          caption: "manuva.app — live",
+        },
       },
       {
         title: "BOMs that match the line",

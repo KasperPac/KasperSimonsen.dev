@@ -40,6 +40,11 @@ export default function Scrub({
           : Math.min(1, Math.max(0, (vh - rect.top) / (vh + rect.height)));
       el.style.setProperty("--p", p.toFixed(4));
       el.style.setProperty("--pc", (p * 2 - 1).toFixed(4));
+      // Fade envelope: full while in view, ramping to 0 as the element leaves
+      // (exit mode fades across the whole exit).
+      const fade =
+        mode === "exit" ? 1 - p : p > 0.72 ? Math.max(0, 1 - (p - 0.72) / 0.24) : 1;
+      el.style.setProperty("--fade", fade.toFixed(4));
     };
 
     // rAF-driven (recompute only when the scroll position moved) — scroll

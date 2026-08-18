@@ -122,7 +122,7 @@ export default function V2Page() {
       />
 
       {/* ── Selected work ── */}
-      <section className="v2-section" id="work">
+      <Scrub className="v2-section v2-fade" id="work">
         <Scrub>
           <Reveal className="v2-section-head">
             <p className="v2-caption">Selected work — 2023 to now</p>
@@ -163,10 +163,45 @@ export default function V2Page() {
             </div>
           ))}
         </Scrub>
-      </section>
+
+        {/* Full-bleed product shots */}
+        <div className="v2-showcase">
+          <Scrub className="v2-shot v2-fade">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/silio-dashboard.png"
+              alt="Silio production dashboard — live PLC state, throughput, productive hours"
+              loading="lazy"
+            />
+          </Scrub>
+          <div className="v2-shot-caption">
+            <span className="v2-caption">
+              Silio — live production dashboard. Running a feed plant since 2023.
+            </span>
+            <Link href="/v2/work/silio" className="v2-caption">
+              Case study <Arrow size={10} />
+            </Link>
+          </div>
+
+          <Scrub className="v2-shot v2-fade">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/v2/manuva-live.jpg"
+              alt="Manuva — manufacturing operations for Shopify brands, live at manuva.app"
+              loading="lazy"
+            />
+          </Scrub>
+          <div className="v2-shot-caption">
+            <span className="v2-caption">Manuva — live at manuva.app.</span>
+            <Link href="/v2/work/manuva" className="v2-caption">
+              Case study <Arrow size={10} />
+            </Link>
+          </div>
+        </div>
+      </Scrub>
 
       {/* ── Services — the linen page turn ── */}
-      <section className="v2-linen" id="services">
+      <Scrub className="v2-linen v2-fade" id="services">
         <div className="v2-section">
           <Scrub>
             <Reveal className="v2-section-head">
@@ -198,10 +233,10 @@ export default function V2Page() {
             ))}
           </div>
         </div>
-      </section>
+      </Scrub>
 
       {/* ── Process ── */}
-      <section className="v2-section" id="process">
+      <Scrub className="v2-section v2-fade" id="process">
         <Scrub>
           <Reveal className="v2-section-head">
             <p className="v2-caption">Process — what happens after you get in touch</p>
@@ -224,7 +259,7 @@ export default function V2Page() {
             </Reveal>
           ))}
         </div>
-      </section>
+      </Scrub>
       </div>
 
       {/* ── Contact / footer — revealed as the page lifts away ── */}

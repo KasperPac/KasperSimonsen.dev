@@ -97,7 +97,7 @@ export default async function V2CaseStudyPage({ params }: { params: Params }) {
 
         <div style={{ marginTop: "clamp(48px, 8vh, 80px)" }}>
           {study.sections.map((section) => (
-            <Scrub key={section.title}>
+            <Scrub key={section.title} className="v2-fade">
               <Reveal className="v2-case-section">
                 <h3>{section.title}</h3>
                 <div>

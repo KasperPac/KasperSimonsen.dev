@@ -464,6 +464,41 @@ html {
   color: var(--iron);
 }
 
+/* ── Showcase — full-bleed product shots, wallpaper not thumbnails ── */
+
+.v2-showcase {
+  margin-top: clamp(56px, 9vh, 96px);
+}
+
+.v2-shot {
+  margin: 0 calc(-1 * var(--pad-x));
+  overflow: hidden;
+}
+
+.v2-shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  scale: calc(1.08 - var(--p, 0) * 0.08);
+}
+
+.v2-shot-caption {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 16px 0 clamp(40px, 7vh, 64px);
+}
+
+.v2-shot-caption a {
+  color: var(--bone);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
 /* ── Linen panel — the magazine page turn ── */
 
 .v2-linen {
@@ -640,6 +675,18 @@ html.lenis {
 /* ── Scroll-scrubbed motion (CSS vars published by <Scrub>) ──
    All consumers use var(--p, 0) / var(--pc, 0) so no-JS and
    reduced-motion render at the neutral position. */
+
+.v2-fade {
+  opacity: var(--fade, 1);
+}
+
+.v2-hero {
+  opacity: calc(1 - var(--p, 0));
+}
+
+.v2-case-hero {
+  opacity: calc(1 - var(--p, 0));
+}
 
 .v2-hero .v2-line:nth-child(1) { translate: calc(var(--p, 0) * -7vw) 0; }
 .v2-hero .v2-line:nth-child(2) { translate: calc(var(--p, 0) * 5vw) 0; }
