@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { currently, previously } from "./work/data";
+import { currently, previously } from "./(main)/work/data";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const base = "https://kaspersimonsen.dev";

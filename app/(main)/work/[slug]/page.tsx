@@ -1,7 +1,7 @@
 import type { ComponentType } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { currently, previously } from "@/app/work/data";
+import { currently, previously } from "@/app/(main)/work/data";
 import { fetchRepoMeta } from "@/lib/github";
 import InversionCursor from "@/app/components/InversionCursor";
 import PacForgeContent from "./content/pac-forge";

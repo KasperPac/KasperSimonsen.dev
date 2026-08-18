@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Fraunces, Instrument_Sans, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
-import "./globals.css";
+import "../globals.css";
 import Nav from "@/app/components/Nav";
 import Footer from "@/app/components/Footer";
 
