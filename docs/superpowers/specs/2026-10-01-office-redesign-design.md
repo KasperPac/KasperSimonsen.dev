@@ -72,8 +72,14 @@ The page is exactly as tall as the walk-in. Scroll position maps to the camera a
 The hallway is there so The Commons reads as a big building with an office in it, not a building that is one
 small room (Kasper, grey-box review 2026-10-01).
 
-The opening view looks down more steeply over Cremorne. The street door is a real door that swings open on scroll
-and carries **KASPER SIMONSEN.DEV** (Kasper, review round 2, pulled forward into phase 1).
+The opening view looks down more steeply over Cremorne (Kasper, review round 2, pulled forward into phase 1).
+
+**The route in is the real one** (Kasper, round 3): Kasper's office has no street door. The camera descends to The
+Commons' real entrance, the glass lobby door by the concrete blade at the south end of the Gwynne St frontage. It
+swings open; the camera crosses the lobby and goes along a corridor to the office door, which carries
+**KASPER SIMONSEN.DEV** and swings open into the office. The Commons is hand-modelled from Kasper's photos (three
+floors, woven corten screen, 5 m glazed lobby, roof deck). Both doors live in the street model so they share the
+walk-in's single animation.
 
 Scrolling back up plays the walk-in in reverse. "Skip intro" jumps to 100%.
 
@@ -99,7 +105,10 @@ wilted plant). Any words on props (sticky notes, mug, whiteboard) are visitor-fa
 need his approval, like the monitor gag.
 
 Idle life: steam off the mug, a blinking cursor on the monitor, and a small camera sway following the mouse
-(desktop only).
+(desktop only). The record player is playing (platter at 33⅓ rpm) and a "now playing" stand next to it swaps
+between four sleeves every few seconds: Pink Floyd *The Dark Side of the Moon*, Polaris *Fatalism*, Led Zeppelin
+*IV*, Mac Miller *Swimming* (Kasper, round 3; pulled forward into phase 1). Sleeves carry the artist and title
+plus a simple nod, never the album artwork. Reduced motion: no spin, sleeve 0 static.
 
 Hover (desktop): the object's lines switch to its section's colour (section 4) and a label appears. Whether hover also flips the
 object to its triangle-mesh look (style A) is decided in phase 3 look-dev.
