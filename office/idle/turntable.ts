@@ -23,9 +23,9 @@ export function nowPlaying(seconds: number, count: number, period = 12): { index
 export type TurntableNodes = {
   platter: Object3D;
   sleeves: Object3D[];
-  platterZ: number;
-  /** Rest z of each sleeve, captured before anything moves them. */
-  restZ: number[];
+  platterY: number;
+  /** Rest y of each sleeve, captured before anything moves them. */
+  restY: number[];
 };
 
 let warned = false;
@@ -46,23 +46,24 @@ export function findTurntable(root: Object3D): TurntableNodes | null {
     return null;
   }
   const sleeves = found.sort((a, b) => a.n - b.n).map((f) => f.obj);
-  return { platter, sleeves, platterZ: platter.rotation.z, restZ: sleeves.map((s) => s.position.z) };
+  return { platter, sleeves, platterY: platter.rotation.y, restY: sleeves.map((s) => s.position.y) };
 }
 
 const ease = (t: number) => t * t * (3 - 2 * t);
 
 /** Per-frame update. Pure with respect to `seconds`, so it can be tested without React. */
 export function applyTurntable(nodes: TurntableNodes, seconds: number, reducedMotion: boolean): void {
-  const { platter, sleeves, platterZ, restZ } = nodes;
-  platter.rotation.z = platterZ + (reducedMotion ? 0 : platterAngle(seconds));
+  const { platter, sleeves, platterY, restY } = nodes;
+  // glTF is Y-up, so a Blender object's local up axis is +Y. Negative = clockwise seen from above.
+  platter.rotation.y = platterY - (reducedMotion ? 0 : platterAngle(seconds));
   const { index, swap } = reducedMotion ? { index: 0, swap: 0 } : nowPlaying(seconds, sleeves.length);
   const incoming = (index + 1) % sleeves.length;
   const e = ease(swap);
   sleeves.forEach((s, i) => {
     const swapping = swap > 0 && sleeves.length > 1;
     s.visible = i === index || (swapping && i === incoming);
-    s.position.z = restZ[i];
-    if (swapping && i === index) s.position.z -= SWAP_TRAVEL * e;
-    else if (swapping && i === incoming) s.position.z -= SWAP_TRAVEL * (1 - e);
+    s.position.y = restY[i];
+    if (swapping && i === index) s.position.y -= SWAP_TRAVEL * e;
+    else if (swapping && i === incoming) s.position.y -= SWAP_TRAVEL * (1 - e);
   });
 }

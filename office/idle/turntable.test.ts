@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { Group, Object3D } from "three";
+import { Group, Object3D, Vector3 } from "three";
 import { applyTurntable, findTurntable, nowPlaying, platterAngle } from "./turntable";
 
 describe("platterAngle", () => {
@@ -55,7 +55,7 @@ function rig(sleeves = 4) {
   for (let i = sleeves - 1; i >= 0; i--) {
     const s = new Object3D();
     s.name = `prop_now_playing__sleeve_0${i}`;
-    s.position.z = 1;
+    s.position.y = 1; // glTF is Y-up: a Blender local-up axis arrives as +Y
     root.add(s);
     list[i] = s;
   }
@@ -63,37 +63,57 @@ function rig(sleeves = 4) {
 }
 
 describe("applyTurntable", () => {
-  it("spins the platter about local z and shows only the current sleeve", () => {
+  it("spins the platter about local Y, clockwise from above, and shows only the current sleeve", () => {
     const { root, platter, sleeves } = rig();
     const nodes = findTurntable(root)!;
     applyTurntable(nodes, 0.9, false);
-    expect(platter.rotation.z).toBeCloseTo(Math.PI);
+    expect(platter.rotation.y).toBeCloseTo(-Math.PI);
+    expect(platter.rotation.x).toBe(0);
+    expect(platter.rotation.z).toBe(0);
+    const up = new Vector3(0, 1, 0).applyQuaternion(platter.quaternion);
+    expect(up.distanceTo(new Vector3(0, 1, 0))).toBeLessThan(1e-9);
     expect(sleeves.map((s) => s.visible)).toEqual([true, false, false, false]);
     applyTurntable(nodes, 13, false);
     expect(sleeves.map((s) => s.visible)).toEqual([false, true, false, false]);
   });
 
-  it("swaps: outgoing slides down in local -z, incoming rises in", () => {
+  it("keeps the platter's base rotation.y", () => {
+    const { root, platter } = rig();
+    platter.rotation.y = 0.5;
+    const nodes = findTurntable(root)!;
+    applyTurntable(nodes, 0.9, false);
+    expect(platter.rotation.y).toBeCloseTo(0.5 - Math.PI);
+    applyTurntable(nodes, 0, true);
+    expect(platter.rotation.y).toBe(0.5);
+  });
+
+  it("swaps along Y only: outgoing drops, incoming rises in", () => {
     const { root, sleeves } = rig();
     const nodes = findTurntable(root)!;
     applyTurntable(nodes, 11.6, false);
     expect(sleeves[0].visible && sleeves[1].visible).toBe(true);
     expect(sleeves[2].visible || sleeves[3].visible).toBe(false);
-    expect(sleeves[0].position.z).toBeLessThan(1);
-    expect(sleeves[1].position.z).toBeLessThan(1);
-    expect(sleeves[1].position.z).toBeGreaterThan(1 - 0.25 - 1e-9);
+    expect(sleeves[0].position.y).toBeLessThan(1);
+    expect(sleeves[1].position.y).toBeLessThan(1);
+    expect(sleeves[1].position.y).toBeGreaterThan(1 - 0.25 - 1e-9);
+    for (const s of sleeves) {
+      expect(s.position.x).toBe(0);
+      expect(s.position.z).toBe(0);
+    }
+    applyTurntable(nodes, 11.9, false);
+    expect(sleeves[0].position.y).toBeLessThan(sleeves[1].position.y); // outgoing is further down late in the swap
     applyTurntable(nodes, 12.5, false);
-    expect(sleeves[0].position.z).toBe(1); // back at rest once hidden
-    expect(sleeves[1].position.z).toBe(1);
+    expect(sleeves[0].position.y).toBe(1); // back at rest once hidden
+    expect(sleeves[1].position.y).toBe(1);
   });
 
   it("holds still under reduced motion, sleeve 0 only", () => {
     const { root, platter, sleeves } = rig();
     const nodes = findTurntable(root)!;
     applyTurntable(nodes, 11.6, true);
-    expect(platter.rotation.z).toBe(0);
+    expect(platter.rotation.y).toBe(0);
     expect(sleeves.map((s) => s.visible)).toEqual([true, false, false, false]);
-    expect(sleeves.every((s) => s.position.z === 1)).toBe(true);
+    expect(sleeves.every((s) => s.position.y === 1)).toBe(true);
   });
 });
 
