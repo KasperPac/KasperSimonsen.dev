@@ -43,6 +43,11 @@ Landmarks, measured from Gwynne St:
 - **Nylex Clock** on the Richmond Maltings silos: ~400 m at bearing ~249° (WSW). Included by default; it is the
   Cremorne landmark.
 - **CBD skyline** beyond, to the west, as distant extruded towers.
+- **MCG**: from OSM, its own landmark.
+
+AAMI Park and the MCG are pulled in to **half their real distance**, on their real bearing, so they read in the
+opening shot (Kasper, grey-box review 2026-10-01). Buildings under their new footprints are dropped. The Nylex
+Clock, The Commons and the skyline stay where they really are.
 
 The opening camera sits high to the east of The Commons looking west, so the building is in the foreground with
 the Nylex sign, AAMI Park and the skyline behind it.
@@ -61,8 +66,11 @@ The page is exactly as tall as the walk-in. Scroll position maps to the camera a
 |---|---|
 | 0% | Elevated wide view over Cremorne, landmarks behind |
 | 0–70% | Sweeps down and pushes in towards The Commons' door on Gwynne St |
-| 70–90% | Door swings open; camera passes through |
+| 70–90% | Door swings open; camera passes through into a short hallway and turns left into the office |
 | 90–100% | Settles at the standing spot inside. Page ends; further scrolling does nothing |
+
+The hallway is there so The Commons reads as a big building with an office in it, not a building that is one
+small room (Kasper, grey-box review 2026-10-01).
 
 Scrolling back up plays the walk-in in reverse. "Skip intro" jumps to 100%.
 
@@ -213,7 +221,8 @@ ScrollTrigger, CustomEase, SplitText, ScrambleText).
 - **Near field** (~150 m around The Commons): The Commons' facade and its door are hand-modelled from photo
   reference. Neighbours get simple facade detail (windows, awnings) so the descent reads.
 - **Mid field:** plain extruded OSM blocks.
-- **Far field:** AAMI Park and the Nylex silos are hand-modelled; CBD towers are OSM extrusions.
+- **Far field:** AAMI Park and the Nylex silos are hand-modelled; CBD towers are OSM extrusions. AAMI Park's
+  triangulated bubble roof is pulled forward into phase 1 (Kasper, 2026-10-01).
 - OSM data is © OpenStreetMap contributors under ODbL. The site shows the attribution in the street view and on the
   flat home page. Whether the exported street GLB counts as a produced work or a derivative database under ODbL is
   checked before launch.
