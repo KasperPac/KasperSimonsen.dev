@@ -1,0 +1,45 @@
+:root {
+  color-scheme: dark;
+  --office-bg: #0b0b0b;
+  --office-fg: #e8e8e8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--office-bg);
+  color: var(--office-fg);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.office-stage {
+  position: fixed;
+  inset: 0;
+}
+
+.office-fallback {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 4px;
+  padding: 16px;
+  text-align: center;
+}
+
+.office-fallback a {
+  color: inherit;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
