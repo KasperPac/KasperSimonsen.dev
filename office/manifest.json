@@ -2,14 +2,14 @@
   "street": {
     "url": "/models/street.glb",
     "maxBytes": 819200,
-    "nodes": ["osm_buildings", "osm_commons", "prop_aami_park", "prop_mcg", "osm_roads"],
+    "nodes": ["osm_buildings", "prop_commons", "prop_aami_park", "prop_mcg", "osm_roads"],
     "cameras": ["cam_walkin"],
-    "animated": ["cam_walkin", "prop_commons_door"]
+    "animated": ["cam_walkin", "prop_lobby_door", "prop_office_door"]
   },
   "office": {
     "url": "/models/office.glb",
     "maxBytes": 2097152,
-    "nodes": ["office_root", "hs_crate", "hs_drawer", "hs_monitor", "hs_shelf"],
+    "nodes": ["office_root", "hs_crate", "hs_drawer", "hs_monitor", "hs_shelf", "prop_turntable__platter"],
     "cameras": ["cam_stand", "cam_stand_portrait"],
     "animated": []
   }
