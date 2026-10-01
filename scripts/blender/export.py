@@ -10,10 +10,11 @@ import common  # noqa: E402
 
 importlib.reload(common)
 
-EXPORTS = {"street": "street.glb", "office": "office.glb"}
+# The site plays one street clip, so the street bakes the scene: the camera and the door on one 0-240 timeline.
+EXPORTS = {"street": ("street.glb", "SCENE"), "office": ("office.glb", "ACTIONS")}
 
 
-def export(collection_name, filename):
+def export(collection_name, filename, animation_mode):
     objects = set(bpy.data.collections[collection_name].all_objects)
     for obj in bpy.context.view_layer.objects:
         obj.select_set(obj in objects)
@@ -25,7 +26,8 @@ def export(collection_name, filename):
         use_selection=True,
         export_cameras=True,
         export_animations=True,
-        export_animation_mode="ACTIONS",
+        export_animation_mode=animation_mode,
+        export_anim_scene_split_object=False,  # SCENE only: one animation, not one per object
         export_force_sampling=True,
         export_anim_slide_to_zero=True,
         export_apply=True,  # applies the doorway boolean
@@ -40,7 +42,7 @@ def export(collection_name, filename):
 
 def main():
     common.save()
-    return {name: export(name, filename) for name, filename in EXPORTS.items()}
+    return {name: export(name, *args) for name, args in EXPORTS.items()}
 
 
 if __name__ == "__main__":

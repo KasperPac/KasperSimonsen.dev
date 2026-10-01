@@ -1,4 +1,4 @@
-"""Street collection of art/office.blend: OSM import, The Commons' doorway, AAMI Park, Nylex sign grey-box.
+"""Street collection of art/office.blend: OSM import, The Commons' doorway and door, AAMI Park, Nylex sign grey-box.
 
 Re-runnable: rebuilds the street and helpers collections from art/osm/. This also removes cam_walkin,
 so run greybox_office.py afterwards.
@@ -64,6 +64,43 @@ def cut_doorway(m, helpers):
     mod.solver = "EXACT"
     mod.use_self = True  # the three Commons footprints share walls
     mod.use_hole_tolerant = True
+
+
+def commons_door(m, street):
+    """prop_commons_door: the street door's leaf, origin on the hinge (left jamb, outer face). greybox_office.py
+    swings it. A slim frame of stiles and rails, a recessed panel and a pull handle on the street side."""
+    inward = -common.gl_to_bl(m["normal"]).normalized()
+    turn = math.atan2(inward.y, inward.x) - math.pi / 2  # local +y into the building, +x along the facade
+    width, height, thick = DOOR_WIDTH - 0.02, DOOR_HEIGHT - 0.02, 0.05
+    stile, rail, kick = 0.1, 0.1, 0.25
+    bm = bmesh.new()
+
+    def part(size, centre):
+        verts = bmesh.ops.create_cube(bm, size=1.0)["verts"]
+        bmesh.ops.scale(bm, vec=Vector(size), verts=verts)
+        bmesh.ops.translate(bm, vec=Vector(centre), verts=verts)
+
+    part((stile, thick, height), (stile / 2, thick / 2, height / 2))
+    part((stile, thick, height), (width - stile / 2, thick / 2, height / 2))
+    part((width - 2 * stile, thick, rail), (width / 2, thick / 2, height - rail / 2))
+    part((width - 2 * stile, thick, kick), (width / 2, thick / 2, kick / 2))
+    panel = height - rail - kick
+    part((width - 2 * stile, thick - 0.03, panel), (width / 2, thick / 2, kick + panel / 2))  # 15 mm recess each face
+    handle = width - 0.16  # pull bar on the street side by the free edge; nothing on the inside, which opens flat to the wall
+    part((0.03, 0.03, 0.9), (handle, -0.065, 1.05))
+    for z in (0.65, 1.45):
+        part((0.02, 0.05, 0.02), (handle, -0.025, z))
+    mesh = bpy.data.meshes.new("prop_commons_door")
+    bm.to_mesh(mesh)
+    bm.free()
+    leaf = bpy.data.objects.new("prop_commons_door", mesh)
+    hinge = Vector((-DOOR_WIDTH / 2 + 0.01, 0.02, 0.01))  # 10 mm in from the jamb, 20 mm behind the facade
+    leaf.location = common.gl_to_bl(m["door"]) + Matrix.Rotation(turn, 3, "Z") @ hinge
+    leaf.rotation_euler.z = turn
+    street.objects.link(leaf)
+    # the sign, at eye height on the panel's street face: ~9 cm capitals, 6 mm proud, inside the panel's recess
+    common.text_mesh("prop_commons_door__sign", "KASPER SIMONSEN.DEV", 0.13, 0.006, (width / 2, 0.015, 1.6), leaf, street)
+    return leaf
 
 
 def outline(obj):
@@ -222,6 +259,7 @@ def main():
     import_osm(street)
     stadium = aami_park(street, helpers)
     cut_doorway(m, helpers)
+    commons_door(m, street)
     roof = nylex_sign(m, street)
     common.save()
     return {"street": sorted(o.name for o in street.all_objects), "nylex_roof": roof, "aami_park": stadium, "blend": str(common.BLEND)}

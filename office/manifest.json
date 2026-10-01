@@ -4,7 +4,7 @@
     "maxBytes": 819200,
     "nodes": ["osm_buildings", "osm_commons", "prop_aami_park", "osm_mcg", "osm_roads"],
     "cameras": ["cam_walkin"],
-    "animated": ["cam_walkin"]
+    "animated": ["cam_walkin", "prop_commons_door"]
   },
   "office": {
     "url": "/models/office.glb",

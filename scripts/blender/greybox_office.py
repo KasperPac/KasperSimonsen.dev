@@ -43,11 +43,15 @@ WALKIN_KEYS = [
     (0.45, (0.0, -45.0, 22.0), (0.0, 30.0, 2.0)),  # descending towards the facade
     (0.60, (0.0, -10.0, 9.0), (0.0, 20.0, 2.0)),  # over the roof across Gwynne St, clear of its edge
     (0.70, (0.0, -4.0, 1.65), (0.0, 10.0, 1.6)),  # at the door, eye height
-    (0.78, (0.0, 1.0, 1.65), (0.0, 10.0, 1.6)),  # through the door into the hallway
-    (0.88, (0.0, 5.2, 1.65), (-2.0, 9.0, 1.5)),  # down the hallway, starting to look left
-    (0.94, (-0.3, 6.8, 1.65), (-6.0, 7.0, 1.3)),  # turning left into the room
+    (0.80, (0.0, -1.6, 1.65), (0.0, 10.0, 1.6)),  # up to the door while it swings open
+    (0.86, (0.0, 1.6, 1.65), (0.0, 10.0, 1.6)),  # through the door into the hallway
+    (0.92, (0.0, 5.2, 1.65), (-2.0, 9.0, 1.5)),  # down the hallway, starting to look left
+    (0.96, (-0.3, 6.8, 1.65), (-6.0, 7.0, 1.3)),  # turning left into the room
     (1.00, *in_office(STAND)),  # standing spot
 ]
+# prop_commons_door (built by setup_street.py) swings in over these scroll fractions, before the camera reaches
+# it. It stops at 90 degrees: the leaf is as wide as the doorway, so any further and it would hit the hallway wall.
+DOOR_SWING = (0.72, 0.82, 90.0)
 
 
 def office_frame(m):
@@ -176,6 +180,23 @@ def build_walkin(frame, street):
     return cam
 
 
+def swing_door(frame):
+    """anim_door_swing on prop_commons_door, on the walk-in's timeline. It opens inwards about its hinge."""
+    door = bpy.data.objects.get("prop_commons_door")
+    if door is None:
+        return None
+    door.animation_data_clear()
+    for action in [a for a in bpy.data.actions if a.name.startswith("anim_door_swing")]:
+        bpy.data.actions.remove(action)
+    closed = frame.to_euler().z
+    start, end, angle = DOOR_SWING
+    for fraction, z in ((start, closed), (end, closed + math.radians(angle))):
+        door.rotation_euler.z = z
+        door.keyframe_insert("rotation_euler", index=2, frame=round(fraction * WALKIN_FRAMES))
+    door.animation_data.action.name = "anim_door_swing"
+    return door
+
+
 def main():
     m = common.meta()
     frame = office_frame(m)
@@ -185,6 +206,7 @@ def main():
     place(camera("cam_stand", CAMERA_FOV_DEG, office, room), *STAND)
     place(camera("cam_stand_portrait", PORTRAIT_FOV_DEG, office, room), *PORTRAIT)
     build_walkin(frame, common.collection("street"))
+    swing_door(frame)
     common.save()
     return {"office_objects": len(office.all_objects), "door": [round(v, 2) for v in frame.translation], "frames": WALKIN_FRAMES}
 

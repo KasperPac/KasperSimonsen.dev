@@ -1,10 +1,11 @@
 """Shared helpers for the Blender scripts (setup_street.py, greybox_office.py, export.py)."""
 import json
+import math
 from pathlib import Path
 
 import bmesh
 import bpy
-from mathutils import Vector
+from mathutils import Matrix, Vector
 
 REPO = Path(__file__).resolve().parents[2]
 BLEND = REPO / "art" / "office.blend"
@@ -66,6 +67,35 @@ def cylinder(name, radius, depth, location, parent, col, segments=12):
 
 def empty(name, location, parent, col):
     return _place(bpy.data.objects.new(name, None), location, parent, col)
+
+
+def text_mesh(name, text, size, depth, location, parent, col, align="CENTER"):
+    """Text in Blender's built-in font as a plain mesh, standing upright and reading along +x.
+
+    The letters face -y: their back is on y = 0 and they stand out `depth` towards -y, so `location` can sit on
+    the face of a wall, sign or poster. `size` is the font size (capitals come out about 0.7 * size tall), with the
+    line roughly centred on z = 0. `align` is LEFT, CENTER or RIGHT about x = 0. No curve or font datablock is left
+    behind.
+    """
+    curve = bpy.data.curves.new(name, "FONT")
+    curve.body = text
+    curve.size = size
+    curve.extrude = depth / 2  # either side of the glyphs' plane
+    curve.resolution_u = 3  # few segments per glyph curve, so curved letters keep their facets and stay light
+    curve.align_x = align
+    curve.align_y = "CENTER"
+    font = curve.font
+    tmp = bpy.data.objects.new(name, curve)
+    bpy.context.scene.collection.objects.link(tmp)
+    mesh = bpy.data.meshes.new_from_object(tmp.evaluated_get(bpy.context.evaluated_depsgraph_get()))
+    bpy.data.objects.remove(tmp, do_unlink=True)
+    bpy.data.curves.remove(curve)
+    if font is not None and font.users == 0:
+        bpy.data.fonts.remove(font)
+    mesh.name = name
+    # glyphs lie in xy facing +z; stand them up facing -y, back face on y = 0
+    mesh.transform(Matrix.Translation((0, -depth / 2, 0)) @ Matrix.Rotation(math.pi / 2, 4, "X"))
+    return _place(bpy.data.objects.new(name, mesh), location, parent, col)
 
 
 def save():
