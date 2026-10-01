@@ -27,8 +27,15 @@ def collection(name):
 
 
 def clear(col):
+    """Remove the collection's objects and the mesh/camera data they orphan, so re-runs keep clean names."""
     for obj in list(col.all_objects):
+        data = obj.data
         bpy.data.objects.remove(obj, do_unlink=True)
+        if data is not None and data.users == 0:
+            if isinstance(data, bpy.types.Mesh):
+                bpy.data.meshes.remove(data)
+            elif isinstance(data, bpy.types.Camera):
+                bpy.data.cameras.remove(data)
 
 
 def _place(obj, location, parent, col):
