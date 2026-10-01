@@ -54,3 +54,6 @@ art/export/
 # playwright
 /test-results/
 /playwright-report/
+
+# python bytecode (Blender scripts)
+__pycache__/
