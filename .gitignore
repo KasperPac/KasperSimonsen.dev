@@ -45,3 +45,12 @@ next-env.d.ts
 
 # brainstorming companion mockups
 .superpowers/
+
+# generated 3D intermediates (sources are art/osm/*.json and art/office.blend)
+art/osm/*.glb
+art/export/
+*.blend1
+
+# playwright
+/test-results/
+/playwright-report/
