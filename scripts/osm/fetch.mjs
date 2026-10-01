@@ -1,13 +1,14 @@
 // Fetches the Cremorne extract from Overpass into art/osm/cremorne.json. Run rarely: the JSON is the source.
 import { mkdir, writeFile } from "node:fs/promises";
-import { AAMI_PARK_WAY_ID } from "./meshes.mjs";
+import { AAMI_PARK_WAY_ID, MCG_WAY_ID } from "./meshes.mjs";
 
 const LAT = -37.8283; // Gwynne Street, Cremorne
 const LON = 144.9932;
-// AAMI Park is fetched by id: OSM tags it leisure=stadium, so the building filters miss it.
+// AAMI Park and the MCG are fetched by id: OSM tags them leisure=stadium, so the building filters miss them.
 const QUERY = `[out:json][timeout:180];
 (
   way(${AAMI_PARK_WAY_ID});
+  way(${MCG_WAY_ID});
   way["building"](around:600,${LAT},${LON});
   way["building"]["height"](around:1300,${LAT},${LON});
   way["building"]["building:levels"](around:1300,${LAT},${LON});

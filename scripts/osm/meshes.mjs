@@ -1,10 +1,27 @@
 import { Document } from "@gltf-transform/core";
 import { buildingHeight, makeProjector } from "./geo.mjs";
-import { cleanRing, closestPointOnSegment, extrudeFootprint, ribbon, stripWidth } from "./geometry.mjs";
+import {
+  cleanRing,
+  closestPointOnSegment,
+  extrudeFootprint,
+  pointInRing,
+  ribbon,
+  ringCentroid,
+  ringsWithin,
+  stripWidth,
+} from "./geometry.mjs";
 
 export const COMMONS_WAY_IDS = [946747659, 946747654, 1290625051]; // 10–12, 14–18 and 20 Gwynne St
 export const AAMI_PARK_WAY_ID = 60116158; // tagged leisure=stadium + height, no building tag
+export const MCG_WAY_ID = 210337258; // tagged leisure=stadium, no building or height tag
 export const COMMONS_GREYBOX_HEIGHT = 14; // OSM has no height for The Commons; phase 2 models it from photos
+export const MCG_HEIGHT = 40; // OSM has no height for the MCG outline; its grandstands carry their own
+export const LANDMARK_PULL = 0.5; // landmarks sit at half their real distance, on the same bearing
+const LANDMARK_MARGIN = 5; // metres of clear ground kept around a moved landmark
+const LANDMARKS = [
+  { id: AAMI_PARK_WAY_ID, name: "aami_park", bucket: "osm_aami_park" },
+  { id: MCG_WAY_ID, name: "mcg", bucket: "osm_mcg", height: MCG_HEIGHT },
+];
 const STREET_NAME = "Gwynne Street";
 const LANDMARK_NODE = "Nylex Clock";
 
@@ -75,11 +92,35 @@ export function osmToMeshes(elements) {
     osm_buildings: bucket(),
     osm_commons: bucket(),
     osm_aami_park: bucket(),
+    osm_mcg: bucket(),
     osm_roads: bucket(),
     osm_rail: bucket(),
   };
   const skipped = [];
+  const displaced = [];
+  const merged = [];
+  const landmarks = {};
+  const placed = [];
   let nylex = null;
+
+  // Landmarks first, so the main pass can carry their own buildings along and clear the ground they land on.
+  for (const { id, name, bucket: target, height: fixedHeight } of LANDMARKS) {
+    const el = elements.find((e) => e.type === "way" && e.id === id && Array.isArray(e.geometry));
+    if (!el) continue;
+    const ring = cleanRing(el.geometry.filter(Boolean).map((p) => project(p.lat, p.lon)));
+    if (!ring) {
+      skipped.push(id);
+      continue;
+    }
+    const real = ringCentroid(ring);
+    const offset = [-real[0] * LANDMARK_PULL, -real[1] * LANDMARK_PULL];
+    const moved = ring.map(([x, z]) => [x + offset[0], z + offset[1]]);
+    const height = fixedHeight ?? buildingHeight(el.tags);
+    buckets[target].add(extrudeFootprint(moved, height));
+    landmarks[name] = { centre: [real[0] + offset[0], real[1] + offset[1]], real, height };
+    placed.push({ ring, moved, offset, target });
+  }
+  const landmarkIds = LANDMARKS.map((l) => l.id);
 
   for (const el of elements) {
     const tags = el.tags ?? {};
@@ -87,18 +128,30 @@ export function osmToMeshes(elements) {
       if (tags.name === LANDMARK_NODE) nylex = project(el.lat, el.lon);
       continue;
     }
-    if (el.type !== "way" || !Array.isArray(el.geometry)) continue;
+    if (el.type !== "way" || !Array.isArray(el.geometry) || landmarkIds.includes(el.id)) continue;
     const points = el.geometry.filter(Boolean).map((p) => project(p.lat, p.lon));
 
-    if (tags.building || el.id === AAMI_PARK_WAY_ID) {
+    if (tags.building) {
       const ring = cleanRing(points);
       if (!ring) {
         skipped.push(el.id);
         continue;
       }
-      const isCommons = COMMONS_WAY_IDS.includes(el.id);
-      const target = isCommons ? buckets.osm_commons : el.id === AAMI_PARK_WAY_ID ? buckets.osm_aami_park : buckets.osm_buildings;
-      target.add(extrudeFootprint(ring, isCommons ? COMMONS_GREYBOX_HEIGHT : buildingHeight(tags)));
+      if (COMMONS_WAY_IDS.includes(el.id)) {
+        buckets.osm_commons.add(extrudeFootprint(ring, COMMONS_GREYBOX_HEIGHT));
+        continue;
+      }
+      const centroid = ringCentroid(ring);
+      const home = placed.find((landmark) => pointInRing(centroid, landmark.ring));
+      if (home) {
+        const [dx, dz] = home.offset;
+        buckets[home.target].add(extrudeFootprint(ring.map(([x, z]) => [x + dx, z + dz]), buildingHeight(tags)));
+        merged.push(el.id);
+      } else if (placed.some((landmark) => ringsWithin(ring, landmark.moved, LANDMARK_MARGIN))) {
+        displaced.push(el.id);
+      } else {
+        buckets.osm_buildings.add(extrudeFootprint(ring, buildingHeight(tags)));
+      }
     } else if (tags.highway || tags.railway) {
       const strip = ribbon(points, stripWidth(tags));
       if (!strip) {
@@ -113,7 +166,7 @@ export function osmToMeshes(elements) {
   for (const [name, b] of Object.entries(buckets)) {
     if (b.indices.length) meshes[name] = { positions: b.positions, indices: b.indices };
   }
-  return { origin, meshes, skipped, frontage: commonsFrontage(elements, project), nylex };
+  return { origin, meshes, skipped, displaced, merged, landmarks, frontage: commonsFrontage(elements, project), nylex };
 }
 
 /** Mesh buckets → a glTF Document with one node + mesh per bucket, named after it. No normals, no materials. */

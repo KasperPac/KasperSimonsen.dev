@@ -146,3 +146,62 @@ export function closestPointOnSegment(p, a, b) {
   const t = len2 === 0 ? 0 : Math.min(1, Math.max(0, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dz) / len2));
   return [a[0] + t * dx, a[1] + t * dz];
 }
+
+/** Area centroid of a ring from `cleanRing` (so never zero area). */
+export function ringCentroid(ring) {
+  let cx = 0;
+  let cz = 0;
+  for (let i = 0; i < ring.length; i++) {
+    const [x1, z1] = ring[i];
+    const [x2, z2] = ring[(i + 1) % ring.length];
+    const cross = x1 * z2 - x2 * z1;
+    cx += (x1 + x2) * cross;
+    cz += (z1 + z2) * cross;
+  }
+  const area6 = 6 * ringArea(ring);
+  return [cx / area6, cz / area6];
+}
+
+function bounds(ring) {
+  const xs = ring.map((p) => p[0]);
+  const zs = ring.map((p) => p[1]);
+  return [Math.min(...xs), Math.min(...zs), Math.max(...xs), Math.max(...zs)];
+}
+
+export function pointInRing([x, z], ring) {
+  let inside = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, zi] = ring[i];
+    const [xj, zj] = ring[j];
+    if (zi > z !== zj > z && x < ((xj - xi) * (z - zi)) / (zj - zi) + xi) inside = !inside;
+  }
+  return inside;
+}
+
+const cross = (o, p, q) => (p[0] - o[0]) * (q[1] - o[1]) - (p[1] - o[1]) * (q[0] - o[0]);
+const distance = (p, q) => Math.hypot(p[0] - q[0], p[1] - q[1]);
+
+function segmentGap(a, b, c, d) {
+  if (cross(a, b, c) * cross(a, b, d) < 0 && cross(c, d, a) * cross(c, d, b) < 0) return 0;
+  return Math.min(
+    distance(a, closestPointOnSegment(a, c, d)),
+    distance(b, closestPointOnSegment(b, c, d)),
+    distance(c, closestPointOnSegment(c, a, b)),
+    distance(d, closestPointOnSegment(d, a, b)),
+  );
+}
+
+/** True when two rings overlap, one contains the other, or they come within `margin` metres. */
+export function ringsWithin(a, b, margin) {
+  const [ax0, az0, ax1, az1] = bounds(a);
+  const [bx0, bz0, bx1, bz1] = bounds(b);
+  if (ax0 > bx1 + margin || bx0 > ax1 + margin || az0 > bz1 + margin || bz0 > az1 + margin) return false;
+  // a ring nested well inside the other has no edge near it, so containment is checked by one vertex
+  if (pointInRing(a[0], b) || pointInRing(b[0], a)) return true;
+  for (let i = 0; i < a.length; i++) {
+    for (let j = 0; j < b.length; j++) {
+      if (segmentGap(a[i], a[(i + 1) % a.length], b[j], b[(j + 1) % b.length]) <= margin) return true;
+    }
+  }
+  return false;
+}

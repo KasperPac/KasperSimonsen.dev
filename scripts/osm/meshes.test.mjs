@@ -1,5 +1,13 @@
 import { describe, it, expect } from "vitest";
-import { AAMI_PARK_WAY_ID, COMMONS_GREYBOX_HEIGHT, COMMONS_WAY_IDS, meshesToDocument, osmToMeshes } from "./meshes.mjs";
+import {
+  AAMI_PARK_WAY_ID,
+  COMMONS_GREYBOX_HEIGHT,
+  COMMONS_WAY_IDS,
+  MCG_HEIGHT,
+  MCG_WAY_ID,
+  meshesToDocument,
+  osmToMeshes,
+} from "./meshes.mjs";
 
 const LAT0 = -37.8283;
 const LON0 = 144.9932;
@@ -26,6 +34,9 @@ const fixture = [
 ];
 
 const maxY = ({ positions }) => Math.max(...positions.filter((_, i) => i % 3 === 1));
+/** Whether a mesh has a vertex at local [x, z] (any height). */
+const hasCorner = ({ positions }, [x, z]) =>
+  positions.some((_, i) => i % 3 === 0 && Math.abs(positions[i] - x) < 0.01 && Math.abs(positions[i + 2] - z) < 0.01);
 
 describe("osmToMeshes", () => {
   const result = osmToMeshes(fixture);
@@ -74,6 +85,108 @@ describe("osmToMeshes", () => {
 
   it("refuses an extract without Gwynne Street", () => {
     expect(() => osmToMeshes(fixture.filter((e) => e.id !== 3))).toThrow(/Gwynne Street/);
+  });
+});
+
+describe("landmark pull", () => {
+  // Origin (The Commons' centroid) is at ll(-10, 5), so local x = east + 10 and z = 5 - north.
+  // AAMI Park: real centre x -790, z -370 → moved to -395, -185 (east -505…-305, north 115…265).
+  // MCG: real centre x 990, z -995 → moved to 495, -497.5 (east 435…535, north 452.5…552.5).
+  const aami = way(AAMI_PARK_WAY_ID, { leisure: "stadium", height: "30 m" }, square(-900, 300, -700, 450));
+  const mcg = way(MCG_WAY_ID, { leisure: "stadium", height: "40" }, square(930, 950, 1030, 1050));
+  const extract = [
+    ...fixture,
+    aami,
+    mcg,
+    way(101, { building: "yes" }, square(-420, 180, -400, 200)), // under moved AAMI Park
+    way(102, { building: "yes" }, square(-302, 180, -292, 190)), // 3 m east of it: inside the margin
+    way(103, { building: "yes", height: "9" }, square(-295, 180, -285, 190)), // 10 m east of it: kept
+    way(104, { building: "yes" }, square(480, 490, 490, 500)), // under moved MCG
+    way(105, { building: "yes", height: "11" }, square(-850, 350, -840, 360)), // under AAMI Park's real site: moves with it
+  ];
+  const result = osmToMeshes(extract);
+  const bounds = ({ positions }) => {
+    const xs = positions.filter((_, i) => i % 3 === 0);
+    const ys = positions.filter((_, i) => i % 3 === 1);
+    const zs = positions.filter((_, i) => i % 3 === 2);
+    return {
+      centre: [(Math.min(...xs) + Math.max(...xs)) / 2, (Math.min(...zs) + Math.max(...zs)) / 2],
+      size: [Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), Math.max(...zs) - Math.min(...zs)],
+    };
+  };
+
+  it("buckets the MCG by id whatever its tags say", () => {
+    expect(Object.keys(result.meshes)).toContain("osm_mcg");
+    expect(maxY(result.meshes.osm_mcg)).toBeCloseTo(40);
+  });
+
+  it.each([
+    ["aami_park", "osm_aami_park", [-790, -370]],
+    ["mcg", "osm_mcg", [990, -995]],
+  ])("moves %s to half its real distance on the same bearing", (name, bucketName, real) => {
+    const landmark = result.landmarks[name];
+    landmark.real.forEach((v, i) => expect(v).toBeCloseTo(real[i], 1));
+    landmark.centre.forEach((v, i) => expect(v).toBeCloseTo(landmark.real[i] / 2, 2));
+    bounds(result.meshes[bucketName]).centre.forEach((v, i) => expect(v).toBeCloseTo(landmark.centre[i], 2));
+  });
+
+  it("keeps each landmark's own dimensions", () => {
+    [200, 30, 150].forEach((v, i) => expect(bounds(result.meshes.osm_aami_park).size[i]).toBeCloseTo(v, 2));
+    [100, 40, 100].forEach((v, i) => expect(bounds(result.meshes.osm_mcg).size[i]).toBeCloseTo(v, 2));
+    expect(result.landmarks.aami_park.height).toBe(30);
+    expect(result.landmarks.mcg.height).toBe(40);
+  });
+
+  it("drops buildings under or within 5 m of a moved landmark and lists them as displaced", () => {
+    expect(result.displaced.sort()).toEqual([101, 102, 104]);
+    expect(hasCorner(result.meshes.osm_buildings, [-410, -175])).toBe(false);
+  });
+
+  it("keeps buildings elsewhere", () => {
+    expect(hasCorner(result.meshes.osm_buildings, [-285, -175])).toBe(true);
+  });
+
+  it("leaves The Commons and the Nylex Clock where they are", () => {
+    expect(result.origin).toEqual(osmToMeshes(fixture).origin);
+    expect(result.nylex).toEqual(osmToMeshes(fixture).nylex);
+    expect(result.meshes.osm_commons).toEqual(osmToMeshes(fixture).meshes.osm_commons);
+  });
+});
+
+describe("buildings inside a landmark", () => {
+  // Same sites as above. The MCG moves by [-495, 497.5], AAMI Park by [395, 185].
+  const extract = [
+    ...fixture,
+    way(MCG_WAY_ID, { leisure: "stadium" }, square(930, 950, 1030, 1050)),
+    way(201, { building: "grandstand", name: "Ponsford Stand", height: "50" }, square(1000, 960, 1025, 1040)),
+    way(202, { building: "yes", height: "12" }, square(1025, 1000, 1045, 1010)), // straddles the MCG's edge, centroid outside
+    way(AAMI_PARK_WAY_ID, { leisure: "stadium", height: "30 m" }, square(-900, 300, -700, 450)),
+    way(203, { building: "yes", height: "11" }, square(-850, 350, -840, 360)),
+  ];
+  const result = osmToMeshes(extract);
+
+  it("gives the MCG outline its fixed height, since OSM has none", () => {
+    expect(MCG_HEIGHT).toBe(40);
+    expect(result.landmarks.mcg.height).toBe(MCG_HEIGHT);
+  });
+
+  it("moves them with the landmark at their own heights and lists them as merged", () => {
+    expect(result.merged.sort()).toEqual([201, 203]);
+    expect(maxY(result.meshes.osm_mcg)).toBeCloseTo(50);
+    expect(hasCorner(result.meshes.osm_mcg, [515, -457.5])).toBe(true);
+    expect(hasCorner(result.meshes.osm_aami_park, [-445, -160])).toBe(true);
+    expect(hasCorner(result.meshes.osm_buildings, [1010, -955])).toBe(false);
+    expect(hasCorner(result.meshes.osm_buildings, [-840, -345])).toBe(false);
+    expect(result.displaced).toEqual([]);
+  });
+
+  it("leaves a building whose centroid is outside the landmark where it is", () => {
+    expect(result.merged).not.toContain(202);
+    expect(hasCorner(result.meshes.osm_buildings, [1055, -1005])).toBe(true);
+  });
+
+  it("doesn't move the landmark's own centre", () => {
+    [495, -497.5].forEach((v, i) => expect(result.landmarks.mcg.centre[i]).toBeCloseTo(v, 2));
   });
 });
 
