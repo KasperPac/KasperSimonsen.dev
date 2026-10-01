@@ -72,6 +72,9 @@ The page is exactly as tall as the walk-in. Scroll position maps to the camera a
 The hallway is there so The Commons reads as a big building with an office in it, not a building that is one
 small room (Kasper, grey-box review 2026-10-01).
 
+The opening view looks down more steeply over Cremorne. The street door is a real door that swings open on scroll
+and carries **KASPER SIMONSEN.DEV** (Kasper, review round 2, pulled forward into phase 1).
+
 Scrolling back up plays the walk-in in reverse. "Skip intro" jumps to 100%.
 
 `office.glb` streams in the background during the walk-in. If it is not ready by 70%, the door holds shut with a
@@ -86,6 +89,11 @@ One fixed view that takes in every interactive object. Composition (finalised on
 - **Record crate** on the floor, left of the desk.
 - **Ornament shelf** on the wall, right of the desk.
 - Non-interactive dressing (`prop_*`): chair, plant, cables, sticky notes, posters, a window back to Gwynne St.
+
+Review round 2 (Kasper, pulled forward into phase 1): a smaller, modern one-person office, lived-in and a bit messy
+rather than bare. A proper ergonomic chair; plants; records on show; a laptop beside the monitor; books; a corny
+"Hang in there" poster; a Melbourne Victory poster (crest-free: club colours, a V and the name, no badge, same rule as
+AAMI Park's signage).
 
 Idle life: steam off the mug, a blinking cursor on the monitor, and a small camera sway following the mouse
 (desktop only).
