@@ -90,7 +90,7 @@ One fixed view that takes in every interactive object. Composition (finalised on
 Idle life: steam off the mug, a blinking cursor on the monitor, and a small camera sway following the mouse
 (desktop only).
 
-Hover (desktop): the object's lines switch to the accent colour and a label appears. Whether hover also flips the
+Hover (desktop): the object's lines switch to its section's colour (section 4) and a label appears. Whether hover also flips the
 object to its triangle-mesh look (style A) is decided in phase 3 look-dev.
 
 Touch: small pulsing markers on interactive objects, since there is no hover. Tap opens directly.
@@ -127,10 +127,14 @@ page doesn't scroll. Objects open panels with a short fade and no camera move.
 
 - **Scene:** near-black background; each mesh drawn as a black fill (depth-writing, polygon offset) plus its
   feature edges (`EdgesGeometry`, angle threshold ~20°, tuned per scene) as screen-space fat lines
-  (`LineSegments2`, ~1.3 px). Lines fade with distance so the far city doesn't clutter. One accent colour for
-  interactive states, picked in phase 1 look-dev.
-- **UI (panels, standalone pages):** new minimal style derived from the office: black, white hairlines, the same
-  single accent, a mono face for labels. Typefaces picked in phase 1 look-dev. Nothing from the old design system.
+  (`LineSegments2`, ~1.3 px). Lines fade with distance so the far city doesn't clutter. **One colour per section**
+  for interactive states (Kasper, phase 1 look-dev): work (crate) lime `#C6FF3D`, services (shelf) red `#FF3B30`,
+  contact (drawer) cyan `#2EF2FF`, the monitor gag amber `#FFB224`. Only the hovered or focused object is
+  coloured, so one colour shows at a time. Touch markers stay white.
+- **UI (panels, standalone pages):** new minimal style derived from the office: black, white hairlines, each
+  section's panels and pages in that section's colour, white for everything that isn't a section (nav, skip intro,
+  fallback). Type: Inter Tight for UI, IBM Plex Mono for labels (phase 1 look-dev). Nothing from the old design
+  system.
 - **Copy voice:** case-study bodies keep their current professional register. Everything that explains what
   Kasper does (intro, services, contact, drawer card, monitor gag, labels) is in his voice per the voice profile in
   memory: conversational, dry, contractions, no marketing language. The monitor copy is drafted and shown to Kasper

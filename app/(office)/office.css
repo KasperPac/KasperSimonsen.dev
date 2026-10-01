@@ -13,7 +13,7 @@ body {
   margin: 0;
   background: var(--office-bg);
   color: var(--office-fg);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: var(--font-ui), system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
 .office-stage {
