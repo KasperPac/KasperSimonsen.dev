@@ -93,7 +93,10 @@ One fixed view that takes in every interactive object. Composition (finalised on
 Review round 2 (Kasper, pulled forward into phase 1): a smaller, modern one-person office, lived-in and a bit messy
 rather than bare. A proper ergonomic chair; plants; records on show; a laptop beside the monitor; books; a corny
 "Hang in there" poster; a Melbourne Victory poster (crest-free: club colours, a V and the name, no badge, same rule as
-AAMI Park's signage).
+AAMI Park's signage); a couch and an old CRT TV. The tone is tongue-in-cheek: a sleep-deprived developer's office
+(energy-can pyramid, abandoned mugs, pizza box, pillow and blanket on the couch, rubber duck, clock at 3:47, a
+wilted plant). Any words on props (sticky notes, mug, whiteboard) are visitor-facing copy in Kasper's voice and
+need his approval, like the monitor gag.
 
 Idle life: steam off the mug, a blinking cursor on the monitor, and a small camera sway following the mouse
 (desktop only).
