@@ -1,0 +1,16 @@
+{
+  "street": {
+    "url": "/models/street.glb",
+    "maxBytes": 819200,
+    "nodes": ["osm_buildings", "osm_commons", "osm_aami_park", "osm_roads"],
+    "cameras": ["cam_walkin"],
+    "animated": ["cam_walkin"]
+  },
+  "office": {
+    "url": "/models/office.glb",
+    "maxBytes": 2097152,
+    "nodes": ["office_root", "hs_crate", "hs_drawer", "hs_monitor", "hs_shelf"],
+    "cameras": ["cam_stand", "cam_stand_portrait"],
+    "animated": []
+  }
+}
