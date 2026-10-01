@@ -19,17 +19,22 @@ importlib.reload(common)
 FPS = 24
 WALKIN_FRAMES = 240  # clip length only; scroll maps onto it
 CAMERA_FOV_DEG = 50.0  # vertical; shared by the walk-in and the standing spot so there's no jump
-PORTRAIT_FOV_DEG = 75.0
+PORTRAIT_FOV_DEG = 85.0  # wide enough for crate-to-shelf across a 3.5 m office on a phone
 
 # The office frame: metres, origin at the door on the facade, +x along the facade (right when facing in),
-# +y into the building, +z up. A hallway runs in from the door and the room opens off its left wall.
+# +y into the building, +z up. A hallway runs in from the door; the office opens off its left wall, against the
+# facade so it can have a window back to Gwynne St, and the hallway carries on past it.
 HALL = (1.9, 8.0, 2.7)  # interior width, length and ceiling height
-ROOM_DOOR_Y = 6.8  # centre of the room's doorway in the hallway's left wall
-# The room's own frame: origin on its doorway's centre line, +y into the room. Its front wall is at y = 0.25
-# in that frame, so this puts the wall on the hallway's left wall, with the room facing out of it.
-ROOM_FRAME = Matrix.Translation((-HALL[0] / 2 - 0.05 + 0.25, ROOM_DOOR_Y, 0)) @ Matrix.Rotation(math.pi / 2, 4, "Z")
-STAND = ((0.0, 1.6, 1.6), (0.0, 6.6, 1.0))  # room frame: the standing spot, facing the desk
-PORTRAIT = ((0.0, 0.6, 1.7), (0.3, 6.6, 1.1))  # room frame
+HALL_START = 0.02  # just behind the facade, which runs a fraction of a degree off square to the door normal
+WALL = 0.1
+ROOM = (3.5, 4.0, 2.7)  # interior width (along the hallway), depth and ceiling height: a one-person office
+ROOM_DOOR = (0.8, 1.1, 2.2)  # centre (room frame x), width, height; clear of the open street door
+ROOM_WINDOW = (2.0, 1.4, 0.9, 2.2)  # in the street-side wall: centre (room frame y), width, sill, head
+# The room's own frame: origin on the face of the hallway's left wall, +y into the room, +x along the hallway
+# (deeper into the building). Its street-side wall sits just behind the facade.
+ROOM_FRAME = Matrix.Translation((-HALL[0] / 2, HALL_START + WALL + ROOM[0] / 2, 0)) @ Matrix.Rotation(math.pi / 2, 4, "Z")
+STAND = ((0.35, 1.1, 1.6), (0.05, 3.7, 0.95))  # room frame: the standing spot, facing the desk
+PORTRAIT = ((0.0, 0.25, 1.6), (0.0, 3.6, 0.95))  # room frame, back against the front wall
 
 
 def in_office(pose):
@@ -44,9 +49,9 @@ WALKIN_KEYS = [
     (0.60, (0.0, -10.0, 9.0), (0.0, 20.0, 2.0)),  # over the roof across Gwynne St, clear of its edge
     (0.70, (0.0, -4.0, 1.65), (0.0, 10.0, 1.6)),  # at the door, eye height
     (0.80, (0.0, -1.6, 1.65), (0.0, 10.0, 1.6)),  # up to the door while it swings open
-    (0.86, (0.0, 1.6, 1.65), (0.0, 10.0, 1.6)),  # through the door into the hallway
-    (0.92, (0.0, 5.2, 1.65), (-2.0, 9.0, 1.5)),  # down the hallway, starting to look left
-    (0.96, (-0.3, 6.8, 1.65), (-6.0, 7.0, 1.3)),  # turning left into the room
+    (0.86, (0.0, 1.2, 1.65), (-1.5, 4.5, 1.55)),  # through the door, looking along the hallway to the office door
+    (0.91, *in_office(((ROOM_DOOR[0], -0.7, 1.65), (ROOM_DOOR[0] + 0.1, 4.0, 1.3)))),  # turned left at the office door
+    (0.95, *in_office(((ROOM_DOOR[0] - 0.1, 0.6, 1.62), (0.1, 3.8, 1.05)))),  # through it
     (1.00, *in_office(STAND)),  # standing spot
 ]
 # prop_commons_door (built by setup_street.py) swings in over these scroll fractions, before the camera reaches
@@ -82,51 +87,63 @@ def build_office(frame, col):
     root = common.empty("office_root", (0, 0, 0), None, col)
     root.matrix_world = frame
 
-    # hallway in from the street door
+    def span(name, lo, hi, parent):
+        """A box between two opposite corners, in the parent's space."""
+        lo, hi = Vector(lo), Vector(hi)
+        return box(name, hi - lo, (lo + hi) / 2, parent, col)
+
+    # hallway in from the street door; the office's front wall is its left wall as far as the office goes
     width, length, height = HALL
-    wall_x = width / 2 + 0.05
-    y0 = 0.02  # just behind the facade, which runs a fraction of a degree off square to the door normal
-    y1 = ROOM_DOOR_Y - 4.0  # the room's front wall (8 m, centred on its doorway) takes over the left side here
-    # thin, so its front edge under the street door sits on the facade's base line
-    box("prop_hall_floor", (width + 0.2, length - y0, 0.01), (0, (y0 + length) / 2, -0.005), root, col)
-    box("prop_hall_ceiling", (width + 0.2, length - y0, 0.05), (0, (y0 + length) / 2, height + 0.025), root, col)
-    box("prop_hall_wall_right", (0.1, length - y0, height), (wall_x, (y0 + length) / 2, height / 2), root, col)
-    box("prop_hall_wall_left", (0.1, y1 - y0, height), (-wall_x, (y0 + y1) / 2, height / 2), root, col)
-    box("prop_hall_wall_end", (width + 0.1, 0.1, height), (0.05, length + 0.05, height / 2), root, col)
+    side, y0 = width / 2, HALL_START
+    office_end = ROOM_FRAME.translation.y + ROOM[0] / 2 + WALL
+    # thin floor, so its front edge under the street door sits on the facade's base line
+    span("prop_hall_floor", (-side - WALL, y0, -0.01), (side + WALL, length, 0), root)
+    span("prop_hall_ceiling", (-side - WALL, y0, height), (side + WALL, length, height + 0.05), root)
+    span("prop_hall_wall_right", (side, y0, 0), (side + WALL, length, height), root)
+    span("prop_hall_wall_left", (-side - WALL, office_end, 0), (-side, length, height), root)
+    span("prop_hall_wall_end", (-side, length, 0), (side + WALL, length + WALL, height), root)
 
     room = common.empty("office_room", (0, 0, 0), root, col)
     room.matrix_basis = ROOM_FRAME
 
-    # room shell, 8 x 7 x 3.2 m, with a doorway in the front wall onto the hallway
-    box("prop_floor", (8, 7, 0.05), (0, 3.8, -0.025), room, col)
-    box("prop_ceiling", (8, 7, 0.05), (0, 3.8, 3.225), room, col)
-    box("prop_wall_back", (8, 0.1, 3.2), (0, 7.35, 1.6), room, col)
-    box("prop_wall_left", (0.1, 7, 3.2), (-4.05, 3.8, 1.6), room, col)
-    box("prop_wall_right", (0.1, 7, 3.2), (4.05, 3.8, 1.6), room, col)
-    box("prop_wall_front_left", (3.1, 0.1, 3.2), (-2.45, 0.25, 1.6), room, col)
-    box("prop_wall_front_right", (3.1, 0.1, 3.2), (2.45, 0.25, 1.6), room, col)
-    box("prop_wall_front_lintel", (1.8, 0.1, 0.6), (0, 0.25, 2.9), room, col)
+    # room shell: the front wall onto the hallway has the doorway, the street-side wall the window
+    w, back, h = ROOM[0] / 2, WALL + ROOM[1], ROOM[2]
+    door_x, door_w, door_h = ROOM_DOOR
+    win_y, win_w, sill, head = ROOM_WINDOW
+    span("prop_floor", (-w, WALL, -0.05), (w, back, 0), room)
+    span("prop_ceiling", (-w, WALL, h), (w, back, h + 0.05), room)
+    span("prop_wall_back", (-w - WALL, back, 0), (w + WALL, back + WALL, h), room)
+    span("prop_wall_right", (w, WALL, 0), (w + WALL, back, h), room)
+    span("prop_wall_front_left", (-w - WALL, 0, 0), (door_x - door_w / 2, WALL, h), room)
+    span("prop_wall_front_right", (door_x + door_w / 2, 0, 0), (w + WALL, WALL, h), room)
+    span("prop_wall_front_lintel", (door_x - door_w / 2, 0, door_h), (door_x + door_w / 2, WALL, h), room)
+    span("prop_wall_left_front", (-w - WALL, WALL, 0), (-w, win_y - win_w / 2, h), room)
+    span("prop_wall_left_back", (-w - WALL, win_y + win_w / 2, 0), (-w, back, h), room)
+    span("prop_window_sill", (-w - WALL, win_y - win_w / 2, 0), (-w, win_y + win_w / 2, sill), room)
+    span("prop_window_head", (-w - WALL, win_y - win_w / 2, head), (-w, win_y + win_w / 2, h), room)
 
-    # desk against the back wall, drawer pedestal under its right side
-    box("prop_desk_top", (1.6, 0.8, 0.04), (0, 6.5, 0.74), room, col)
-    box("prop_desk_leg_l0", (0.04, 0.04, 0.72), (-0.76, 6.14, 0.36), room, col)
-    box("prop_desk_leg_l1", (0.04, 0.04, 0.72), (-0.76, 6.86, 0.36), room, col)
-    box("prop_pedestal", (0.45, 0.7, 0.72), (0.55, 6.5, 0.36), room, col)
-    box("hs_drawer", (0.41, 0.03, 0.2), (0.55, 6.135, 0.6), room, col)
+    # desk against the back wall, drawer pedestal under its right side, chair tucked in left of centre so it
+    # hides neither the drawer nor the crate from the standing spot
+    y = back - 0.45  # the desk's centre line
+    box("prop_desk_top", (1.6, 0.8, 0.04), (0, y, 0.74), room, col)
+    box("prop_desk_leg_l0", (0.04, 0.04, 0.72), (-0.76, y - 0.36, 0.36), room, col)
+    box("prop_desk_leg_l1", (0.04, 0.04, 0.72), (-0.76, y + 0.36, 0.36), room, col)
+    box("prop_pedestal", (0.45, 0.7, 0.72), (0.55, y, 0.36), room, col)
+    box("hs_drawer", (0.41, 0.03, 0.2), (0.55, y - 0.365, 0.6), room, col)
+    box("prop_chair_seat", (0.45, 0.45, 0.05), (-0.2, y - 0.55, 0.45), room, col)
+    box("prop_chair_back", (0.45, 0.05, 0.5), (-0.2, y - 0.77, 0.72), room, col)
 
     # on the desk
-    box("hs_monitor", (0.64, 0.04, 0.38), (0, 6.75, 1.12), room, col)
-    box("prop_monitor_stand", (0.05, 0.04, 0.18), (0, 6.78, 0.85), room, col)
-    box("prop_monitor_base", (0.24, 0.17, 0.015), (0, 6.78, 0.768), room, col)
-    box("prop_keyboard", (0.44, 0.15, 0.022), (0, 6.3, 0.771), room, col)
-    cyl("prop_mug", 0.04, 0.1, (-0.5, 6.3, 0.81), room, col)
-    packet = box("prop_chip_packet", (0.17, 0.24, 0.05), (-0.35, 6.55, 0.785), room, col)
+    box("hs_monitor", (0.64, 0.04, 0.38), (0, y + 0.25, 1.12), room, col)
+    box("prop_monitor_stand", (0.05, 0.04, 0.18), (0, y + 0.28, 0.85), room, col)
+    box("prop_monitor_base", (0.24, 0.17, 0.015), (0, y + 0.28, 0.768), room, col)
+    box("prop_keyboard", (0.44, 0.15, 0.022), (0, y - 0.2, 0.771), room, col)
+    cyl("prop_mug", 0.04, 0.1, (-0.5, y - 0.2, 0.81), room, col)
+    packet = box("prop_chip_packet", (0.17, 0.24, 0.05), (-0.35, y + 0.05, 0.785), room, col)
     packet.rotation_euler.z = 0.5
-    box("prop_chair_seat", (0.45, 0.45, 0.05), (0.6, 5.6, 0.45), room, col)
-    box("prop_chair_back", (0.45, 0.05, 0.5), (0.6, 5.38, 0.72), room, col)
 
     # record crate on the floor, left of the desk
-    crate = common.empty("hs_crate", (-1.4, 6.3, 0), room, col)
+    crate = common.empty("hs_crate", (-1.15, y - 0.2, 0), room, col)
     box("hs_crate__side_l", (0.02, 0.4, 0.32), (-0.19, 0, 0.16), crate, col)
     box("hs_crate__side_r", (0.02, 0.4, 0.32), (0.19, 0, 0.16), crate, col)
     box("hs_crate__front", (0.4, 0.02, 0.32), (0, -0.19, 0.16), crate, col)
@@ -137,10 +154,10 @@ def build_office(frame, col):
         record.rotation_euler.x = -0.18 + i * 0.012
 
     # ornament shelf on the back wall, right of the desk
-    shelf = common.empty("hs_shelf", (2.0, 7.15, 1.55), room, col)
-    box("hs_shelf__board", (1.4, 0.25, 0.03), (0, 0, 0), shelf, col)
-    box("hs_shelf__ornament_00", (0.14, 0.14, 0.14), (-0.35, 0, 0.085), shelf, col)
-    cyl("hs_shelf__ornament_01", 0.07, 0.16, (0.35, 0, 0.095), shelf, col)
+    shelf = common.empty("hs_shelf", (1.1, back - 0.15, 1.55), room, col)
+    box("hs_shelf__board", (0.8, 0.25, 0.03), (0, 0, 0), shelf, col)
+    box("hs_shelf__ornament_00", (0.14, 0.14, 0.14), (-0.2, 0, 0.085), shelf, col)
+    cyl("hs_shelf__ornament_01", 0.07, 0.16, (0.2, 0, 0.095), shelf, col)
     return root, room
 
 
@@ -180,6 +197,32 @@ def build_walkin(frame, street):
     return cam
 
 
+def cut_window(frame):
+    """The office window, cut through The Commons' facade too: a second boolean on osm_commons."""
+    commons = bpy.data.objects.get("osm_commons")
+    if commons is None:
+        return None
+    old = bpy.data.objects.get("helper_window_cutter")
+    if old:
+        data = old.data
+        bpy.data.objects.remove(old, do_unlink=True)
+        bpy.data.meshes.remove(data)
+    win_y, win_w, sill, head = ROOM_WINDOW
+    centre = ROOM_FRAME @ Vector((0, win_y, (sill + head) / 2))
+    centre.y = 0.0  # on the facade
+    cutter = common.box("helper_window_cutter", (win_w, 1.0, head - sill), frame @ centre, None, common.collection("helpers"))
+    cutter.rotation_euler.z = frame.to_euler().z
+    cutter.display_type = "WIRE"
+    cutter.hide_render = True
+    mod = commons.modifiers.get("window") or commons.modifiers.new("window", "BOOLEAN")
+    mod.operation = "DIFFERENCE"
+    mod.object = cutter
+    mod.solver = "EXACT"
+    mod.use_self = True
+    mod.use_hole_tolerant = True
+    return cutter
+
+
 def swing_door(frame):
     """anim_door_swing on prop_commons_door, on the walk-in's timeline. It opens inwards about its hinge."""
     door = bpy.data.objects.get("prop_commons_door")
@@ -203,6 +246,7 @@ def main():
     office = common.collection("office")
     common.clear(office)
     _, room = build_office(frame, office)
+    cut_window(frame)
     place(camera("cam_stand", CAMERA_FOV_DEG, office, room), *STAND)
     place(camera("cam_stand_portrait", PORTRAIT_FOV_DEG, office, room), *PORTRAIT)
     build_walkin(frame, common.collection("street"))
