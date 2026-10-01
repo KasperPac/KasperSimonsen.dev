@@ -1,0 +1,34 @@
+{
+  "source": "art/osm/cremorne.json",
+  "attribution": "© OpenStreetMap contributors, ODbL 1.0",
+  "fetchedAt": "2026-10-01T05:43:19.372Z",
+  "origin": {
+    "lat": -37.8274841,
+    "lon": 144.9930855952381
+  },
+  "axes": "+x east, +y up, -z north, metres; Blender (x, y) = (x, -z)",
+  "door": [
+    16.585827577074145,
+    2.1778793067125797
+  ],
+  "normal": [
+    0.9913549440402188,
+    0.13120737375244956
+  ],
+  "streetPoint": [
+    21.993615006572636,
+    2.9108892649228437
+  ],
+  "nylex": [
+    -366.30310965471904,
+    233.82659041098125
+  ],
+  "skipped": 0,
+  "triangles": {
+    "osm_buildings": 46821,
+    "osm_commons": 48,
+    "osm_aami_park": 394,
+    "osm_roads": 4884,
+    "osm_rail": 2870
+  }
+}
