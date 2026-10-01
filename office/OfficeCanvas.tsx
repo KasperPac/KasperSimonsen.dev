@@ -8,6 +8,7 @@ import manifest from "./manifest.json";
 import { theme } from "./theme";
 import { applyCleanEdges, setLineResolution } from "./style/cleanEdges";
 import { findClipFor, makeClipSampler, progressToTime } from "./walkin/clipSampler";
+import { useTurntable } from "./idle/useTurntable";
 import { copyCameraPose, findCamera } from "./walkin/cameraPose";
 
 const WALKIN_CAMERA = "cam_walkin";
@@ -64,6 +65,7 @@ function Street({ progress, host }: OfficeCanvasProps) {
 
 function Office() {
   const office = useCleanEdges(manifest.office.url);
+  useTurntable(office.scene);
   return <primitive object={office.scene} />;
 }
 
