@@ -39,7 +39,7 @@ def in_office(pose):
 
 # (scroll fraction, eye, look-at) in the office frame.
 WALKIN_KEYS = [
-    (0.00, (0.0, -180.0, 90.0), (20.0, 400.0, 0.0)),  # high over Gwynne St; Nylex and AAMI Park beyond
+    (0.00, (-40.0, -230.0, 195.0), (63.0, 254.0, 0.0)),  # 21.5 deg down over Cremorne; Nylex, AAMI, MCG, CBD beyond
     (0.45, (0.0, -45.0, 22.0), (0.0, 30.0, 2.0)),  # descending towards the facade
     (0.60, (0.0, -10.0, 9.0), (0.0, 20.0, 2.0)),  # over the roof across Gwynne St, clear of its edge
     (0.70, (0.0, -4.0, 1.65), (0.0, 10.0, 1.6)),  # at the door, eye height
