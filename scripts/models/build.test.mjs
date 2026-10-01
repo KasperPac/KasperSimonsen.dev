@@ -34,4 +34,16 @@ describe("optimise", () => {
     const after = await roundTrip(sampleDocument());
     expect(after.getRoot().listExtensionsUsed().map((e) => e.extensionName)).toContain("EXT_meshopt_compression");
   });
+
+  it("keeps node extras, including on nodes that share a mesh", async () => {
+    const doc = sampleDocument();
+    const nodes = Object.fromEntries(doc.getRoot().listNodes().map((n) => [n.getName(), n]));
+    expect(nodes.hs_drawer.getMesh()).toBe(nodes.hs_shelf.getMesh());
+    nodes.hs_drawer.setExtras({ edge_threshold_deg: 1 });
+    nodes.hs_shelf.setExtras({ edge_threshold_deg: 5 });
+    const after = await roundTrip(doc);
+    const byName = Object.fromEntries(after.getRoot().listNodes().map((n) => [n.getName(), n]));
+    expect(byName.hs_drawer.getExtras()).toEqual({ edge_threshold_deg: 1 });
+    expect(byName.hs_shelf.getExtras()).toEqual({ edge_threshold_deg: 5 });
+  });
 });

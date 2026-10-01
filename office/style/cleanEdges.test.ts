@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { BoxGeometry, DoubleSide, Group, Mesh, Raycaster, Vector3 } from "three";
+import { BoxGeometry, DoubleSide, Group, IcosahedronGeometry, Mesh, Raycaster, Vector3 } from "three";
 import type { LineSegments2 } from "three/addons/lines/LineSegments2.js";
 import { applyCleanEdges, setLineResolution } from "./cleanEdges";
 
@@ -77,5 +77,51 @@ describe("setLineResolution", () => {
     const handle = applyCleanEdges(root, opts);
     setLineResolution(handle, 390, 844);
     expect(handle.line.resolution.toArray()).toEqual([390, 844]);
+  });
+});
+
+describe("per-object edge threshold", () => {
+  const segments = (mesh: Mesh) => edgesOf(mesh).geometry.attributes.instanceStart.count;
+  const dome = () => {
+    const mesh = new Mesh(new IcosahedronGeometry(1, 1));
+    mesh.name = "dome";
+    return mesh;
+  };
+  const baseline = () => {
+    const mesh = dome();
+    applyCleanEdges(new Group().add(mesh), opts);
+    return segments(mesh);
+  };
+
+  it("draws more edges when the mesh asks for a lower threshold", () => {
+    const mesh = dome();
+    mesh.userData.edge_threshold_deg = 1;
+    applyCleanEdges(new Group().add(mesh), opts);
+    expect(segments(mesh)).toBeGreaterThan(baseline());
+  });
+
+  it("inherits from an ancestor", () => {
+    const mesh = dome();
+    const root = new Group().add(new Group().add(mesh));
+    root.userData.edge_threshold_deg = 1;
+    applyCleanEdges(root, opts);
+    expect(segments(mesh)).toBeGreaterThan(baseline());
+  });
+
+  it("nearest ancestor wins", () => {
+    const mesh = dome();
+    const inner = new Group().add(mesh);
+    inner.userData.edge_threshold_deg = 170;
+    const root = new Group().add(inner);
+    root.userData.edge_threshold_deg = 1;
+    applyCleanEdges(root, opts);
+    expect(segments(mesh)).toBeLessThan(baseline());
+  });
+
+  it.each([0, -5, 200, "abc", Number.NaN])("falls back to the default for %s", (bad) => {
+    const mesh = dome();
+    mesh.userData.edge_threshold_deg = bad;
+    applyCleanEdges(new Group().add(mesh), opts);
+    expect(segments(mesh)).toBe(baseline());
   });
 });

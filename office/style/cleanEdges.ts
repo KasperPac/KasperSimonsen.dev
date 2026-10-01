@@ -18,6 +18,7 @@ export type CleanEdgesHandle = { fill: MeshBasicMaterial; line: LineMaterial };
  * Restyles every mesh under `root` in place: a fill that hides what's behind it, plus the mesh's
  * real edges as screen-space lines. Names, hierarchy and transforms are untouched, so hotspots and
  * Blender animations keep working. Calling it again on the same tree is a no-op for styled meshes.
+ * A mesh (or its nearest ancestor) with `userData.edge_threshold_deg` in (0, 180) overrides `opts.thresholdDeg`.
  */
 export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanEdgesHandle {
   const fill = new MeshBasicMaterial({
@@ -28,7 +29,7 @@ export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanE
     polygonOffsetUnits: 1,
   });
   const line = new LineMaterial({ color: opts.line, linewidth: opts.lineWidth, fog: true });
-  const edgeCache = new Map<BufferGeometry, LineSegmentsGeometry>();
+  const edgeCache = new Map<BufferGeometry, Map<number, LineSegmentsGeometry>>();
 
   const meshes: Mesh[] = [];
   root.traverse((obj) => {
@@ -37,10 +38,13 @@ export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanE
 
   for (const mesh of meshes) {
     mesh.material = fill;
-    let edges = edgeCache.get(mesh.geometry);
+    const threshold = thresholdFor(mesh, opts.thresholdDeg);
+    let byThreshold = edgeCache.get(mesh.geometry);
+    if (!byThreshold) edgeCache.set(mesh.geometry, (byThreshold = new Map()));
+    let edges = byThreshold.get(threshold);
     if (!edges) {
-      edges = new LineSegmentsGeometry().fromEdgesGeometry(new EdgesGeometry(mesh.geometry, opts.thresholdDeg));
-      edgeCache.set(mesh.geometry, edges);
+      edges = new LineSegmentsGeometry().fromEdgesGeometry(new EdgesGeometry(mesh.geometry, threshold));
+      byThreshold.set(threshold, edges);
     }
     const lines = new LineSegments2(edges, line);
     lines.name = `${mesh.name}__edges`;
@@ -50,6 +54,15 @@ export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanE
     mesh.userData.cleanEdgesApplied = true;
   }
   return { fill, line };
+}
+
+/** Nearest valid `edge_threshold_deg` (a Blender custom property, exported as glTF extras) up the tree. */
+function thresholdFor(mesh: Object3D, fallback: number): number {
+  for (let o: Object3D | null = mesh; o; o = o.parent) {
+    const v: unknown = o.userData.edge_threshold_deg;
+    if (typeof v === "number" && Number.isFinite(v) && v > 0 && v < 180) return v;
+  }
+  return fallback;
 }
 
 /** Line widths are in CSS pixels relative to this; call on every canvas resize. */
