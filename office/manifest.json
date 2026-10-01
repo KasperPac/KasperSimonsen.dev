@@ -2,7 +2,7 @@
   "street": {
     "url": "/models/street.glb",
     "maxBytes": 819200,
-    "nodes": ["osm_buildings", "osm_commons", "osm_aami_park", "osm_roads"],
+    "nodes": ["osm_buildings", "osm_commons", "prop_aami_park", "osm_mcg", "osm_roads"],
     "cameras": ["cam_walkin"],
     "animated": ["cam_walkin"]
   },
