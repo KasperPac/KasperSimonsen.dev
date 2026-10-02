@@ -37,5 +37,6 @@ export const COPY = {
   crate: {
     label: (name: string, n: number, of: number) => `Record crate: ${name}, ${n} of ${of}. Arrow keys flick, Enter puts it on.`,
     hint: "Hover a record to flick to it. Click it to put it on.",
+    hintTouch: "Swipe to flick through. Tap one to put it on.",
   },
 } as const;

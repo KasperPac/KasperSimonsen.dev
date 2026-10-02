@@ -11,13 +11,14 @@ import { describeDirector, focusedHotspot, initialDirector, isLocked, reduceDire
 import { pathForTarget } from "./scene/targets";
 import { layerOf, sceneFor } from "./scene/location";
 import { clearLayer, pushLayer, useOfficeLocation } from "./history";
-import { HOTSPOTS, labelFor, sameHit, type Hit } from "./hotspots/registry";
+import { HOTSPOTS, labelFor, sameHit, type Hit, type HotspotName } from "./hotspots/registry";
 import type { OverlayElements } from "./OfficeCanvas";
 import BusinessCard from "./cards/BusinessCard";
 import SleeveBack from "./cards/SleeveBack";
 import { clampDig } from "./objects/crate";
 import { canPull, digFor, swipeStep } from "./crate/dig";
 import { tourAt } from "./hints/tour";
+import { GLINT_SECONDS, glintGap, nextGlint } from "./hints/glint";
 import { findWork, work } from "@/content/work";
 import Panel from "@/panels/Panel";
 import ContactForm from "@/panels/ContactForm";
@@ -49,8 +50,9 @@ export default function OfficeExperience() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dig, setDig] = useState(0);
   const browsingRef = useRef(false);
-  // Arrival hints (spec 3.1): a tour of the four objects, then dots until the visitor uses one.
-  const [hints, setHints] = useState<"" | "tour" | "dots">("");
+  // Arrival hints (spec 3.1): a tour of the four objects, then each object's dot, in its colour, with now and then one
+  // object lit up (a glint). Once the visitor has opened something the glints and the line of text stop; the dots stay.
+  const [hints, setHints] = useState<"" | "tour" | "dots" | "used">("");
   const used = useRef(false);
   const toured = useRef(false);
 
@@ -88,16 +90,18 @@ export default function OfficeExperience() {
     setHovered(hit);
     if (host.current) host.current.dataset.hover = hit ? hit.hotspot : "";
   }, []);
-  // The tour gives way to the visitor's own pointer at once; the dots stay until they open something (Kasper).
+  // The tour and the glints give way to the visitor's own pointer at once, and come back to what it's on.
   const interacted = useRef(false);
+  const visitorHover = useRef<Hit | null>(null);
   const markUsed = useCallback(() => {
     if (used.current) return;
     used.current = true;
-    setHints("");
+    setHints("used");
   }, []);
   // The visitor's own hover or keyboard focus: ends the hints, and in the crate brings the hovered record to the front.
   const onHover = useCallback(
     (hit: Hit | null) => {
+      visitorHover.current = hit;
       if (hit) interacted.current = true;
       if (hit?.hotspot === "hs_crate" && hit.item && browsingRef.current) {
         const i = work.findIndex((w) => w.slug === hit.item);
@@ -253,6 +257,32 @@ export default function OfficeExperience() {
     };
   }, [state.kind, show]);
 
+  // Glints (Kasper picked them over labels): after the tour, until something's been opened, an object lights up in its
+  // colour now and then, one at a time, never while the visitor is on something themselves.
+  useEffect(() => {
+    if (state.kind !== "idle" || hints !== "dots") return;
+    let timer = 0;
+    let last: HotspotName | null = null;
+    let lit = false;
+    const wait = () => (timer = window.setTimeout(glint, glintGap(Math.random()) * 1000));
+    const glint = () => {
+      if (visitorHover.current) return wait();
+      last = nextGlint(last, Math.random());
+      lit = true;
+      show({ hotspot: last, item: null });
+      timer = window.setTimeout(() => {
+        lit = false;
+        show(visitorHover.current);
+        wait();
+      }, GLINT_SECONDS * 1000);
+    };
+    wait();
+    return () => {
+      window.clearTimeout(timer);
+      if (lit) show(visitorHover.current);
+    };
+  }, [state.kind, hints, show]);
+
   const navProps = (hit: Hit) => ({ onFocus: () => onHover(hit), onBlur: () => onHover(null) });
 
   return (
@@ -342,7 +372,13 @@ export default function OfficeExperience() {
             overlay.current.markers[h] = el;
           }}
           className="office-marker"
+          data-hotspot={h}
+          style={{ "--marker": theme.accents[h] } as CSSProperties}
           aria-hidden="true"
+          // A dot is a way in too, for a finger especially; the nav has the same for keyboards and screen readers.
+          onClick={() => activate({ hotspot: h, item: null })}
+          onPointerEnter={() => onHover({ hotspot: h, item: null })}
+          onPointerLeave={() => onHover(null)}
         />
       ))}
 
@@ -369,7 +405,8 @@ export default function OfficeExperience() {
             {work[crate.current.dig].name}
           </p>
           <p className="office-hint" aria-hidden="true">
-            {COPY.crate.hint}
+            <span className="office-hint-pointer">{COPY.crate.hint}</span>
+            <span className="office-hint-touch">{COPY.crate.hintTouch}</span>
           </p>
         </>
       )}

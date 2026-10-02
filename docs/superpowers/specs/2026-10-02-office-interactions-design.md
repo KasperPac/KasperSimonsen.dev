@@ -47,12 +47,20 @@ label above it, and plays a tease:
 | Monitor | The screen flickers once |
 | Shelf | The ornaments bob slightly |
 
-Touch devices get white pulsing markers instead (no hover); a tap opens directly.
+Touch devices have no hover; the dots below show them what's usable, and a tap on an object or its dot opens it.
 
-**Arriving** (amended after Kasper's M2 review): the first time a visitor reaches the standing spot, a short tour lights
-each object with its label in turn, left to right (crate, drawer, monitor, shelf; ~0.8 s each). Then white pulsing dots
-stay on the four objects, on every device, with a short hint line, until the visitor opens one (hovering or focusing
-only ends the tour; Kasper: the dots should stay). They breathe gently rather than pulse in and out.
+**Arriving** (amended after Kasper's M2 review, and again 2026-10-03): the first time a visitor reaches the standing
+spot, a short tour lights each object with its label in turn, left to right (crate, drawer, monitor, shelf; ~0.8 s
+each). Then each object gets a dot in its own colour (a solid dot in a ring, still: white breathing rings read as more
+line art, and the breath swung them about), on every device. Until the visitor opens something, an object lights up in
+its colour now and then (a glint, ~1.1 s, one at a time, 2.4-4.4 s apart, never while the visitor is on something) and a
+short hint line shows; after that the dots stay as the way round. Kasper picked colour and glints over name labels.
+A dot is tappable. Standing holds through a small scroll back (progress down to 0.97, ~200 px), so a wheel notch or a
+nudge on a phone doesn't walk the visitor out.
+
+**Phones** (2026-10-03, Kasper: "meant for mobile, not cropped"): the portrait standing view looks down from high at
+the front wall with the whole room centred; it is authored for a 0.64-wide screen and narrower phones widen it (to
+105 degrees) so the room always fits across. The crate's hint says swipe and tap on touch screens.
 
 ### 3.2 Crate (work)
 

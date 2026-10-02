@@ -106,30 +106,36 @@ html.office-locked {
   white-space: nowrap;
 }
 
-/* Touch markers: white, only where hover isn't possible, only while standing. */
+/* The dots over what you can use: each in its object's colour, a solid dot in a ring (Kasper picked colour and glints
+   over plain white rings, which read as more line art). After the arrival tour they stay whenever you're standing in the
+   office. A dot is a way in too: tapping it opens its object. */
 .office-marker {
   display: none;
   position: fixed;
   left: 0;
   top: 0;
   z-index: 2;
-  width: 14px;
-  height: 14px;
-  margin: -24px 0 0 -7px;
-  border: 1px solid var(--office-fg);
+  width: 12px;
+  height: 12px;
+  margin: -30px 0 0 -6px;
   border-radius: 50%;
-  pointer-events: none;
+  background: var(--marker, var(--office-fg));
+  box-shadow: 0 0 0 3px var(--office-bg);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-@media (hover: none) {
-  .office[data-director="idle"] .office-marker { display: block; animation: office-pulse 2.4s ease-in-out infinite; }
+.office-marker::after {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--marker, var(--office-fg));
+  opacity: 0.55;
 }
-@keyframes office-pulse { /* a gentle breath that never fades away: Kasper read the old one as dots flying in and out */
-  0%, 100% { scale: 1; opacity: 0.95; }
-  50% { scale: 1.15; opacity: 0.6; }
-}
-/* After the arrival tour, every device gets the pulsing dots until the visitor has used an object. */
-.office[data-hints="dots"][data-director="idle"]:not([data-office-fallback="true"]) .office-marker { display: block; animation: office-pulse 2.4s ease-in-out infinite; }
-.office-hints-text { display: none; position: fixed; left: 50%; bottom: 20px; z-index: 3; translate: -50% 0; font: 11px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.7); }
+.office[data-director="idle"]:is([data-hints="dots"], [data-hints="used"]):not([data-office-fallback="true"]) .office-marker { display: block; }
+/* With the dots up, an object's label sits above its dot's ring rather than on it. */
+.office[data-director="idle"]:is([data-hints="dots"], [data-hints="used"]) .office-label { margin-top: -64px; }
+.office-hints-text { display: none; position: fixed; left: 16px; right: 16px; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 3; text-align: center; font: 11px/1.5 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.7); }
 .office[data-hints="dots"][data-director="idle"]:not([data-office-fallback="true"]) .office-hints-text { display: block; }
 
 /* On the street: a way in for anyone who doesn't think to scroll (Kasper). Gone once the camera is on its way down,
@@ -295,7 +301,13 @@ html.office-locked {
 .article h3 { margin: 28px 0 8px; font-size: 18px; font-weight: 600; }
 .article-stack { padding-left: 18px; color: rgba(232, 232, 232, 0.8); }
 /* the crate's hint, bottom centre while browsing it */
-.office-hint { position: fixed; left: 50%; bottom: 20px; z-index: 3; translate: -50% 0; font: 11px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.7); }
+.office-hint { position: fixed; left: 16px; right: 16px; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 3; text-align: center; font: 11px/1.5 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.7); }
+/* The crate says how to use it in the visitor's own terms: hover and click with a pointer, swipe and tap on a phone. */
+.office-hint-touch { display: none; }
+@media (hover: none) {
+  .office-hint-pointer { display: none; }
+  .office-hint-touch { display: inline; }
+}
 .office-crate,
 .office-sr { position: fixed; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 /* browsing the crate, a finger on it is ours: the page doesn't pan, and the swipe flicks */
@@ -335,7 +347,6 @@ html.office-locked {
 @keyframes panel-in { from { translate: 40px 0; opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .panel { animation: panel-fade 0.2s ease-out both; }
-  .office-marker,
   .office-scroll::after { animation: none !important; }
 }
 @keyframes panel-fade { from { opacity: 0; } }

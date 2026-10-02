@@ -81,19 +81,25 @@ test("the director is idle at the standing spot and the camera follows the walk-
   await expect(office(page)).toHaveAttribute("data-camera", "base");
 });
 
-test("on arrival the office names what you can use, then leaves dots until you open something", async ({ page }) => {
+test("on arrival the office names what you can use, then keeps a dot over each", async ({ page }) => {
   await openOffice(page);
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
   await expect(office(page)).toHaveAttribute("data-hints", "dots", { timeout: MOVE_WAIT });
   await expect(page.locator(".office-marker").first()).toBeVisible();
-  await page.getByRole("button", { name: "The work" }).focus(); // looking around doesn't dismiss them
+  await expect(page.getByText(COPY_HINTS)).toBeVisible();
+  await page.getByRole("button", { name: "The work" }).focus(); // looking around changes nothing
   await expect(office(page)).toHaveAttribute("data-hints", "dots");
-  await page.keyboard.press("Enter"); // opening something does
-  await expect(office(page)).toHaveAttribute("data-hints", "");
-  await expect(page.locator(".office-marker").first()).toBeHidden();
+  await page.keyboard.press("Enter"); // opening something ends the glints and the line of text
+  await expect(office(page)).toHaveAttribute("data-hints", "used");
+  await expect(page.locator(".office-marker").first()).toBeHidden(); // nothing over an open object
+  await page.keyboard.press("Escape");
+  await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
+  await expect(page.locator(".office-marker").first()).toBeVisible(); // the dots are still the way round
+  await expect(page.getByText(COPY_HINTS)).toBeHidden();
 });
 
+const COPY_HINTS = "Have a look around.";
 const comeIn = (page: Page) => page.getByRole("button", { name: "Come in" });
 const scrollY = (page: Page) => page.evaluate(() => Math.round(window.scrollY));
 const bottom = (page: Page) => page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
@@ -157,20 +163,44 @@ test.describe("reduced motion", () => {
   });
 });
 
-test("the dots breathe where they are, over their objects", async ({ page }) => {
+async function standWithDots(page: Page) {
   await openOffice(page);
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect(office(page)).toHaveAttribute("data-hints", "dots", { timeout: MOVE_WAIT });
-  const dot = page.locator(".office-marker").last(); // the farthest from the corner, so any drift is largest
-  const sample = () =>
-    dot.evaluate((m) => {
-      const r = m.getBoundingClientRect();
-      return { x: r.x + r.width / 2, y: r.y + r.height / 2, scale: Number(getComputedStyle(m).scale) || 1 };
-    });
-  await expect.poll(async () => (await sample()).scale, { timeout: MOVE_WAIT }).toBeLessThan(1.02);
-  const rest = await sample();
-  await expect.poll(async () => (await sample()).scale, { timeout: MOVE_WAIT }).toBeGreaterThan(1.1);
-  const full = await sample();
-  expect(Math.abs(full.x - rest.x)).toBeLessThanOrEqual(1);
-  expect(Math.abs(full.y - rest.y)).toBeLessThanOrEqual(1);
+}
+const dot = (page: Page, hotspot: string) => page.locator(`.office-marker[data-hotspot="${hotspot}"]`);
+
+test("each dot is its object's colour and holds still over it", async ({ page }) => {
+  await standWithDots(page);
+  await expect(dot(page, "hs_crate")).toHaveCSS("background-color", "rgb(198, 255, 61)");
+  await expect(dot(page, "hs_drawer")).toHaveCSS("background-color", "rgb(46, 242, 255)");
+  const where = () => dot(page, "hs_shelf").evaluate((m) => {
+    const r = m.getBoundingClientRect();
+    return `${Math.round(r.x + r.width / 2)},${Math.round(r.y + r.height / 2)}`;
+  });
+  const before = await where();
+  await page.waitForTimeout(2500);
+  expect(await where()).toBe(before);
+});
+
+test("now and then an object lights up in its colour on its own", async ({ page }) => {
+  await standWithDots(page);
+  await page.mouse.move(2, 2); // the pointer on nothing
+  await expect.poll(() => office(page).getAttribute("data-hover"), { timeout: MOVE_WAIT }).toMatch(/^hs_/);
+  await expect.poll(() => office(page).getAttribute("data-hover"), { timeout: MOVE_WAIT }).toBe("");
+});
+
+test("tapping a dot opens its object", async ({ page }) => {
+  await standWithDots(page);
+  await dot(page, "hs_drawer").click();
+  await expect(office(page)).toHaveAttribute("data-director", /focus(ing|ed):hs_drawer/, { timeout: MOVE_WAIT });
+});
+
+test("a small scroll back keeps you in the office, dots and all", async ({ page }) => {
+  await standWithDots(page);
+  await page.evaluate(() => window.scrollBy(0, -100));
+  await expect.poll(() => progress(page), { timeout: MOVE_WAIT }).toBeLessThan(0.995);
+  await page.waitForTimeout(1500);
+  await expect(office(page)).toHaveAttribute("data-director", "idle");
+  await expect(dot(page, "hs_crate")).toBeVisible();
 });
