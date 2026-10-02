@@ -177,6 +177,11 @@ export default function OfficeExperience() {
     };
   }, [browsing, flick]);
 
+  // Keyboard flicks show the front record's label, as hovering it would.
+  useEffect(() => {
+    if (browsing && document.activeElement === crateRef.current) show({ hotspot: "hs_crate", item: work[digFor(dig, null)].slug });
+  }, [browsing, dig, show]);
+
   const onCrateKey = (e: ReactKeyboardEvent) => {
     const step = e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 0;
     if (step) {
@@ -331,7 +336,12 @@ export default function OfficeExperience() {
             aria-roledescription="record crate"
             aria-label={COPY.crate.label(work[crate.current.dig].name, crate.current.dig + 1, work.length)}
             onKeyDown={onCrateKey}
+            onFocus={() => show({ hotspot: "hs_crate", item: work[crate.current.dig].slug })}
           />
+          {/* read out as the records flick (the group's own label isn't re-announced when it changes) */}
+          <p className="office-sr" aria-live="polite">
+            {work[crate.current.dig].name}
+          </p>
           <p className="office-hint" aria-hidden="true">
             {COPY.crate.hint}
           </p>

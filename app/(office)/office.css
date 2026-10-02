@@ -228,7 +228,26 @@ html.office-locked {
 .article-stack { padding-left: 18px; color: rgba(232, 232, 232, 0.8); }
 /* the crate's hint, bottom centre while browsing it */
 .office-hint { position: fixed; left: 50%; bottom: 20px; z-index: 3; translate: -50% 0; font: 11px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.7); }
-.office-crate { position: fixed; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+.office-crate,
+.office-sr { position: fixed; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* browsing the crate, a finger on it is ours: the page doesn't pan, and the swipe flicks */
+.office[data-director="focused:hs_crate"] .office-stage { touch-action: none; }
+/* Printed on objects, phones see them small: larger type, and the sleeve's back trimmed to what fits (the full case
+   study is a tap away). The print is then mapped onto the object, so these sizes shrink with it. */
+@media (max-width: 700px), (orientation: portrait) {
+  .office-card-face { font-size: 25px; }
+  .office-card-face .office-card-eyebrow { font-size: 17px; }
+  .office-card-face .office-card-title { font-size: 48px; }
+  .office-card-face .office-card-cta { font-size: 21px; }
+  .office-sleeve-back { font-size: 26px; }
+  .office-sleeve-back .office-card-eyebrow { font-size: 18px; }
+  .office-sleeve-back .office-card-title { font-size: 58px; }
+  .office-sleeve-headline { font-size: 30px; }
+  .office-sleeve-back .office-card-text { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+  .office-sleeve-label,
+  .office-sleeve-stack { display: none; }
+  .office-sleeve-back .office-card-cta { font-size: 23px; }
+}
 
 /* The Read more panel. */
 .panel-scrim { position: fixed; inset: 0; z-index: 10; }
