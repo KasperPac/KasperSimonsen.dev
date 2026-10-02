@@ -10,6 +10,8 @@ import {
   climbShare,
   flightPoint,
   flightTurn,
+  hopPoint,
+  playPhaseStart,
   PLAY_BACK_SECONDS,
   PLAY_SECONDS,
   playPhases,
@@ -86,9 +88,9 @@ describe("CrateMotion", () => {
 });
 
 describe("playPhases", () => {
-  it("runs travel, slide out, lay, to the stand, then the turn, in order, each starting as the last ends", () => {
-    expect(playPhases(0)).toEqual({ travel: 0, slideOut: 0, lay: 0, toStand: 0, turn: 0 });
-    const steps = ["travel", "slideOut", "lay", "toStand", "turn"] as const;
+  it("runs travel, slide out, lay, then the hop to the stand, in order, each starting as the last ends", () => {
+    expect(playPhases(0)).toEqual({ travel: 0, slideOut: 0, lay: 0, toStand: 0 });
+    const steps = ["travel", "slideOut", "lay", "toStand"] as const;
     let previous = 0;
     for (const step of steps) {
       // find where this step finishes, and check the next one hasn't started before it
@@ -99,7 +101,7 @@ describe("playPhases", () => {
       if (next) expect(playPhases(t - 0.002)[next]).toBe(0);
       previous = t;
     }
-    expect(playPhases(1)).toEqual({ travel: 1, slideOut: 1, lay: 1, toStand: 1, turn: 1 });
+    expect(playPhases(1)).toEqual({ travel: 1, slideOut: 1, lay: 1, toStand: 1 });
   });
   it("flies the record over in step with the camera's move to the player, so they arrive together", () => {
     expect(playPhases(PLAYER_MOVE.seconds / PLAY_SECONDS).travel).toBeCloseTo(1, 6);
@@ -139,6 +141,19 @@ describe("flightPoint (out of the crate, over the desk, under the shelf, never t
   });
 });
 
+describe("hopPoint (from over the platter to the stand, over the books between them)", () => {
+  const from = new Vector3(-2, 0.8, 0);
+  const to = new Vector3(-2.55, 0.91, 0);
+  const at = (t: number) => hopPoint(from, to, t, new Vector3());
+  it("starts and ends exactly where it should", () => {
+    expect(at(0).toArray()).toEqual(from.toArray());
+    expect(at(1).toArray().map((v) => +v.toFixed(9))).toEqual(to.toArray());
+  });
+  it("rises over the straight line between them", () => {
+    expect(at(0.35).y).toBeGreaterThan(from.y + (to.y - from.y) * 0.35 + 0.05);
+  });
+});
+
 describe("CrateMotion play", () => {
   it("flies a played record over in an arc, above the straight line", () => {
     const { nodes, player } = rigWithPlayer();
@@ -164,6 +179,16 @@ describe("CrateMotion play", () => {
     const centre = vinyl.getWorldPosition(new Vector3());
     expect(Math.hypot(centre.x - platter.position.x, centre.z - platter.position.z)).toBeLessThan(1e-6);
     expect(centre.y).toBeGreaterThan(platter.position.y);
+  });
+  it("turns the sleeve round as it hops to the stand, the same way every time (the other way clips the stand)", () => {
+    const { nodes, player } = rigWithPlayer();
+    const m = new CrateMotion();
+    // run to the middle of the hop: everything before it, then half of it
+    const before = PLAY_SECONDS * playPhaseStart("toStand");
+    m.update(nodes, { dig: 0, playing: 0, player, reduced: false }, before);
+    m.update(nodes, { dig: 0, playing: 0, player, reduced: false }, (PLAY_SECONDS * (1 - playPhaseStart("toStand"))) / 2);
+    const relative = player.stand.quaternion.clone().invert().multiply(nodes.records[0].getWorldQuaternion(new Quaternion()));
+    expect(2 * Math.atan2(relative.y, relative.w)).toBeCloseTo(Math.PI / 2, 1);
   });
   it("spins the vinyl with the platter", () => {
     const { nodes, player, platter } = rigWithPlayer();

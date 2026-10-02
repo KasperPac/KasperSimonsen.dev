@@ -55,7 +55,7 @@ export function flightPoint(from: Vector3, to: Vector3, toward: Vector3, t: numb
  * How long each step of playing a record takes, in order. The flight over matches the camera's move to the player, so
  * the record and the camera arrive together; the vinyl and the sleeve then play out in front of the parked camera.
  */
-const PLAY_STEPS = { travel: PLAYER_MOVE.seconds, slideOut: 0.35, lay: 0.35, toStand: 0.4, turn: 0.45 };
+const PLAY_STEPS = { travel: PLAYER_MOVE.seconds, slideOut: 0.35, lay: 0.35, toStand: 0.85 };
 export const PLAY_SECONDS = Object.values(PLAY_STEPS).reduce((a, b) => a + b, 0);
 /** Back retraces it at the same pace: the camera heads home first and the record follows it back into view. */
 export const PLAY_BACK_SECONDS = PLAY_SECONDS;
@@ -75,13 +75,43 @@ const band = (t: number, a: number, b: number) => Math.min(1, Math.max(0, (t - a
 /** Progress through each step of playing a record, from the overall progress `t`. */
 export function playPhases(t: number): Record<keyof typeof PLAY_STEPS, number> {
   let at = 0;
-  const out = { travel: 0, slideOut: 0, lay: 0, toStand: 0, turn: 0 };
+  const out = { travel: 0, slideOut: 0, lay: 0, toStand: 0 };
   for (const step of Object.keys(PLAY_STEPS) as (keyof typeof PLAY_STEPS)[]) {
     const from = at;
     at += PLAY_STEPS[step];
     out[step] = band(t, from / PLAY_SECONDS, at / PLAY_SECONDS);
   }
   return out;
+}
+
+/** Where step `step` of playing a record starts, as a share of PLAY_SECONDS. */
+export function playPhaseStart(step: keyof typeof PLAY_STEPS): number {
+  let at = 0;
+  for (const k of Object.keys(PLAY_STEPS) as (keyof typeof PLAY_STEPS)[]) {
+    if (k === step) break;
+    at += PLAY_STEPS[k];
+  }
+  return at / PLAY_SECONDS;
+}
+
+/**
+ * The hop from over the platter to the stand rises `rise` above the one and `land` above the other, over the books
+ * between them, turning the sleeve round as it goes (a turn on the spot would sweep through the stand; Blender).
+ */
+export const HOP = { rise: 0.12, land: 0.2 };
+
+/** The point `t` (0→1) along the hop from `from` (over the platter) to `to` (on the stand). */
+export function hopPoint(from: Vector3, to: Vector3, t: number, out: Vector3): Vector3 {
+  const v = 1 - t;
+  const a = v * v * v;
+  const b = 3 * v * v * t;
+  const c = 3 * v * t * t;
+  const d = t * t * t;
+  return out.set(
+    (a + b) * from.x + (c + d) * to.x,
+    a * from.y + b * (from.y + HOP.rise) + c * (to.y + HOP.land) + d * to.y,
+    (a + b) * from.z + (c + d) * to.z,
+  );
 }
 
 type Phases = ReturnType<typeof playPhases>;
@@ -143,8 +173,8 @@ function setWorldPose(o: Object3D, parent: Object3D, position: Vector3, quaterni
 
 /**
  * Places a sleeve part way through being played. From where it rests in the crate (S0) it flies to hover upright over
- * the platter, facing as the stand does (S1, `travel`), then goes to the stand (S2, `toStand`) and turns round on the
- * spot to show its back (S3, `turn`). The sleeve's origin is its bottom edge, its front is local +z.
+ * the platter, facing as the stand does (S1, `travel`), then hops over to the stand, turning round on the way to
+ * show its back (S2, `toStand`). The sleeve's origin is its bottom edge, its front is local +z.
  */
 function placeSleeve(sleeve: Object3D, parent: Object3D, stand: Placement, toward: Vector3, p: Phases): void {
   parent.updateWorldMatrix(true, false);
@@ -154,9 +184,9 @@ function placeSleeve(sleeve: Object3D, parent: Object3D, stand: Placement, towar
   leaving.copy(sleeveAt.position);
   flightPoint(leaving, hover, toward, p.travel, sleeveAt.position);
   sleeveAt.quaternion.slerp(stand.quaternion, flightTurn(p.travel, climbShare(leaving)));
-  sleeveAt.position.lerp(stand.position, p.toStand);
-  sleeveAt.quaternion.slerp(stand.quaternion, p.toStand);
-  sleeveAt.quaternion.multiply(turn.setFromAxisAngle(Y, Math.PI * p.turn));
+  if (p.toStand > 0) hopPoint(hover, stand.position, p.toStand, sleeveAt.position);
+  // turning round as it hops, about its own up, always this way (the other way sweeps through the stand)
+  sleeveAt.quaternion.multiply(turn.setFromAxisAngle(Y, Math.PI * p.toStand));
   setWorldPose(sleeve, parent, sleeveAt.position, sleeveAt.quaternion, sleeveAt.scale);
 }
 
@@ -192,7 +222,6 @@ const eased = (p: Phases): Phases => ({
   slideOut: easeInOutCubic(p.slideOut),
   lay: easeInOutCubic(p.lay),
   toStand: easeInOutCubic(p.toStand),
-  turn: easeInOutCubic(p.turn),
 });
 
 /** Per-frame easing of the flicks and of playing a record. Pure state: no React, no clocks. Runs after ObjectMotion (the tease). */
