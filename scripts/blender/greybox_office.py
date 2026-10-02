@@ -2,11 +2,14 @@
 
 Builds prop_commons (commons.py) with the office window cut in, hangs the lobby and office doors, fits out the lobby
 and the corridor, furnishes the office (office_props.py) and keys the walk-in: down over Gwynne St to the lobby
-door, across the lobby, up the corridor and into the office.
+door, across the lobby, up the corridor and into the office. Stands the heritage rooftop signs (signs.py) in the
+opening shot, facing its camera.
 
-Run after setup_street.py. Re-runnable: rebuilds the office collection, The Commons, both doors and cam_walkin.
+Run after setup_street.py. Re-runnable: rebuilds the office collection, The Commons, both doors, the signs and
+cam_walkin.
 Tune the walk-in by editing WALKIN_KEYS, re-running this, then export.py.
 """
+import bisect
 import importlib
 import math
 import sys
@@ -20,10 +23,12 @@ sys.path.insert(0, str(Path(__file__).parent))
 import common  # noqa: E402
 import commons  # noqa: E402
 import office_props  # noqa: E402
+import signs  # noqa: E402
 
 importlib.reload(common)
 importlib.reload(commons)
 importlib.reload(office_props)
+importlib.reload(signs)
 
 FPS = 24
 WALKIN_FRAMES = 240  # clip length only; scroll maps onto it
@@ -76,28 +81,54 @@ def in_office(pose):
     return tuple(tuple(ROOM_FRAME @ Vector(p)) for p in pose)
 
 
-# (scroll fraction, eye, look-at) in the office frame.
+# (scroll fraction, eye, look-at) in the office frame. walkin_path() runs a smooth spline through the eyes and eases
+# the view between the look-ats, so these are waypoints, not poses the camera stops at. The budget gives the inside
+# the larger share: descent 0-0.40, lobby door 0.40-0.55, lobby and corridor 0.55-0.72, the nameplate 0.72-0.84,
+# the office door 0.84-0.92, settling 0.92-1.
+NAMEPLATE_VIEW = (ROOM_DOOR[0], 4.0, 1.5)  # room frame: straight at the door, a touch below eye height
 WALKIN_KEYS = [
     (0.00, (-40.0, -230.0, 195.0), (63.0, 254.0, 0.0)),  # 21.5 deg down over Cremorne; Nylex, AAMI, MCG, CBD beyond
-    (0.45, (ENTRY, -45.0, 24.0), (ENTRY, 30.0, 2.0)),  # descending towards the lobby entrance
-    (0.57, (ENTRY, -10.5, 9.0), (ENTRY, 20.0, 2.0)),  # over the 7 m roof across Gwynne St, which starts 10.1 m out
-    (0.64, (ENTRY, -4.0, 1.65), (ENTRY, 10.0, 1.6)),  # at the lobby door, eye height
-    (0.72, (ENTRY, -1.4, 1.65), (ENTRY, 10.0, 1.6)),  # up to it while it swings open
-    (0.77, (ENTRY + 0.4, 2.0, 1.65), (ENTRY + 6.0, 4.5, 1.6)),  # inside, turning right up the lobby
-    (0.82, (-6.0, 4.4, 1.65), (4.4, 5.5, 1.6)),  # crossing the lobby towards the corridor
-    (0.865, (3.4, CORRIDOR_Y, 1.65), (11.0, CORRIDOR_Y, 1.6)),  # into the corridor
-    (0.885, (7.0, CORRIDOR_Y, 1.65), (14.0, CORRIDOR_Y, 1.6)),  # halfway: keeps the curve on the centre line
-    (0.905, (STUB_X, CORRIDOR_Y, 1.65), (STUB_X, 0.0, 1.55)),  # end of the corridor, turned right along the stub
-    (0.93, *in_office(((ROOM_DOOR[0], -0.7, 1.65), (ROOM_DOOR[0], 4.0, 1.5)))),  # turned right, facing the nameplate
-    (0.945, *in_office(((ROOM_DOOR[0], -0.7, 1.65), (ROOM_DOOR[0], 4.0, 1.5)))),  # held there as the door opens
-    (0.98, *in_office(((ROOM_DOOR[0] - 0.3, 0.42, 1.62), (0.1, 4.7, 0.95)))),  # through it
+    # the descent's waypoints carry no scroll fraction: the pace (DESCENT_EASE, DESCENT_CLOSING) times them. Across
+    # Gwynne St the buildings are one storey (4 m) from 9 to 60 m out, with rails beyond. From about 40 m out (0.25)
+    # the camera glides in just above the line from the foot of the entrance over the last roof's edge, so the whole
+    # doorway stays in sight, and crosses that edge 2 m up.
+    (None, (ENTRY, -78.0, 24.0), (ENTRY, 0.0, 0.0)),  # down over the rails, the entrance ahead
+    (None, (ENTRY, -40.0, 17.0), (ENTRY, 0.0, 1.35)),  # over the road between the low blocks
+    (None, (ENTRY, -9.5, 6.2), (ENTRY, 0.0, 1.35)),  # 2 m over the last roof, at its street edge
+    (0.40, (ENTRY, -4.0, 1.65), (ENTRY, 10.0, 1.6)),  # at the lobby door, eye height
+    (0.47, (ENTRY, -1.4, 1.65), (ENTRY, 10.0, 1.6)),  # up to it while it swings open
+    (0.55, (ENTRY + 0.4, 2.0, 1.65), (ENTRY + 6.0, 4.5, 1.6)),  # inside, turning right up the lobby
+    (0.59, (-6.0, 4.4, 1.65), (4.4, 5.5, 1.6)),  # crossing the lobby towards the corridor
+    (0.62, (3.4, CORRIDOR_Y, 1.65), (11.0, CORRIDOR_Y, 1.6)),  # into the corridor
+    # the corridor runs north and the door faces north, so the view turns about 180 degrees from here to the
+    # nameplate: spread over three waypoints, it looks round the corner before the camera gets there
+    (0.65, (7.8, CORRIDOR_Y, 1.65), (11.0, 4.2, 1.6)),
+    (0.68, (10.1, 5.25, 1.65), (11.5, 1.5, 1.6)),
+    (0.71, (10.7, 4.1, 1.65), (9.7, 3.0, 1.55)),
+    # facing the nameplate from the far wall of the stub, so the whole door is in frame, then a slow push-in
+    (0.74, *in_office(((ROOM_DOOR[0], -1.25, 1.65), NAMEPLATE_VIEW))),
+    (0.84, *in_office(((ROOM_DOOR[0], -1.0, 1.65), NAMEPLATE_VIEW))),
+    (0.92, *in_office(((ROOM_DOOR[0] - 0.3, 0.42, 1.62), (0.1, 4.7, 0.95)))),  # through the door
     (1.00, *in_office(STAND)),  # standing spot
 ]
 # The doors swing over these scroll fractions, each before the camera reaches it: the lobby door into the lobby
-# about its hinge jamb (the sign follows commons.entrance's hinge side), the office door into the office.
-LOBBY_DOOR_SWING = (0.645, 0.715, 100.0)
-OFFICE_DOOR_SWING = (0.935, 0.965, -90.0)
+# about its hinge jamb (the sign follows commons.entrance's hinge side), the office door into the office near the
+# end of the nameplate hold.
+# The descent eases up to a steady cruise over DESCENT_EASE of the clip, then closes on the lobby door covering
+# DESCENT_CLOSING of the distance left each frame, so the door grows at an even rate rather than rushing up at the end.
+DESCENT_EASE = 0.06
+DESCENT_CLOSING = 0.09
+LOBBY_DOOR_SWING = (0.405, 0.465, 100.0)
+OFFICE_DOOR_SWING = (0.83, 0.88, -90.0)
 NAMEPLATE = (0.08, 1.55)  # font size (~5.6 cm capitals) and height of the plate's centre
+# Heritage rooftop signs, each standing on the OSM roof below it and turned to the opening camera. Pelaco and the
+# Skipping Girl are artistic licence, as their real spots are behind that camera: (world x, y, scale) on big flat roofs
+# either side of The Commons' sightline. The girl is on the left, with open ground behind her at frame 0 and sky lower
+# down, where she stays in frame longest. Pelaco is on the right, near enough to leave the frame before the descent
+# gets low, as anything further back on that side ends up peering over The Commons' roof. The Nylex sign stands on its
+# real silos (prop_nylex_silos, built by setup_street.py).
+SIGNS = {"skipping_girl": (-404.0, -100.0, 3.6), "pelaco": (-107.8, 164.3, 2.5)}
+NYLEX_SCALE = 2.5
 
 
 def office_frame(m):
@@ -307,7 +338,134 @@ def place(cam, eye, target):
     cam.rotation_quaternion = look(eye, target)
 
 
+def monotone(xs, ys):
+    """Fritsch-Carlson monotone cubic through (xs, ys): C1, never overshoots, flat (eased) where neighbours are equal,
+    and starting and ending at rest."""
+    n = len(xs)
+    d = [(ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]) for i in range(n - 1)]
+    m = [0.0] + [0.0 if d[i - 1] * d[i] <= 0 else (d[i - 1] + d[i]) / 2 for i in range(1, n - 1)] + [0.0]
+    for i in range(n - 1):
+        if d[i] == 0:
+            m[i] = m[i + 1] = 0.0
+            continue
+        a, b = m[i] / d[i], m[i + 1] / d[i]
+        if a * a + b * b > 9:
+            tau = 3 / math.sqrt(a * a + b * b)
+            m[i], m[i + 1] = tau * a * d[i], tau * b * d[i]
+
+    def at(x):
+        i = max(0, min(n - 2, bisect.bisect_right(xs, x) - 1))
+        h = xs[i + 1] - xs[i]
+        t = min(max((x - xs[i]) / h, 0.0), 1.0)
+        return ((2 * t**3 - 3 * t**2 + 1) * ys[i] + (t**3 - 2 * t**2 + t) * h * m[i]
+                + (-2 * t**3 + 3 * t**2) * ys[i + 1] + (t**3 - t**2) * h * m[i + 1])
+
+    return at
+
+
+def spline(points, spacing=0.02):
+    """Centripetal Catmull-Rom through `points`, by arc length: returns at(s) and the arc length at each point."""
+    ends = [2 * points[0] - points[1], *points, 2 * points[-1] - points[-2]]
+    dense, marks = [points[0].copy()], [0]
+    for i in range(len(points) - 1):
+        p0, p1, p2, p3 = ends[i:i + 4]
+        k = [0.0]
+        for a, b in ((p0, p1), (p1, p2), (p2, p3)):
+            k.append(k[-1] + max((b - a).length, 1e-6) ** 0.5)
+        steps = max(16, int((p2 - p1).length / spacing))
+        for j in range(1, steps + 1):
+            t = k[1] + (k[2] - k[1]) * j / steps
+            a1 = ((k[1] - t) * p0 + (t - k[0]) * p1) / (k[1] - k[0])
+            a2 = ((k[2] - t) * p1 + (t - k[1]) * p2) / (k[2] - k[1])
+            a3 = ((k[3] - t) * p2 + (t - k[2]) * p3) / (k[3] - k[2])
+            b1 = ((k[2] - t) * a1 + (t - k[0]) * a2) / (k[2] - k[0])
+            b2 = ((k[3] - t) * a2 + (t - k[1]) * a3) / (k[3] - k[1])
+            dense.append(((k[2] - t) * b1 + (t - k[1]) * b2) / (k[2] - k[1]))
+        marks.append(len(dense) - 1)
+    cumulative = [0.0]
+    for a, b in zip(dense, dense[1:]):
+        cumulative.append(cumulative[-1] + (b - a).length)
+
+    def at(s):
+        j = max(0, min(len(dense) - 2, bisect.bisect_right(cumulative, s) - 1))
+        gap = cumulative[j + 1] - cumulative[j]
+        return dense[j].lerp(dense[j + 1], 0.0 if gap == 0 else min(max((s - cumulative[j]) / gap, 0.0), 1.0))
+
+    return at, [cumulative[i] for i in marks]
+
+
+def descent(length, until, arrive):
+    """(scroll fraction, distance flown) on every frame of a descent of `length` metres, flown from rest so that it
+    lands at scroll fraction `until`, at `arrive` metres a frame. Its speed eases up over DESCENT_EASE to a cruise,
+    capped by DESCENT_CLOSING of the distance left (a soft cap, so it brakes gently into the approach); the cruise is
+    whatever lands it on time."""
+    frames, ease, sub = until * WALKIN_FRAMES, DESCENT_EASE * WALKIN_FRAMES, 16
+
+    def fly(cruise):
+        flown, f, out = 0.0, 0, [0.0]
+        while flown < length:
+            for k in range(sub):
+                x = min((f + (k + 0.5) / sub) / ease, 1.0)
+                up, closing = cruise * x * x * (3 - 2 * x), DESCENT_CLOSING * (length - flown) + arrive
+                flown += (up ** -4 + closing ** -4) ** -0.25 / sub
+            f += 1
+            out.append(min(flown, length))
+            if f > 4 * frames:
+                break
+        return out
+
+    lo, hi = 0.0, length
+    for _ in range(50):  # a faster cruise only ever lands sooner
+        mid = (lo + hi) / 2
+        lo, hi = (mid, hi) if len(fly(mid)) - 1 > frames else (lo, mid)
+    flown = fly(hi)[:int(frames)]
+    return [(f / WALKIN_FRAMES, s) for f, s in enumerate(flown)] + [(until, length)]
+
+
+def walkin_path():
+    """Eye and view direction (office frame) on every frame. The eye rides a centripetal Catmull-Rom spline through
+    the key eyes, timed by a monotone curve through the keys' scroll fractions (DESCENT_PACE down to the lobby door),
+    so its speed changes smoothly, holds ease in and out, and turns are arcs rather than pivots. The view's yaw and
+    pitch ride monotone curves too."""
+    times = [k[0] for k in WALKIN_KEYS]
+    eyes = [Vector(k[1]) for k in WALKIN_KEYS]
+    points, index = [], []
+    for e in eyes:  # a hold repeats an eye; the spline runs through each place once
+        if not points or (e - points[-1]).length > 1e-6:
+            points.append(e)
+        index.append(len(points) - 1)
+    along, at_points = spline(points)
+    arc = [at_points[i] for i in index]
+
+    # the descent runs to the first timed key, arriving at the pace of the walk that follows; its waypoints take
+    # their scroll fractions from where it passes them
+    end = next(i for i, t in enumerate(times) if i and t is not None)
+    walk = (arc[end + 1] - arc[end]) / (times[end + 1] - times[end]) / WALKIN_FRAMES
+    pace = descent(arc[end], times[end], walk)
+    for i in range(1, end):
+        j = next(j for j in range(1, len(pace)) if pace[j][1] >= arc[i])
+        (t0, s0), (t1, s1) = pace[j - 1], pace[j]
+        times[i] = t0 + (t1 - t0) * (arc[i] - s0) / (s1 - s0)
+    distance = monotone([t for t, _ in pace] + times[end + 1:], [s for _, s in pace] + arc[end + 1:])
+    yaws, pitches = [], []
+    for _, eye, target in WALKIN_KEYS:
+        d = (Vector(target) - Vector(eye)).normalized()
+        yaw = math.atan2(d.y, d.x)
+        if yaws:  # unwrap, so a turn goes the short way round
+            yaw += 2 * math.pi * round((yaws[-1] - yaw) / (2 * math.pi))
+        yaws.append(yaw)
+        pitches.append(math.asin(max(-1.0, min(1.0, d.z))))
+    yaw, pitch = monotone(times, yaws), monotone(times, pitches)
+    path = []
+    for f in range(WALKIN_FRAMES + 1):
+        t = f / WALKIN_FRAMES
+        y, p = yaw(t), pitch(t)
+        path.append((along(distance(t)), Vector((math.cos(p) * math.cos(y), math.cos(p) * math.sin(y), math.sin(p)))))
+    return path
+
+
 def build_walkin(frame, street):
+    """cam_walkin, baked on every frame of the clip from walkin_path()."""
     old = bpy.data.objects.get("cam_walkin")
     if old:
         data = old.data
@@ -323,15 +481,14 @@ def build_walkin(frame, street):
     scene.frame_end = WALKIN_FRAMES
 
     cam = camera("cam_walkin", CAMERA_FOV_DEG, street)
+    turn = frame.to_3x3()
     previous = None
-    for fraction, eye, target in WALKIN_KEYS:
-        eye_w, target_w = frame @ Vector(eye), frame @ Vector(target)
-        q = look(eye_w, target_w)
+    for f, (eye, direction) in enumerate(walkin_path()):
+        q = (turn @ direction).to_track_quat("-Z", "Y")
         if previous is not None and previous.dot(q) < 0:
-            q.negate()  # stay in one hemisphere so Blender doesn't spin the long way round
-        cam.location = eye_w
+            q.negate()  # stay in one hemisphere so nothing spins the long way round
+        cam.location = frame @ eye
         cam.rotation_quaternion = q
-        f = round(fraction * WALKIN_FRAMES)
         cam.keyframe_insert("location", frame=f)
         cam.keyframe_insert("rotation_quaternion", frame=f)
         previous = q
@@ -452,6 +609,33 @@ def office_door(frame, street):
     return door
 
 
+def roof(x, y):
+    """The height of the OSM roof at (x, y), looking down through any helper or prop above it."""
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    origin = Vector((x, y, 1000.0))
+    while True:
+        hit, location, _, _, obj, _ = bpy.context.scene.ray_cast(depsgraph, origin, Vector((0, 0, -1)))
+        if not hit:
+            raise ValueError(f"no roof at {x}, {y}")
+        if obj.name == "osm_buildings":
+            return location.z
+        origin = location - Vector((0, 0, 0.01))
+
+
+def heritage_signs(frame, street):
+    """Pelaco and the Skipping Girl on their roofs and the Nylex sign on its silos, all facing the opening camera."""
+    eye = frame @ Vector(WALKIN_KEYS[0][1])
+
+    def stand(build, at, scale):
+        build(at, math.atan2(eye.y - at.y, eye.x - at.x) + math.pi / 2, street, scale)  # their fronts face local -y
+
+    for name, (x, y, scale) in SIGNS.items():
+        stand(getattr(signs, name), Vector((x, y, roof(x, y))), scale)
+    silos = bpy.data.objects["prop_nylex_silos"]
+    top = max((silos.matrix_world @ Vector(corner)).z for corner in silos.bound_box)
+    stand(signs.nylex, Vector((*silos.matrix_world.translation.xy, top)), NYLEX_SCALE)
+
+
 def main():
     m = common.meta()
     frame = office_frame(m)
@@ -465,6 +649,7 @@ def main():
     place(camera("cam_stand_portrait", PORTRAIT_FOV_DEG, office, room), *PORTRAIT)
     build_commons(frame, street, fp)
     build_walkin(frame, street)
+    heritage_signs(frame, street)
     door, hand = lobby_door(fp, street)
     start, end, angle = LOBBY_DOOR_SWING
     swing("prop_lobby_door", "anim_lobby_door_swing", door.rotation_euler.z, (start, end, hand * angle))

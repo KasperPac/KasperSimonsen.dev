@@ -2,7 +2,7 @@
   "street": {
     "url": "/models/street.glb",
     "maxBytes": 819200,
-    "nodes": ["osm_buildings", "prop_commons", "prop_aami_park", "prop_mcg", "osm_roads"],
+    "nodes": ["osm_buildings", "prop_commons", "prop_aami_park", "prop_mcg", "osm_roads", "prop_pelaco", "prop_skipping_girl", "prop_skipping_girl__pose_00", "prop_skipping_girl__pose_01", "prop_skipping_girl__pose_02", "prop_skipping_girl__pose_03", "prop_nylex", "prop_nylex_silos", "prop_mcg__portal_00", "prop_mcg__portal_01", "prop_mcg__portal_02", "prop_mcg__portal_03"],
     "cameras": ["cam_walkin"],
     "animated": ["cam_walkin", "prop_lobby_door", "prop_office_door"]
   },
