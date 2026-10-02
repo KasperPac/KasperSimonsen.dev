@@ -20,7 +20,7 @@ export const FOCUS_CAMERA: Record<HotspotName, string> = {
 export const RECORDS = 9;
 export const ORNAMENTS = 5;
 
-const ITEM = /^(hs_crate)__record_(\d\d)$|^(hs_shelf)__ornament_(\d\d)$/;
+const ITEM = /^(hs_crate)__(?:record|zone)_(\d\d)$|^(hs_shelf)__ornament_(\d\d)$/;
 
 function isHotspot(name: string): name is HotspotName {
   return (HOTSPOTS as readonly string[]).includes(name);
@@ -71,7 +71,11 @@ export function hitFor(object: Object3D | null, focused: HotspotName | null): Hi
  * before the crate) doesn't hide it. Focused, only the nearest object counts: the records and ornaments are close up.
  */
 export function pickHit(objects: Object3D[], focused: HotspotName | null): Hit | null {
-  if (focused !== null) return hitFor(objects[0] ?? null, focused);
+  if (focused !== null) {
+    // Browsing the crate, where records rest decides (they flick and lift under the pointer).
+    const zone = focused === "hs_crate" ? objects.find((o) => /^hs_crate__zone_\d\d$/.test(o.name)) : undefined;
+    return hitFor(zone ?? objects[0] ?? null, focused);
+  }
   for (const o of objects) {
     const hit = hitFor(o, null);
     if (hit) return hit;

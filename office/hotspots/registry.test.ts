@@ -4,7 +4,7 @@ import { work } from "@/content/work";
 import { services } from "@/content/services";
 import { hitFor, highlightFor, highlightKey, itemAt, itemNode, labelFor, ORNAMENTS, pickHit, RECORDS, sameHit } from "./registry";
 
-/** office_root › hs_crate › (hs_crate__body mesh, record_00 › mesh, record_05 › mesh), hs_shelf › ornament_01 › mesh, hs_drawer › mesh, prop_chair mesh */
+/** office_root › hs_crate › (hs_crate__body mesh, record_00 › mesh, record_05 › mesh, zone_01 mesh), hs_shelf › ornament_01 › mesh, hs_drawer › mesh, prop_chair mesh */
 function scene() {
   const node = (name: string, ...children: Array<Group | Mesh>) => {
     const g = new Group();
@@ -16,17 +16,18 @@ function scene() {
   const body = mesh("hs_crate__body");
   const rec0 = mesh("rec0_mesh");
   const rec5 = mesh("rec5_mesh");
+  const zone1 = mesh("hs_crate__zone_01");
   const orn1 = mesh("orn1_mesh");
   const drawer = mesh("hs_drawer__drawer");
   const chair = mesh("prop_chair");
   node(
     "office_root",
-    node("hs_crate", body, node("hs_crate__record_00", rec0), node("hs_crate__record_05", rec5)),
+    node("hs_crate", body, node("hs_crate__record_00", rec0), node("hs_crate__record_05", rec5), zone1),
     node("hs_shelf", node("hs_shelf__ornament_01", orn1)),
     node("hs_drawer", drawer),
     chair,
   );
-  return { body, rec0, rec5, orn1, drawer, chair };
+  return { body, rec0, rec5, zone1, orn1, drawer, chair };
 }
 
 describe("hitFor", () => {
@@ -58,6 +59,8 @@ describe("pickHit (everything under the pointer, nearest first)", () => {
     expect(pickHit([s.chair, s.rec0], "hs_crate")).toBeNull();
     expect(pickHit([s.rec0, s.chair], "hs_crate")).toEqual({ hotspot: "hs_crate", item: work[0].slug });
   });
+  it("browsing the crate: a resting zone wins over a record moving in front of it", () =>
+    expect(pickHit([s.rec0, s.zone1], "hs_crate")).toEqual({ hotspot: "hs_crate", item: work[1].slug }));
   it("nothing under the pointer is nothing", () => expect(pickHit([], null)).toBeNull());
 });
 
