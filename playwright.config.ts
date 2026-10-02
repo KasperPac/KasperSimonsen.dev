@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "e2e",
+  globalSetup: "./e2e/warm.ts",
   timeout: 90_000,
   use: {
     ...devices["Desktop Chrome"],
