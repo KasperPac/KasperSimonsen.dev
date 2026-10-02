@@ -5,6 +5,7 @@ import { PLATTER_NODE, SLEEVE_NODE } from "./idle/turntable";
 import { POSE_NODE } from "./walkin/skippingGirl";
 import { CARD_NODE, DRAWER_NODE, SCREEN_NODE } from "./objects/motion";
 import { work } from "@/content/work";
+import { RECORDS } from "@/office/hotspots/registry";
 
 // The runtime finds these nodes by name. check:models enforces the manifest, so the manifest must name
 // them too, or a rename in Blender leaves the build green while the animation silently stops.
@@ -37,5 +38,11 @@ describe("runtime node names are required by the manifest", () => {
 
   it("every project's record has its logo on the front", () => {
     work.forEach((_, i) => expect(manifest.office.nodes).toContain(`hs_crate__record_${String(i).padStart(2, "0")}__art`));
+  });
+
+  it("every record has its vinyl, and the player has its focus cameras", () => {
+    for (let i = 0; i < RECORDS; i++) expect(manifest.office.nodes).toContain(`hs_crate__record_${String(i).padStart(2, "0")}__vinyl`);
+    expect(manifest.office.cameras).toContain("cam_focus_player");
+    expect(manifest.office.cameras).toContain("cam_focus_player_portrait");
   });
 });

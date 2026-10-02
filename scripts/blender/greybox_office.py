@@ -79,10 +79,11 @@ CHAIR = (-0.35, -0.75, math.pi - 0.35)  # x and y from the desk's centre, turn: 
 RESERVED = {"couch": (-1.825, 4.2, math.pi / 2, 1.7, 0.85), "tv": (2.0, 4.0, -math.pi / 2, 0.7, 0.5)}
 PILLOW_TURN = -math.pi / 2  # the pillow stood side-on to the couch, its top leaning into the far arm
 # Focus cameras (spec 3.5), room frame: (eye, look-at, vertical fov). Landscape frames (16:10) leave the right ~40% for
-# the panel, so the object's centre sits about a third in from the left; the monitor and the crate have no panel beside
-# them and are centred. Portrait frames (390 x 844) centre the object, as the panel is a full-screen sheet there. Every
-# eye is at least 0.3 m from any mesh (the crate and monitor eyes pass closest, by the desk top and over the chair),
-# except the drawer's: it looks into the open drawer under the desk, 0.17 m from the drawer front on portrait.
+# the panel, so the object's centre sits about a third in from the left; the monitor, the crate and the player have no
+# panel beside them and are centred. Portrait frames (390 x 844) centre the object, as the panel is a full-screen sheet
+# there. Every eye is at least 0.3 m from any mesh (the crate and monitor eyes pass closest, by the desk top and over
+# the chair), except the drawer's: it looks into the open drawer under the desk, 0.17 m from the drawer front on
+# portrait.
 FOCUS = {
     # square on to the crate's front and 63 degrees down: a flicked record stands upright against the corner posts, and
     # the next sleeve's logo only shows over its top from 57 degrees down (the front sleeve's label over the crate's
@@ -102,6 +103,11 @@ FOCUS = {
     # level with the shelf, all five ornaments in frame
     "shelf": {"land": ((1.4, 3.6, 1.6), (1.57, 5.0, 1.58), 45.0),
               "portrait": ((1.3, 3.0, 1.6), (1.3, 5.0, 1.55), 70.0)},
+    # a played record: its vinyl on the platter and its sleeve turned round on the now-playing stand, the details
+    # printed on its back. Nearly square on to the stand's sleeve (10 degrees round towards the room, 5 above) so the
+    # back reads: on 16:10 it is 42% of the height with the platter in shot beside it, on portrait 80% of the width
+    "player": {"land": ((1.286, 3.976, 1.191), (1.464, 4.858, 0.916), 45.0),
+               "portrait": ((1.471, 4.178, 1.219), (1.734, 4.85, 1.066), 60.0)},
 }
 
 

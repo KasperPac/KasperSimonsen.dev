@@ -574,10 +574,37 @@ def _sleeve(name, parent, col, location, rotation=(0, 0, 0)):
     return _part(name, bm, parent, col, location, rotation, uv=lambda co: (co.x / SLEEVE + 0.5, co.z / SLEEVE))
 
 
-ART_BOX = (0.24, 0.12)  # largest logo width and height on a sleeve front, metres
-ART_BOX_LABELLED = (0.2, 0.09)
-ART_TOP = 0.29  # the art's top edge above the sleeve's bottom: the top of the sleeve shows between flicked records
+ART_BOX = (0.2, 0.17)  # the cover art (logo, and label under it) fits this, centred on the sleeve's front, metres
+ART_MARK = 0.7  # with a label, the logo's share of the box's height
 LABEL_SIZE = 0.032
+LABEL_GAP = 0.02  # between the logo and its label
+BORDER_INSET = 0.012  # the cover's thin square border, this far in from the sleeve's edges
+BORDER_W = 0.0015
+VINYL_R = 0.15
+VINYL_LABEL_R = 0.05
+VINYL_PEEK = 0.04  # how far the disc's top stands above the sleeve's top edge
+
+
+def _vinyl(record, col):
+    """The LP inside `record`: a 2 mm disc with a raised label, origin at its centre, peeking out of the sleeve's top
+    (the runtime slides it out onto the platter)."""
+    bm = bmesh.new()
+    _lathe(bm, [(0, -0.001), (VINYL_R, -0.001), (VINYL_R, 0.001), (VINYL_LABEL_R, 0.001), (VINYL_LABEL_R, 0.0015), (0, 0.0015)], 48)
+    # the lathe's axis is z; stand the disc in the sleeve's plane (normal along y), centre up so its top peeks out
+    centre_z = SLEEVE + VINYL_PEEK - VINYL_R
+    return _part(f"{record.name}__vinyl", bm, record, col, location=(0, 0, centre_z), rotation=(math.pi / 2, 0, 0))
+
+
+def _cover_border(bm, m):
+    """A thin flat square frame BORDER_INSET in from the sleeve's edges, drawn in xy about the sleeve's centre and put
+    on its front through m."""
+    h = SLEEVE / 2 - BORDER_INSET
+    outer = [(-h, -h), (h, -h), (h, h), (-h, h)]
+    o = [bm.verts.new(m @ Vector((x, y, 0))) for x, y in outer]
+    i = [bm.verts.new(m @ Vector((x - math.copysign(BORDER_W, x), y - math.copysign(BORDER_W, y), 0))) for x, y in outer]
+    for a in range(4):
+        b = (a + 1) % 4
+        bm.faces.new((o[a], o[b], i[b], i[a]))
 
 
 def _svg_mesh(path):
@@ -621,8 +648,9 @@ def _bounds(bm):
 
 
 def _sleeve_art(record, row, col):
-    """A project's logo (its SVGs side by side) in line geometry on the front of `record`, top-aligned at ART_TOP and
-    centred, with `row['label']` set under it in the built-in font when given."""
+    """A project's cover on the front of `record`: its logo (its SVGs side by side) in line geometry and, when
+    `row['label']` is given, the label under it in the built-in font, centred as one block inside ART_BOX on the
+    sleeve's centre, with the thin border round it (part of __art)."""
     parts = [bm for bm in (_svg_mesh(p) for p in row["logos"]) if bm]
     if not parts:
         return
@@ -641,22 +669,28 @@ def _sleeve_art(record, row, col):
         art.from_mesh(mesh)
         bpy.data.meshes.remove(mesh)
     x0, x1, y0, y1 = _bounds(art)
-    box = ART_BOX_LABELLED if row.get("label") else ART_BOX
-    k = min(box[0] / (x1 - x0), box[1] / (y1 - y0))
-    # centre on x, top at ART_TOP; stand it up on the sleeve front (xz plane), 1 mm proud of it, facing -y
-    place = (Matrix.Translation((0, -0.0035, ART_TOP)) @ Matrix.Rotation(math.pi / 2, 4, "X")
-             @ Matrix.Diagonal((k, k, 1, 1)) @ Matrix.Translation((-(x0 + x1) / 2, -y1, 0)))
-    bmesh.ops.transform(art, matrix=place, verts=art.verts)
-    _part(f"{record.name}__art", art, record, col)
+    label = None
     if row.get("label"):
-        common.text_mesh(f"{record.name}__label", row["label"], LABEL_SIZE, 0.0005,
-                         (0, -0.0025, ART_TOP - box[1] - 0.035), record, col)
+        label = common.text_mesh(f"{record.name}__label", row["label"], LABEL_SIZE, 0.0005, (0, -0.0025, 0), record, col)
+        lz = [v.co.z for v in label.data.vertices]
+    k = min(ART_BOX[0] / (x1 - x0), ART_BOX[1] * (ART_MARK if label else 1) / (y1 - y0))
+    block = k * (y1 - y0) + (LABEL_GAP + max(lz) - min(lz) if label else 0)
+    top = SLEEVE / 2 + block / 2
+    # centre on x, top of the block at `top`; stand it up on the sleeve front (xz plane), 1 mm proud of it, facing -y
+    front = Matrix.Translation((0, -0.0035, 0)) @ WALL
+    place = Matrix.Translation((0, 0, top)) @ front @ Matrix.Diagonal((k, k, 1, 1)) @ Matrix.Translation((-(x0 + x1) / 2, -y1, 0))
+    bmesh.ops.transform(art, matrix=place, verts=art.verts)
+    _cover_border(art, Matrix.Translation((0, 0, SLEEVE / 2)) @ front)
+    _part(f"{record.name}__art", art, record, col)
+    if label:
+        label.location.z = top - k * (y1 - y0) - LABEL_GAP - max(lz)
 
 
 def build_crate(name, location, rotation_z, parent, col, records=9, sleeves=()):
     """Open-top slatted record crate with hand holes, and LPs standing in it as children <name>__record_00.. with
-    their origins on their bottom edges, so each one flips forward by rotating about x. The front records carry the
-    `sleeves` rows' logos, one row each from record 00."""
+    their origins on their bottom edges, so each one flips forward by rotating about x. Each holds its vinyl
+    (<record>__vinyl), peeking out of the top; the front records carry the `sleeves` rows' covers, one row each from
+    record 00."""
     root = _root(name, location, rotation_z, parent, col)
     w, t, slats = 0.36, 0.015, ((0.0, 0.07), (0.095, 0.165), (0.19, 0.26))
     bm = bmesh.new()
@@ -679,6 +713,7 @@ def build_crate(name, location, rotation_z, parent, col, records=9, sleeves=()):
         y = -span / 2 + span * i / max(records - 1, 1)
         jitter = (i * 7) % 3 - 1, (i * 5) % 3 - 1  # -1, 0 or 1, so the LPs don't stand in perfect order
         record = _sleeve(f"{name}__record_{i:02d}", root, col, (0.004 * jitter[0], y, 0.012), (-0.14 + 0.012 * (i % 3), 0, 0.01 * jitter[1]))
+        _vinyl(record, col)
         if i < len(sleeves):
             _sleeve_art(record, sleeves[i], col)
     return root
@@ -836,8 +871,8 @@ def build_turntable(name, location, rotation_z, parent, col):
 NOW_PLAYING = (  # (artist, title, motif); copy for Kasper to approve
     ("PINK FLOYD", "THE DARK SIDE OF THE MOON", "prism"),
     ("POLARIS", "FATALISM", "star"),
-    ("LED ZEPPELIN", "IV", "none"),
-    ("MAC MILLER", "SWIMMING", "waves"),
+    ("PEARL JAM", "BLACK", "none"),
+    ("THE BUTTERFLY EFFECT", "BEGINS HERE", "butterfly"),
 )
 
 
@@ -856,6 +891,13 @@ def _motif(bm, motif, m):
         for k in range(3):
             _stroke(bm, [(x, 0.55 - 0.55 * k + 0.18 * math.sin(math.pi * 1.5 * x + 0.7 * k)) for x in (-1 + j / 6 for j in range(13))],
                     0.11, 1, m)
+    elif motif == "butterfly":  # two mirrored wings either side of a body, and its antennae
+        wing = [(0.14, 0.12), (0.36, 0.72), (0.7, 0.94), (0.98, 0.8), (0.9, 0.32), (0.5, 0.02), (0.8, -0.36),
+                (0.64, -0.76), (0.3, -0.7), (0.14, -0.16)]
+        for side in (1, -1):
+            _stroke(bm, [(side * x, y) for x, y in (wing if side > 0 else wing[::-1])], 0.11, 1, m, closed=True)
+            _stroke(bm, [(0.0, 0.42), (side * 0.3, 0.86)], 0.07, 1, m)
+        _stroke(bm, [(0.0, 0.42), (0.0, -0.62)], 0.11, 1, m)
 
 
 def _sleeve_text(name, text, size, parent, col, top, max_w=0.28):
@@ -876,8 +918,9 @@ def _sleeve_text(name, text, size, parent, col, top, max_w=0.28):
 
 def _album(name, parent, col, location, rotation, artist, title, motif):
     """A sleeve with its artist written large (<name>__artist: 4-5 cm capitals over one or two lines, the most that
-    reads from across the room) and its motif (<name>__motif) bold underneath. The title isn't shown: at that size it
-    can't be read. With motif "none" the name sits in the middle on its own."""
+    reads from across the room; a name too long for that shrinks to the sleeve's width, as THE BUTTERFLY EFFECT does
+    to 2.7 cm) and its motif (<name>__motif) bold underneath. The title isn't shown: at that size it can't be read.
+    With motif "none" the name sits in the middle on its own."""
     sleeve = _sleeve(name, parent, col, location, rotation)
 
     def extent(obj):
@@ -902,9 +945,9 @@ def build_now_playing(name, location, rotation_z, parent, col, albums=NOW_PLAYIN
     """A 'now playing' ledge for next to the turntable: a small base with a front lip and a back rest holding a sleeve
     up, leaning back 12 degrees. Every album in `albums` [(artist, title, motif)] gets a sleeve, all stacked in the
     same spot as <name>__sleeve_00, _01... (origin at the sleeve's bottom centre) for the site to show one at a time.
-    Each face carries its artist, large, and a bold motif as geometry: "prism", "star", "waves", or "none" for the
-    name on its own. Titles stay in `albums` but aren't drawn. The base is 0.16 m wide but a sleeve is 0.315: turn it
-    about 57 degrees to fit between build_turntable's deck and right speaker."""
+    Each face carries its artist, large, and a bold motif as geometry: "prism", "star", "waves", "butterfly", or
+    "none" for the name on its own. Titles stay in `albums` but aren't drawn. The base is 0.16 m wide but a sleeve is
+    0.315: turn it about 57 degrees to fit between build_turntable's deck and right speaker."""
     root = _root(name, location, rotation_z, parent, col)
     seat, lean = (0, -0.022, 0.012), math.radians(-12)
     bm = bmesh.new()
