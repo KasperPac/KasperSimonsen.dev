@@ -37,13 +37,14 @@ export default function CardFace({
   }, [surface, place, widthPx]);
   // drei mounts the print in its own React root and places it on the next frame; until then it would sit flat at the
   // top left of the canvas. Html's frame callback runs before this one (it subscribed first), so once the section
-  // exists here it has been placed: show it, and move focus into it.
+  // exists here it has been placed: show it, and move focus into it. The mark is on the element itself, not a flag on
+  // this component: drei rebuilds its root (and the section) when its effects re-run, as React's StrictMode does in
+  // development, and a fresh section must be shown again.
   const section = useRef<HTMLElement>(null);
-  const placed = useRef(false);
   useFrame(() => {
-    if (placed.current || !section.current) return;
-    placed.current = true;
-    section.current.dataset.placed = "";
+    const el = section.current;
+    if (!el || el.dataset.placed !== undefined) return;
+    el.dataset.placed = "";
     document.getElementById(titleId)?.focus({ preventScroll: true });
   });
   return createPortal(
