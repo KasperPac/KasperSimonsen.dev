@@ -6,6 +6,7 @@ import OfficeErrorBoundary from "./OfficeErrorBoundary";
 import { theme } from "./theme";
 import { COPY } from "./copy";
 import { useWalkInProgress } from "./walkin/useWalkInProgress";
+import { startAutoWalk } from "./walkin/autoWalk";
 import { describeDirector, focusedHotspot, initialDirector, isLocked, reduceDirector, type DirectorState } from "./director/director";
 import { pathForTarget } from "./scene/targets";
 import { layerOf, sceneFor } from "./scene/location";
@@ -26,6 +27,7 @@ import CaseStudy from "@/panels/CaseStudy";
 const OfficeCanvas = dynamic(() => import("./OfficeCanvas"), { ssr: false });
 
 const toEnd = () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
+const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const back = () => window.history.back();
 
 /** Fixed full-screen office over a scroll track exactly as long as the walk-in. The location drives everything. */
@@ -54,6 +56,20 @@ export default function OfficeExperience() {
 
   // A reload keeps history.state; a fresh office starts with no layer.
   useEffect(clearLayer, []);
+
+  // "Come in" walks the visitor in by scrolling for them, so the walk-in plays as it would scrolled (spec 3.3).
+  const [walking, setWalking] = useState(false);
+  const stopWalk = useRef<(() => void) | null>(null);
+  useEffect(() => () => stopWalk.current?.(), []);
+  const comeIn = () => {
+    if (reducedMotion()) return toEnd();
+    stopWalk.current?.();
+    setWalking(true);
+    stopWalk.current = startAutoWalk(theme.walkInAutoSeconds, () => {
+      stopWalk.current = null;
+      setWalking(false);
+    });
+  };
 
   // The location asks for a target; the director moves the camera there (or home).
   const targetKey = scene.target ? `${scene.target.hotspot}:${scene.target.item ?? ""}` : "";
@@ -240,7 +256,17 @@ export default function OfficeExperience() {
   const navProps = (hit: Hit) => ({ onFocus: () => onHover(hit), onBlur: () => onHover(null) });
 
   return (
-    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-hints={hints}>
+    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-hints={hints} data-walking={walking}>
+      {/* First in the page, so the keyboard reaches it first (spec 7.3). Shows only on the street. */}
+      <div className="office-arrive">
+        <button type="button" className="office-come-in" onClick={comeIn}>
+          {COPY.arrive.comeIn}
+        </button>
+        <p className="office-scroll" aria-hidden="true">
+          {COPY.arrive.scroll}
+        </p>
+      </div>
+
       <div className="office-stage">
         <OfficeErrorBoundary host={host}>
           <OfficeCanvas

@@ -67,6 +67,13 @@ the Nylex sign, AAMI Park and the skyline behind it.
 Black screen. The street draws itself in, line by line, as `street.glb` loads (load progress drives the line
 reveal). Kasper's name and a "scroll" hint sit over it. A "skip intro" link is visible throughout the walk-in.
 
+Built (Kasper, 2026-10-02: "it's not very obvious what you have to do"): on the street, a **Come in** button and an
+**or scroll** cue with a chevron that breathes like the office's dots. Come in scrolls the page for the visitor over
+`theme.walkInAutoSeconds` (8 s, eased), so the walk-in plays exactly as scrolled; a wheel, touch, click or scrolling
+key hands control back where it is, and a hitch pauses the walk rather than leaping ahead. Reduced motion: straight
+in. Both show only while the walk-in is under 2% and fade once the camera moves. Come in is the first tab stop.
+Kasper's name and skip intro are not built yet.
+
 ### 3.3 Walk-in
 
 The page is exactly as tall as the walk-in. Scroll position maps to the camera animation authored in Blender

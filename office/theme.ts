@@ -18,4 +18,6 @@ export const theme = {
   fogFar: 4000,
   /** Scroll track height in viewport heights; the walk-in spans it. */
   walkInScreens: 9,
+  /** Seconds "Come in" takes to walk from the street into the office. */
+  walkInAutoSeconds: 8,
 } as const;

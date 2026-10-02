@@ -29,6 +29,8 @@ export const COPY = {
     sent: "Sent. Talk soon.",
     error: "That didn't go through. Email me instead:",
   },
+  /** On the street, for anyone who doesn't think to scroll (Kasper). */
+  arrive: { comeIn: "Come in", scroll: "or scroll" },
   hints: "Have a look around.",
   sleeve: { readMore: "Read more", stack: "Built with" },
   caseStudy: { stack: "Built with", live: "See it live" },

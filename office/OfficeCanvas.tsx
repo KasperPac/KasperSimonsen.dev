@@ -11,6 +11,7 @@ import { findClipFor, makeClipSampler, progressToTime } from "./walkin/clipSampl
 import { useTurntable } from "./idle/useTurntable";
 import { applySkippingGirl, findSkippingGirl } from "./walkin/skippingGirl";
 import { findCamera, WALKIN_CAMERA } from "./walkin/cameraPose";
+import { onStreet } from "./walkin/autoWalk";
 import { applyPose, makePose, readPose, type Pose } from "./camera/pose";
 import { basePose, focusPose } from "./camera/basePose";
 import { CameraRig, FOCUS_MOVES, PLAYER_MOVE } from "./camera/rig";
@@ -32,7 +33,7 @@ export type OverlayElements = { label: HTMLElement | null; markers: Partial<Reco
 export type OfficeCanvasProps = {
   /** Walk-in progress 0 → 1. Read every frame; never causes a render. */
   progress: RefObject<number>;
-  /** Carries data-scene-ready, data-walkin-progress, data-camera and data-drawer for the page and for tests. */
+  /** Carries data-scene-ready, data-walkin-progress, data-street, data-camera and data-drawer for the page and for tests. */
   host: RefObject<HTMLElement | null>;
   director: RefObject<DirectorState>;
   /** What is hovered (pointer) or keyboard-focused (DOM); highlighted, labelled and teased. */
@@ -156,6 +157,7 @@ function Street({ progress, host, director, onProgressCross, onSettled, info }: 
     if (!el) return;
     if (Math.abs(p - written.current.progress) > 0.00005) {
       el.dataset.walkinProgress = p.toFixed(4);
+      el.dataset.street = String(onStreet(p));
       el.dataset.sceneReady = "true";
       written.current.progress = p;
     }
