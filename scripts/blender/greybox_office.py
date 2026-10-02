@@ -74,6 +74,7 @@ CHAIR = (-0.35, -0.75, math.pi - 0.35)  # x and y from the desk's centre, turn: 
 # Room-frame floor spots for the couch and the old TV on its stand: (centre x, centre y, rotation_z, width, depth).
 # Both face into the room, in view from cam_stand.
 RESERVED = {"couch": (-1.825, 4.2, math.pi / 2, 1.7, 0.85), "tv": (2.0, 4.0, -math.pi / 2, 0.7, 0.5)}
+PILLOW_TURN = -math.pi / 2  # the pillow stood side-on to the couch, its top leaning into the far arm
 
 
 def in_office(pose):
@@ -225,11 +226,10 @@ def furnish(room, col, w, back):
     props.build_mouse("prop_mouse", on_desk(0.08, -0.29), 0.1, room, col)
     props.build_desk_mess("prop_desk_mess", on_desk(0, 0), 0, room, col, parts=DESK_MESS)
     props.build_desk_lamp("prop_desk_lamp", on_desk(0.6, 0.2), 0.3, room, col)
-    props.build_can_pyramid("prop_can_pyramid", on_desk(-0.565, 0.315), 0, room, col, rows=3)  # the left end, clear of the monitor
     props.build_mug("prop_mug", on_desk(0.03, 0.03), 0, room, col)
     chair_x, chair_y, chair_turn = CHAIR
     props.build_chair("prop_chair", (desk.x + chair_x, desk.y + chair_y, 0), chair_turn, room, col)
-    props.build_bin("prop_bin", (0.85, 3.95, 0), 0.3, room, col, missed=False)
+    props.build_bin("prop_bin", (0.85, 3.95, 0), 0.3, room, col, missed=False, balls=3)
 
     # record crate on the floor left of the desk; sideboard with the turntable right of it, the shelf above
     props.build_crate("hs_crate", (desk.x - 1.0, back - 0.3, 0), 0.1, room, col)
@@ -250,16 +250,14 @@ def furnish(room, col, w, back):
     props.build_sticky_note("prop_sticky_note", (-0.6, back, 1.72), 0.05, room, col)
     props.build_poster_victory("prop_poster_victory", (-w + 0.5, back, 1.65), 0, room, col)
 
-    # the couch on the street side with its pillow and blanket, the pizza box in front, abandoned mugs and books by it
+    # the couch on the street side, cushions straight and one pillow stood against its far arm, facing the room's
+    # front; the pizza box on the floor in front, books by it
     couch, tv = RESERVED["couch"], RESERVED["tv"]
     at_couch = Matrix.Translation((couch[0], couch[1], 0)) @ Matrix.Rotation(couch[2], 4, "Z")
     seat = 0.445  # build_couch's seat tops
-    props.build_couch("prop_couch", at_couch.translation, couch[2], room, col)
-    props.build_pillow("prop_pillow", at_couch @ Vector((-0.5, -0.1, seat)), couch[2], room, col, tilt=70)
-    props.build_blanket("prop_blanket", at_couch @ Vector((0.34, -0.225, seat)), couch[2], room, col)  # fold on the seat edge
+    props.build_couch("prop_couch", at_couch.translation, couch[2], room, col, askew=False)
+    props.build_pillow("prop_pillow", at_couch @ Vector((0.59, -0.1, seat)), couch[2] + PILLOW_TURN, room, col, tilt=80)
     props.build_pizza_box("prop_pizza_box", at_couch @ Vector((-0.35, -0.85, 0)), couch[2] + 0.3, room, col)
-    props.build_mug_cluster("prop_mug_cluster", (-0.75, 3.35, 0), 0.2, room, col, count=2)
-    remove_tree("prop_mug_cluster__stains")  # coffee rings: more stray lines
     props.build_book_stack("prop_book_stack", (couch[0] + 0.6, couch[1] - couch[3] / 2 - 0.25, 0), 0.3, room, col)
 
     # the old telly facing the couch, a poster over it, and on top the healthy snake plant beside the wilted one

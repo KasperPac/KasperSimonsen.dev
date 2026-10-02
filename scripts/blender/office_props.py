@@ -1520,20 +1520,25 @@ def build_plant_wilted(name, location, rotation_z, parent, col):
     return root
 
 
-def build_bin(name, location, rotation_z, parent, col, missed=True):
-    """A waste bin overflowing with crumpled paper. With missed, three balls that didn't make it lie on the floor
-    round it (in <name>__paper with the rest)."""
+def build_bin(name, location, rotation_z, parent, col, missed=True, balls=6):
+    """A waste bin with `balls` balls of crumpled paper in it (up to 9). Six or more heap up over the rim; fewer sit
+    down in the bin, their tops just showing above it. With missed, three balls that didn't make it lie on the floor
+    round it (all in <name>__paper)."""
     root = _root(name, location, rotation_z, parent, col)
     bm = bmesh.new()
     _lathe(bm, [(0.0, 0.0), (0.12, 0.0), (0.15, 0.31), (0.157, 0.31), (0.157, 0.325), (0.148, 0.325), (0.14, 0.31), (0.112, 0.012),
                 (0.0, 0.012)], 10)
     _part(f"{name}__bin", bm, root, col)
     bm = bmesh.new()
-    balls = ((0.0, 0.0, 0.3, 0.045), (0.07, 0.03, 0.31, 0.04), (-0.07, 0.04, 0.3, 0.042), (-0.04, -0.05, 0.33, 0.038),
-             (0.02, 0.02, 0.37, 0.042), (0.0, -0.01, 0.43, 0.04))
+    heap = ((0.0, 0.0, 0.3, 0.045), (0.07, 0.03, 0.31, 0.04), (-0.07, 0.04, 0.3, 0.042), (-0.04, -0.05, 0.33, 0.038),
+            (0.02, 0.02, 0.37, 0.042), (0.0, -0.01, 0.43, 0.04), (0.03, -0.07, 0.3, 0.04), (-0.03, 0.06, 0.38, 0.036),
+            (0.06, -0.03, 0.375, 0.035))
+    few = ((0.05, 0.03, 0.292, 0.042), (-0.05, 0.04, 0.288, 0.04), (0.0, -0.06, 0.296, 0.041), (-0.03, -0.01, 0.306, 0.038),
+           (0.06, -0.05, 0.286, 0.039))  # rim at 0.325: their tops clear it by a centimetre or two
+    paper = heap[:balls] if balls >= 6 else few[:max(balls, 0)]
     if missed:
-        balls += ((0.26, -0.08, 0.035, 0.035), (-0.2, -0.22, 0.04, 0.04), (0.1, -0.3, 0.033, 0.033))
-    for k, (x, y, z, r) in enumerate(balls):
+        paper += ((0.26, -0.08, 0.035, 0.035), (-0.2, -0.22, 0.04, 0.04), (0.1, -0.3, 0.033, 0.033))
+    for k, (x, y, z, r) in enumerate(paper):
         _crumple(bm, r, (x, y, z), seed=k)
     _part(f"{name}__paper", bm, root, col)
     return root
