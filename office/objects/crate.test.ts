@@ -11,6 +11,7 @@ import {
   flightPoint,
   flightTurn,
   hopPoint,
+  hopTurn,
   playPhaseStart,
   PLAY_BACK_SECONDS,
   PLAY_SECONDS,
@@ -154,6 +155,15 @@ describe("hopPoint (from over the platter to the stand, over the books between t
   });
 });
 
+describe("hopTurn", () => {
+  it("has turned half round before the hop ends, then drops straight down (the deep sleeve clears the stand's lip)", () => {
+    expect(hopTurn(0)).toBe(0);
+    expect(hopTurn(0.9)).toBeCloseTo(Math.PI, 9);
+    expect(hopTurn(0.95)).toBeCloseTo(Math.PI, 9);
+    expect(hopTurn(0.45)).toBeCloseTo(Math.PI / 2, 9);
+  });
+});
+
 describe("CrateMotion play", () => {
   it("flies a played record over in an arc, above the straight line", () => {
     const { nodes, player } = rigWithPlayer();
@@ -188,7 +198,9 @@ describe("CrateMotion play", () => {
     m.update(nodes, { dig: 0, playing: 0, player, reduced: false }, before);
     m.update(nodes, { dig: 0, playing: 0, player, reduced: false }, (PLAY_SECONDS * (1 - playPhaseStart("toStand"))) / 2);
     const relative = player.stand.quaternion.clone().invert().multiply(nodes.records[0].getWorldQuaternion(new Quaternion()));
-    expect(2 * Math.atan2(relative.y, relative.w)).toBeCloseTo(Math.PI / 2, 1);
+    const angle = 2 * Math.atan2(relative.y, relative.w);
+    expect(angle).toBeGreaterThan(Math.PI / 2 - 0.05); // the positive way, past half by halfway
+    expect(angle).toBeLessThan(Math.PI);
   });
   it("spins the vinyl with the platter", () => {
     const { nodes, player, platter } = rigWithPlayer();

@@ -550,6 +550,11 @@ def build_mouse(name, location, rotation_z, parent, col):
 # --- records and shelving ---------------------------------------------------------------------------------------
 
 SLEEVE = 0.315  # LP sleeve, square
+SLEEVE_T = 0.005  # its depth
+# The crate's records are deeper, the extra behind the front face, so the vinyl inside sits 3.5 mm or more from both
+# faces while the cover and the flick against the crate's front stay as they were: the site pushes every fill back in
+# depth so feature lines win, and at the crate camera's angle the vinyl's label, 1 mm under the front, showed through.
+CRATE_SLEEVE_T = 0.01
 
 
 def _ray_rect(hw, hh, d):
@@ -566,11 +571,11 @@ def _plate_with_hole(bm, w, h, hole_w, hole_h, depth, m=I4, segs=16, c=(0, 0)):
     _strip(bm, outer, inner, depth, m, closed=True)
 
 
-def _sleeve(name, parent, col, location, rotation=(0, 0, 0)):
-    """A record sleeve standing on its bottom edge, origin there (the pivot for flipping it forward), front face -y,
-    UV-mapped 0..1 on the front for sleeve art."""
+def _sleeve(name, parent, col, location, rotation=(0, 0, 0), depth=SLEEVE_T):
+    """A record sleeve standing on its bottom edge, origin there (the pivot for flipping it forward), front face -y on
+    y = -SLEEVE_T / 2 whatever its `depth` (any extra goes behind), UV-mapped 0..1 on the front for sleeve art."""
     bm = bmesh.new()
-    _box(bm, (SLEEVE, 0.005, SLEEVE), (0, 0, SLEEVE / 2))
+    _box(bm, (SLEEVE, depth, SLEEVE), (0, (depth - SLEEVE_T) / 2, SLEEVE / 2))
     return _part(name, bm, parent, col, location, rotation, uv=lambda co: (co.x / SLEEVE + 0.5, co.z / SLEEVE))
 
 
@@ -590,9 +595,11 @@ def _vinyl(record, col):
     (the runtime slides it out onto the platter)."""
     bm = bmesh.new()
     _lathe(bm, [(0, -0.001), (VINYL_R, -0.001), (VINYL_R, 0.001), (VINYL_LABEL_R, 0.001), (VINYL_LABEL_R, 0.0015), (0, 0.0015)], 48)
-    # the lathe's axis is z; stand the disc in the sleeve's plane (normal along y), centre up so its top peeks out
+    # the lathe's axis is z; stand the disc in the middle of the record's depth (normal along y), centre up so its top
+    # peeks out
     centre_z = SLEEVE + VINYL_PEEK - VINYL_R
-    return _part(f"{record.name}__vinyl", bm, record, col, location=(0, 0, centre_z), rotation=(math.pi / 2, 0, 0))
+    return _part(f"{record.name}__vinyl", bm, record, col, location=(0, (CRATE_SLEEVE_T - SLEEVE_T) / 2, centre_z),
+                 rotation=(math.pi / 2, 0, 0))
 
 
 def _cover_border(bm, m):
@@ -714,7 +721,8 @@ def build_crate(name, location, rotation_z, parent, col, records=9, sleeves=()):
     for i in range(records):
         y = -span / 2 + span * i / max(records - 1, 1)
         jitter = (i * 7) % 3 - 1, (i * 5) % 3 - 1  # -1, 0 or 1, so the LPs don't stand in perfect order
-        record = _sleeve(f"{name}__record_{i:02d}", root, col, (0.004 * jitter[0], y, 0.012), (-0.14 + 0.012 * (i % 3), 0, 0.01 * jitter[1]))
+        lean = (-0.14 + 0.012 * (i % 3), 0, 0.01 * jitter[1])
+        record = _sleeve(f"{name}__record_{i:02d}", root, col, (0.004 * jitter[0], y, 0.012), lean, CRATE_SLEEVE_T)
         if i < len(sleeves):
             _vinyl(record, col)
             _sleeve_art(record, sleeves[i], col)

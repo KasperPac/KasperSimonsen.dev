@@ -98,7 +98,12 @@ export function playPhaseStart(step: keyof typeof PLAY_STEPS): number {
  * The hop from over the platter to the stand rises `rise` above the one and `land` above the other, over the books
  * between them, turning the sleeve round as it goes (a turn on the spot would sweep through the stand; Blender).
  */
-export const HOP = { rise: 0.12, land: 0.2 };
+export const HOP = { rise: 0.12, land: 0.2, turnedBy: 0.9 };
+
+/** How far round the sleeve has turned at hop progress `t`: all the way by `turnedBy`, then it drops straight onto the stand (its deep body would catch the stand's lip turning at the bottom; Blender). */
+export function hopTurn(t: number): number {
+  return Math.PI * Math.min(1, t / HOP.turnedBy);
+}
 
 /** The point `t` (0→1) along the hop from `from` (over the platter) to `to` (on the stand). */
 export function hopPoint(from: Vector3, to: Vector3, t: number, out: Vector3): Vector3 {
@@ -186,7 +191,7 @@ function placeSleeve(sleeve: Object3D, parent: Object3D, stand: Placement, towar
   sleeveAt.quaternion.slerp(stand.quaternion, flightTurn(p.travel, climbShare(leaving)));
   if (p.toStand > 0) hopPoint(hover, stand.position, p.toStand, sleeveAt.position);
   // turning round as it hops, about its own up, always this way (the other way sweeps through the stand)
-  sleeveAt.quaternion.multiply(turn.setFromAxisAngle(Y, Math.PI * p.toStand));
+  sleeveAt.quaternion.multiply(turn.setFromAxisAngle(Y, hopTurn(p.toStand)));
   setWorldPose(sleeve, parent, sleeveAt.position, sleeveAt.quaternion, sleeveAt.scale);
 }
 
