@@ -49,16 +49,24 @@ label above it, and plays a tease:
 
 Touch devices get white pulsing markers instead (no hover); a tap opens directly.
 
+**Arriving** (amended after Kasper's M2 review): the first time a visitor reaches the standing spot, a short tour lights
+each object with its label in turn, left to right (crate, drawer, monitor, shelf; ~0.8 s each). Then white pulsing dots
+stay on the four objects, on every device, with a short hint line, until the visitor hovers, focuses or clicks one.
+
 ### 3.2 Crate (work)
 
 1. **Click the crate:** the camera drops to it. This is local browsing with no URL change.
-2. **Flip:** wheel, swipe or arrow keys flick the records forward one at a time. Each tips forward on its bottom edge,
-   showing the next sleeve's front: the project's logo in white line geometry (amended after Kasper's M1 review; the
-   Pac Tech logomark stands in where a project has no logo of its own, with the project's name under it). Kasper's
-   projects sit at the front, and flipping stops at the last of them. The blank sleeves behind never come up.
-3. **Pull:** click, tap or Enter on the front record, or a second click on the crate, lifts it out towards the camera
-   and turns it round. The URL becomes `/work/<slug>`. The sleeve's back carries name, years, headline, 2–3 intro
-   sentences, stack and **Read more**, printed on it like liner notes (real HTML, like the business card).
+2. **Flip:** hovering a record brings it to the front (amended after Kasper's M2 review; the wheel no longer flicks):
+   the records in front of it tip forward on their bottom edges and it lifts part way out of the crate, so its whole
+   front shows. Arrow keys and swipes flick one at a time. Each sleeve reads as an LP: the vinyl's edge peeks out of the
+   top, and the project's logo is centred as cover art in white line geometry inside a thin border (the Pac Tech
+   logomark stands in where a project has no logo of its own, with the project's name under it). Kasper's projects sit
+   at the front, and flipping stops at the last of them. The blank sleeves behind never come up.
+3. **Play:** click, tap or Enter on the front record, or a second click on the crate, puts it on the record player
+   (amended after Kasper's M2 review). The camera glides over to the player; the vinyl comes out of the sleeve onto the
+   platter and spins; the sleeve stands on the now-playing stand (its covers make way) and turns round. The URL becomes
+   `/work/<slug>`. The sleeve's back carries name, years, headline, 2–3 intro sentences, stack and **Read more**,
+   printed on it like liner notes (real HTML, like the business card).
 4. **Read more** opens the full case study in the panel. The URL is unchanged.
 5. **Back and Esc step out one layer at a time:** close the panel, then put the record back (URL `/`, browsing the
    crate again), then return to the standing spot.
@@ -115,7 +123,7 @@ until the standalone restyle (old phase 5). `/services/<slug>` is new, in the of
   card.
 - **Motion** is short, eased and reversible, so Back plays it backwards:
   - record flip ~0.35 s;
-  - pull-out ~0.6 s;
+  - playing a record ~2.4 s (back ~1.2 s), the camera's move between the crate and the player ~1.6 s;
   - drawer ~0.5 s;
   - ornament ~0.6 s;
   - teases ≤ 0.3 s;
@@ -150,7 +158,10 @@ until the standalone restyle (old phase 5). `/services/<slug>` is new, in the of
 
 **Blender:**
 - **Ornaments:** the shelf's four service ornaments are remodelled (gear, globe, phone, desktop computer).
-- **Sleeves:** each project sleeve carries its logo (from the project's design-system SVG) in line geometry.
+- **Sleeves:** every record has its vinyl inside, peeking out of the top; each project sleeve carries its logo (from
+  the project's design-system SVG) as centred cover art in line geometry, inside a thin border.
+- **Record player:** focus cameras that frame the platter and the now-playing stand; the stand rotates Pink Floyd
+  (The Dark Side of the Moon), Polaris (Fatalism), Pearl Jam (Black) and The Butterfly Effect (Begins Here).
 - **Drawer:** gets a business card.
 - **Monitor:** gets a flat screen surface named for its HTML.
 - **Cameras:** focus cameras retuned so each object leaves room for its card on the right (desktop).

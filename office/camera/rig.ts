@@ -16,6 +16,9 @@ export const FOCUS_MOVES: Record<HotspotName, { seconds: number; arc: Arc | null
   hs_shelf: { seconds: FOCUS_SECONDS, arc: null },
 };
 
+/** Between the crate and the record player (playing a record, or putting it back): across the room, over the desk. */
+export const PLAYER_MOVE: { seconds: number; arc: Arc | null } = { seconds: 1.6, arc: { lift: 0.3, swing: 0 } };
+
 const UP = new Vector3(0, 1, 0);
 const side = new Vector3();
 

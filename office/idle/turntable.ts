@@ -6,6 +6,8 @@ const SWAP_TRAVEL = 0.25;
 /** Node names the turntable animation drives (office.glb; required by office/manifest.json). */
 export const PLATTER_NODE = "prop_turntable__platter";
 export const SLEEVE_NODE = /^prop_now_playing__sleeve_(\d\d)$/;
+/** Where a played project's sleeve stands: the first cover's resting place on the now-playing stand. */
+export const STAND_NODE = "prop_now_playing__sleeve_00";
 
 /** Platter angle in radians, wrapped to [0, 2π). Defaults to 33 1/3 rpm. */
 export function platterAngle(seconds: number, rpm = 100 / 3): number {

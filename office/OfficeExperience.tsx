@@ -15,7 +15,8 @@ import type { OverlayElements } from "./OfficeCanvas";
 import BusinessCard from "./cards/BusinessCard";
 import SleeveBack from "./cards/SleeveBack";
 import { clampDig } from "./objects/crate";
-import { canPull, digFor, swipeStep, wheelStep, type Wheel } from "./crate/dig";
+import { canPull, digFor, swipeStep } from "./crate/dig";
+import { tourAt } from "./hints/tour";
 import { findWork, work } from "@/content/work";
 import Panel from "@/panels/Panel";
 import ContactForm from "@/panels/ContactForm";
@@ -44,6 +45,12 @@ export default function OfficeExperience() {
   const backRef = useRef<HTMLButtonElement | null>(null);
   const trigger = useRef<HTMLElement | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [dig, setDig] = useState(0);
+  const browsingRef = useRef(false);
+  // Arrival hints (spec 3.1): a tour of the four objects, then dots until the visitor uses one.
+  const [hints, setHints] = useState<"" | "tour" | "dots">("");
+  const used = useRef(false);
+  const toured = useRef(false);
 
   // A reload keeps history.state; a fresh office starts with no layer.
   useEffect(clearLayer, []);
@@ -58,12 +65,30 @@ export default function OfficeExperience() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetKey]);
 
-  const onHover = useCallback((hit: Hit | null) => {
+  // What shows as hovered: the highlight, label and tease. The tour shows through it too.
+  const show = useCallback((hit: Hit | null) => {
     if (sameHit(hover.current, hit)) return;
     hover.current = hit;
     setHovered(hit);
     if (host.current) host.current.dataset.hover = hit ? hit.hotspot : "";
   }, []);
+  const markUsed = useCallback(() => {
+    if (used.current) return;
+    used.current = true;
+    setHints("");
+  }, []);
+  // The visitor's own hover or keyboard focus: ends the hints, and in the crate brings the hovered record to the front.
+  const onHover = useCallback(
+    (hit: Hit | null) => {
+      if (hit) markUsed();
+      if (hit?.hotspot === "hs_crate" && hit.item && browsingRef.current) {
+        const i = work.findIndex((w) => w.slug === hit.item);
+        if (i >= 0) setDig(i);
+      }
+      show(hit);
+    },
+    [markUsed, show],
+  );
 
   // One history entry per new layer: what the live entry already shows is never pushed again (double clicks, repeat Enter).
   const live = () => {
@@ -75,10 +100,11 @@ export default function OfficeExperience() {
     if (now && sameHit(now, hit)) return;
     if (now?.hotspot === "hs_crate" && now.item && hit.hotspot === "hs_crate") return; // one record out at a time
     // Keyboard users opened it from the nav: focus moves into what opened, and comes back here when it closes.
+    markUsed();
     const active = document.activeElement as HTMLElement | null;
     if (active && navRef.current?.contains(active)) trigger.current = active;
     pushLayer({ focus: hit.hotspot, reading: false }, pathForTarget(hit) ?? "/");
-  }, []);
+  }, [markUsed]);
   const read = useCallback(() => {
     const { layer: l, scene: s } = live();
     if (!l.reading && s.target) pushLayer({ focus: s.target.hotspot, reading: true });
@@ -107,11 +133,11 @@ export default function OfficeExperience() {
   // The crate (spec 3.2): flick through the records, pull the front one out, read it on its back and in the panel.
   const pulledSlug = scene.target?.hotspot === "hs_crate" ? scene.target.item : null;
   const pulledIndex = pulledSlug ? work.findIndex((w) => w.slug === pulledSlug) : -1;
-  const [dig, setDig] = useState(0);
   const [sleeveOut, setSleeveOut] = useState(false);
-  const crate = useRef({ dig: 0, pulled: null as number | null });
-  crate.current = { dig: digFor(dig, pulledSlug), pulled: pulledIndex < 0 ? null : pulledIndex };
-  const wheel = useRef<Wheel>({ acc: 0, quietUntil: 0 });
+  const browsing = focusedOn === "hs_crate" && !pulledSlug && !scene.reading;
+  browsingRef.current = browsing;
+  const crate = useRef({ dig: 0, playing: null as number | null, browsing: false });
+  crate.current = { dig: digFor(dig, pulledSlug), playing: pulledIndex < 0 ? null : pulledIndex, browsing };
   const crateRef = useRef<HTMLDivElement | null>(null);
 
   // A pulled record (a click, Enter or Forward) is at the front; the dig starts again at the front of a fresh visit.
@@ -122,21 +148,15 @@ export default function OfficeExperience() {
     if (state.kind === "idle") setDig(0);
   }, [state.kind]);
 
-  const browsing = focusedOn === "hs_crate" && !pulledSlug && !scene.reading;
   const flick = useCallback((step: number) => setDig((d) => clampDig(d + step, work.length)), []);
   const pull = useCallback(() => {
     if (!canPull(focusedHotspot(director.current), live().scene.target?.item ?? null)) return;
     activate({ hotspot: "hs_crate", item: work[crate.current.dig].slug });
   }, [activate]);
 
-  // Wheel and swipe flick while browsing the crate (the page is scroll-locked then).
+  // Swipes flick while browsing the crate on a touch screen (hovering does it with a pointer).
   useEffect(() => {
     if (!browsing) return;
-    const onWheel = (e: WheelEvent) => {
-      const r = wheelStep(wheel.current, e.deltaY, performance.now());
-      wheel.current = r.w;
-      if (r.step) flick(r.step);
-    };
     let startY: number | null = null;
     const onDown = (e: PointerEvent) => {
       if (e.pointerType === "touch") startY = e.clientY;
@@ -147,11 +167,9 @@ export default function OfficeExperience() {
       startY = null;
       if (step) flick(step);
     };
-    window.addEventListener("wheel", onWheel, { passive: true });
     window.addEventListener("pointerdown", onDown);
     window.addEventListener("pointerup", onUp);
     return () => {
-      window.removeEventListener("wheel", onWheel);
       window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("pointerup", onUp);
     };
@@ -185,10 +203,37 @@ export default function OfficeExperience() {
     }
   }, [state.kind]);
 
+  useEffect(() => {
+    if (state.kind !== "idle" || toured.current || used.current) return;
+    toured.current = true;
+    setHints("tour");
+    const start = performance.now();
+    let frame = 0;
+    let done = false;
+    const step = () => {
+      if (used.current) return;
+      const at = tourAt((performance.now() - start) / 1000);
+      show(at ? { hotspot: at, item: null } : null);
+      if (at) frame = requestAnimationFrame(step);
+      else {
+        done = true;
+        setHints("dots");
+      }
+    };
+    frame = requestAnimationFrame(step);
+    return () => {
+      cancelAnimationFrame(frame);
+      if (!done && !used.current) {
+        show(null);
+        setHints("dots");
+      }
+    };
+  }, [state.kind, show]);
+
   const navProps = (hit: Hit) => ({ onFocus: () => onHover(hit), onBlur: () => onHover(null) });
 
   return (
-    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig}>
+    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-hints={hints}>
       <div className="office-stage">
         <OfficeErrorBoundary host={host}>
           <OfficeCanvas
@@ -302,6 +347,10 @@ export default function OfficeExperience() {
           <CaseStudy item={findWork(pulledSlug)!} titleId="case-title" />
         </Panel>
       )}
+
+      <p className="office-hints-text" aria-hidden="true">
+        {COPY.hints}
+      </p>
 
       <div ref={track} className="office-track" style={{ height: `${theme.walkInScreens * 100}vh` }} aria-hidden="true" />
     </div>

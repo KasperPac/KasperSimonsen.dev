@@ -34,6 +34,6 @@ export const COPY = {
   caseStudy: { stack: "Built with", live: "See it live" },
   crate: {
     label: (name: string, n: number, of: number) => `Record crate: ${name}, ${n} of ${of}. Arrow keys flick, Enter pulls it out.`,
-    hint: "Scroll to flick through. Click a record to pull it out.",
+    hint: "Hover a record to flick to it. Click it to put it on.",
   },
 } as const;

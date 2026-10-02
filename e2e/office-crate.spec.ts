@@ -36,7 +36,9 @@ test("the keyboard flicks, pulls, reads and steps back out one layer at a time",
 
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(new RegExp(`/work/${last.slug}$`));
-  await expect(office(page)).toHaveAttribute("data-sleeve", "out", { timeout: 10_000 });
+  await expect(office(page)).toHaveAttribute("data-playing", last.slug); // on the record player
+  await expect(office(page)).toHaveAttribute("data-sleeve", "out", { timeout: 15_000 });
+  await expect(office(page)).toHaveAttribute("data-camera", "focus", { timeout: 10_000 });
   const back = page.getByRole("region", { name: last.name });
   await expect(back).toBeVisible();
   await expect(back.getByRole("heading", { name: last.name })).toBeFocused();
@@ -52,21 +54,12 @@ test("the keyboard flicks, pulls, reads and steps back out one layer at a time",
   await expect(more).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(page).toHaveURL(/\/$/);
+  await expect(office(page)).toHaveAttribute("data-playing", "");
   await expect(office(page)).toHaveAttribute("data-sleeve", "in", { timeout: 10_000 });
   await expect(crate(page)).toBeFocused();
   await page.keyboard.press("Escape");
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: 10_000 });
   await expect(button).toBeFocused();
-});
-
-test("one wheel gesture flicks one record", async ({ page }) => {
-  await standInOffice(page);
-  await openCrate(page);
-  // one gesture: ten events inside a few milliseconds, as a trackpad sends them
-  await page.evaluate(() => {
-    for (let i = 0; i < 10; i++) window.dispatchEvent(new WheelEvent("wheel", { deltaY: 40 }));
-  });
-  await expect(office(page)).toHaveAttribute("data-dig", "1");
 });
 
 test("Forward onto a project's URL brings its record out again, the ones in front flicked", async ({ page }) => {

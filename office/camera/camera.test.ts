@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Object3D, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { applyPose, blendPose, copyPose, DESIGN_ASPECT, easeInOutCubic, makePose, MAX_FOV, readPose, smoothstep, widenForAspect, type Pose } from "./pose";
 import { basePose, focusPose, PORTRAIT_FROM } from "./basePose";
-import { CameraRig, FOCUS_MOVES, FOCUS_SECONDS } from "./rig";
+import { CameraRig, FOCUS_MOVES, FOCUS_SECONDS, PLAYER_MOVE } from "./rig";
 
 const pose = (x: number, fov = 50, yaw = 0): Pose => ({
   position: new Vector3(x, 0, 0),
@@ -180,6 +180,10 @@ describe("focus moves", () => {
   it("takes the drawer slower than the default, on an arc", () => {
     expect(FOCUS_MOVES.hs_drawer.seconds).toBeGreaterThan(FOCUS_SECONDS);
     expect(FOCUS_MOVES.hs_drawer.arc?.lift).toBeGreaterThan(0);
+  });
+  it("carries a record to the player and back on a gentle arc, no faster than the default move", () => {
+    expect(PLAYER_MOVE.seconds).toBeGreaterThanOrEqual(FOCUS_SECONDS);
+    expect(PLAYER_MOVE.arc?.lift).toBeGreaterThan(0);
   });
   it("leaves the other objects on the default move", () => {
     for (const h of ["hs_crate", "hs_monitor", "hs_shelf"] as const) expect(FOCUS_MOVES[h]).toEqual({ seconds: FOCUS_SECONDS, arc: null });

@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
-import { Box3, Vector3, type Mesh, type Object3D, type PerspectiveCamera } from "three";
+import { Box3, Quaternion, Vector3, type Mesh, type Object3D, type PerspectiveCamera } from "three";
 import manifest from "./manifest.json";
 import { theme } from "./theme";
 import { applyCleanEdges, setHighlight, setLineResolution, updateEdgeFades, type CleanEdgesHandle } from "./style/cleanEdges";
@@ -13,12 +13,14 @@ import { applySkippingGirl, findSkippingGirl } from "./walkin/skippingGirl";
 import { findCamera, WALKIN_CAMERA } from "./walkin/cameraPose";
 import { applyPose, makePose, readPose, type Pose } from "./camera/pose";
 import { basePose, focusPose } from "./camera/basePose";
-import { CameraRig, FOCUS_MOVES } from "./camera/rig";
+import { CameraRig, FOCUS_MOVES, PLAYER_MOVE } from "./camera/rig";
 import { FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, hitFor, pickHit, type Hit, type HotspotName } from "./hotspots/registry";
 import { addHitProxies } from "./hotspots/proxies";
 import { focusedHotspot, IDLE_AT, type DirectorState } from "./director/director";
 import { CARD_NODE, findMotionNodes, ObjectMotion } from "./objects/motion";
-import { CrateMotion, findCrateNodes } from "./objects/crate";
+import { CrateMotion, findCrateNodes, type PlayerPoses } from "./objects/crate";
+import { addCrateZones } from "./crate/zones";
+import { PLATTER_NODE, STAND_NODE } from "./idle/turntable";
 import CardFace from "./cards/CardFace";
 import { SLEEVE_WIDTH_PX } from "./cards/SleeveBack";
 import { work } from "@/content/work";
@@ -37,11 +39,11 @@ export type OfficeCanvasProps = {
   overlay: RefObject<OverlayElements>;
   /** What's printed on the business card in the drawer while it shows, or null. */
   drawerCard: { titleId: string; content: ReactNode } | null;
-  /** The crate: the front record of the dig and the pulled record's index (or null). Read every frame. */
-  crate: RefObject<{ dig: number; pulled: number | null }>;
-  /** What's printed on the pulled sleeve's back while it shows, or null. */
+  /** The crate, read every frame: the front record of the dig, the record on the player (or null), and whether the visitor is browsing it. */
+  crate: RefObject<{ dig: number; playing: number | null; browsing: boolean }>;
+  /** What's printed on the back of the sleeve on the now-playing stand while it shows, or null. */
   sleeveBack: { index: number; titleId: string; content: ReactNode } | null;
-  /** The pulled record arrived in front of the camera (true) or left (false). */
+  /** A record finished going onto the player, its sleeve turned round on the stand (true), or started back (false). */
   onSleeveOut: (out: boolean) => void;
   onProgressCross: (progress: number) => void;
   onSettled: () => void;
@@ -54,6 +56,8 @@ export type OfficeCanvasProps = {
 type OfficeInfo = {
   edges: CleanEdgesHandle;
   focus: Partial<Record<HotspotName, { land: Pose; portrait: Pose | null }>>;
+  /** The record player's focus cameras: a record from the crate is played there. */
+  player: { land: Pose; portrait: Pose | null } | null;
   standPortrait: Pose | null;
   anchors: Partial<Record<HotspotName, Vector3>>;
 };
@@ -110,12 +114,15 @@ function Street({ progress, host, director, onProgressCross, onSettled, info }: 
 
     const d = director.current;
     const hotspot = focusedHotspot(d);
-    const cams = hotspot ? office?.focus[hotspot] : undefined;
+    // A record from the crate is played on the record player: the crate's other view.
+    const playing = (d.kind === "focusing" || d.kind === "focused") && d.target.hotspot === "hs_crate" && d.target.item !== null;
+    const cams = playing ? (office?.player ?? office?.focus.hs_crate) : hotspot ? office?.focus[hotspot] : undefined;
     if (cams) focusPose(cams.land, cams.portrait, camera.aspect, poses.focus);
 
     // A new state or a new object starts a camera move from wherever the camera is.
-    const key = d.kind + (hotspot ?? "");
+    const key = d.kind + (hotspot ?? "") + (playing ? ":playing" : "");
     if (key !== seen.current) {
+      const was = seen.current;
       seen.current = key;
       readPose(camera, poses.now);
       if (d.kind === "focusing") {
@@ -125,6 +132,9 @@ function Street({ progress, host, director, onProgressCross, onSettled, info }: 
         left.current = d.target.hotspot;
         if (cams) rig.moveTo(poses.now, { kind: "pose", pose: poses.focus }, reduced || d.from === "walkIn" ? 0 : move.seconds, move.arc);
         else rig.moveTo(poses.now, { kind: "base" }, 0);
+      } else if (d.kind === "focused" && was.startsWith("focused") && cams) {
+        // The same object, another view: a record goes onto the player, or back to the crate.
+        rig.moveTo(poses.now, { kind: "pose", pose: poses.focus }, reduced ? 0 : PLAYER_MOVE.seconds, PLAYER_MOVE.arc);
       } else if (d.kind === "returning") {
         const move = left.current ? FOCUS_MOVES[left.current] : null;
         rig.moveTo(poses.now, { kind: "base" }, reduced || !move ? 0 : move.seconds, move?.arc ?? null);
@@ -165,7 +175,8 @@ type OfficeProps = Pick<
 /** The office model: hover, click, highlight, object motion, where the label and markers go, and the business card's print. */
 function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack, onHover, onActivate, onDrawerOpen, onSleeveOut, info }: OfficeProps) {
   const { gltf: office, handle } = useCleanEdges(manifest.office.url, highlightKey);
-  useTurntable(office.scene);
+  const onStand = useRef(false); // a project's sleeve is on the now-playing stand: its covers hide
+  useTurntable(office.scene, onStand);
   const motion = useMemo(() => new ObjectMotion(), []);
   const nodes = useMemo(() => findMotionNodes(office.scene), [office]);
   const card = useMemo(() => (office.scene.getObjectByName(CARD_NODE) as Mesh | undefined) ?? null, [office]);
@@ -174,6 +185,16 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
   const drawerWasOpen = useRef(false);
   const crateNodes = useMemo(() => findCrateNodes(nodes.records), [nodes]);
   const crateMotion = useMemo(() => new CrateMotion(), []);
+  // Where a played record goes: its vinyl on the platter, its sleeve where the stand's first cover rests.
+  const player = useMemo<PlayerPoses | null>(() => {
+    const platter = office.scene.getObjectByName(PLATTER_NODE);
+    const slot = office.scene.getObjectByName(STAND_NODE);
+    if (!platter || !slot) return null;
+    slot.updateWorldMatrix(true, false);
+    const stand = { position: new Vector3(), quaternion: new Quaternion() };
+    slot.matrixWorld.decompose(stand.position, stand.quaternion, new Vector3());
+    return { platter, stand };
+  }, [office]);
   const sleeveWasOut = useRef(false);
   const v = useMemo(() => new Vector3(), []);
 
@@ -182,6 +203,12 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
     const proxies = addHitProxies(office.scene, () => focusedHotspot(director.current) === null);
     return () => proxies.forEach((p) => p.removeFromParent());
   }, [office, director]);
+
+  // Hovering where a project's record rests brings it to the front (Kasper: flick on mouseover).
+  useEffect(() => {
+    const zones = addCrateZones(crateNodes.records, work.length, () => crate.current.browsing);
+    return () => zones.forEach((z) => z.removeFromParent());
+  }, [crateNodes, crate]);
 
   useEffect(() => {
     const pose = (name: string) => {
@@ -199,7 +226,9 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
         anchors[h] = new Vector3((box.min.x + box.max.x) / 2, box.max.y, (box.min.z + box.max.z) / 2);
       }
     }
-    info.current = { edges: handle, focus, standPortrait: pose("cam_stand_portrait"), anchors };
+    const playerLand = pose("cam_focus_player");
+    const player = playerLand ? { land: playerLand, portrait: pose("cam_focus_player_portrait") } : null;
+    info.current = { edges: handle, focus, player, standPortrait: pose("cam_stand_portrait"), anchors };
     return () => {
       info.current = null;
     };
@@ -215,12 +244,12 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
       if (host.current) host.current.dataset.drawer = motion.drawerOpen ? "open" : "shut";
     }
     const c = crate.current;
-    const cam = camera as PerspectiveCamera;
-    crateMotion.update(crateNodes, { dig: c.dig, pulled: c.pulled, camera: { position: cam.position, quaternion: cam.quaternion, fov: cam.fov }, aspect: size.width / size.height, reduced }, dt);
-    if (crateMotion.pulledDone !== sleeveWasOut.current) {
-      sleeveWasOut.current = crateMotion.pulledDone;
-      onSleeveOut(crateMotion.pulledDone);
-      if (host.current) host.current.dataset.sleeve = crateMotion.pulledDone ? "out" : "in";
+    crateMotion.update(crateNodes, { dig: c.dig, lifted: c.browsing ? c.dig : null, playing: c.playing, player, reduced }, dt);
+    onStand.current = c.playing !== null;
+    if (crateMotion.playDone !== sleeveWasOut.current) {
+      sleeveWasOut.current = crateMotion.playDone;
+      onSleeveOut(crateMotion.playDone);
+      if (host.current) host.current.dataset.sleeve = crateMotion.playDone ? "out" : "in";
     }
 
     const lit = hover.current ?? focused;
