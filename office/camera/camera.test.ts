@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { Object3D, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { applyPose, blendPose, copyPose, DESIGN_ASPECT, easeInOutCubic, makePose, MAX_FOV, readPose, smoothstep, widenForAspect, type Pose } from "./pose";
-import { basePose, focusPose, PORTRAIT_FROM } from "./basePose";
+import { basePose, focusPose, PORTRAIT_ASPECT, PORTRAIT_FROM, PORTRAIT_MAX_FOV } from "./basePose";
 import { CameraRig, FOCUS_MOVES, FOCUS_SECONDS, PLAYER_MOVE } from "./rig";
 
 const pose = (x: number, fov = 50, yaw = 0): Pose => ({
@@ -92,7 +92,20 @@ describe("basePose", () => {
   it("eases into the portrait standing pose at the end on portrait screens", () => {
     expect(basePose(walk, portrait, PORTRAIT_FROM, 0.46, makePose()).position.x).toBe(0);
     expect(basePose(walk, portrait, 1, 0.46, makePose()).position.x).toBeCloseTo(10);
-    expect(basePose(walk, portrait, 1, 0.46, makePose()).fov).toBeCloseTo(85);
+    expect(basePose(walk, portrait, 1, PORTRAIT_ASPECT, makePose()).fov).toBeCloseTo(85);
+  });
+  it("widens the portrait standing pose on narrower phones, so the whole room still fits across", () => {
+    const fov = basePose(walk, pose(10, 82), 1, 0.46, makePose()).fov;
+    expect(fov).toBeCloseTo(widenForAspect(82, 0.46, PORTRAIT_ASPECT, PORTRAIT_MAX_FOV));
+    expect(fov).toBeGreaterThan(95);
+    expect(fov).toBeLessThanOrEqual(PORTRAIT_MAX_FOV);
+  });
+  it("keeps the portrait standing pose as authored on its own phone shape and wider ones", () =>
+    expect(basePose(walk, pose(10, 82), 1, 0.7, makePose()).fov).toBeCloseTo(82));
+  it("eases the widening in with the rest of the hand-over", () => {
+    const half = basePose(walk, pose(10, 82), (PORTRAIT_FROM + 1) / 2, 0.46, makePose()).fov;
+    expect(half).toBeGreaterThan(widenForAspect(50, 0.46));
+    expect(half).toBeLessThan(widenForAspect(82, 0.46, PORTRAIT_ASPECT, PORTRAIT_MAX_FOV));
   });
   it("falls back to widening when there is no portrait pose", () =>
     expect(basePose(walk, null, 1, 0.46, makePose()).fov).toBeCloseTo(widenForAspect(50, 0.46)));

@@ -34,7 +34,7 @@ importlib.reload(signs)
 FPS = 24
 WALKIN_FRAMES = 240  # clip length only; scroll maps onto it
 CAMERA_FOV_DEG = 50.0  # vertical; shared by the walk-in and the standing spot so there's no jump
-PORTRAIT_FOV_DEG = 85.0  # wide enough for crate-to-shelf across the office on a phone
+PORTRAIT_FOV_DEG = 82.0  # vertical, fits the whole room across a 0.6-aspect phone; narrower phones widen it (site)
 
 # Every line of visible text, in one place for Kasper to approve or swap.
 COPY = {
@@ -72,7 +72,8 @@ MAILBOXES = (2.0, 4.4)  # mailbox wall on the lobby's back wall, metres north of
 COUNTER = (-9.6, -7.4)  # reception counter in front of the back wall, office-frame x
 # room frame: the standing spot, back to the front wall so the couch and the TV are in frame with the desk
 STAND = ((0.0, 0.42, 1.6), (-0.05, 4.7, 0.85))
-PORTRAIT = ((0.0, 0.25, 1.6), (0.0, 4.6, 0.95))  # room frame, back against the front wall
+# phones: high up under the ceiling at the front wall, looking down onto the desk with the room centred in the frame
+PORTRAIT = ((0.2, 0.3, 2.55), (0.2, 4.2, 1.0))
 CHAIR = (-0.35, -0.75, math.pi - 0.35)  # x and y from the desk's centre, turn: pulled out, clear of drawer and crate
 # Room-frame floor spots for the couch and the old TV on its stand: (centre x, centre y, rotation_z, width, depth).
 # Both face into the room, in view from cam_stand.
