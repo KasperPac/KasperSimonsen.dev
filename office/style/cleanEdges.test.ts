@@ -1,7 +1,8 @@
 import { describe, it, expect } from "vitest";
-import { BoxGeometry, DoubleSide, Group, IcosahedronGeometry, Mesh, Raycaster, Vector3 } from "three";
+import { BoxGeometry, Color, DoubleSide, Group, IcosahedronGeometry, Mesh, Object3D, Raycaster, Vector3 } from "three";
+import type { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import type { LineSegments2 } from "three/addons/lines/LineSegments2.js";
-import { applyCleanEdges, fadeOpacity, setLineResolution, updateEdgeFades } from "./cleanEdges";
+import { applyCleanEdges, fadeOpacity, setHighlight, setLineResolution, updateEdgeFades } from "./cleanEdges";
 
 const opts = { background: "#000000", line: "#ffffff", lineWidth: 1.5, thresholdDeg: 20 };
 
@@ -238,5 +239,72 @@ describe("distance fade groups", () => {
     applyCleanEdges(root, opts);
     applyCleanEdges(root, opts);
     expect(crate.children.filter((c) => c.userData.cleanEdges)).toHaveLength(1);
+  });
+});
+
+describe("highlight groups", () => {
+  const build = () => {
+    const root = new Group();
+    const named = (name: string, child?: Mesh) => {
+      const g = new Group();
+      g.name = name;
+      if (child) g.add(child);
+      root.add(g);
+      return g;
+    };
+    const drawer = new Mesh(new BoxGeometry());
+    const record = new Mesh(new BoxGeometry());
+    const plain = new Mesh(new BoxGeometry());
+    named("hs_drawer", drawer);
+    named("hs_crate").add(Object.assign(new Group(), { name: "hs_crate__record_00" }).add(record));
+    root.add(plain);
+    const key = (o: Object3D) => {
+      for (let n: Object3D | null = o; n; n = n.parent) if (n.name.startsWith("hs_")) return n.name;
+      return null;
+    };
+    const handle = applyCleanEdges(root, { ...opts, highlightKey: key });
+    const lineOf = (m: Mesh) => (m.children.find((c) => c.userData.cleanEdges) as LineSegments2).material as LineMaterial;
+    return { handle, drawer, record, plain, lineOf };
+  };
+
+  it("gives each highlight key its own line material and leaves the rest shared", () => {
+    const { handle, drawer, record, plain, lineOf } = build();
+    expect(lineOf(plain)).toBe(handle.line);
+    expect(lineOf(drawer)).not.toBe(handle.line);
+    expect(lineOf(record)).not.toBe(lineOf(drawer));
+    expect([...handle.highlights.keys()].sort()).toEqual(["hs_crate__record_00", "hs_drawer"]);
+  });
+
+  it("colours a hotspot and its items, then resets", () => {
+    const { handle, drawer, record, lineOf } = build();
+    setHighlight(handle, "hs_crate", "#ff0000");
+    expect(lineOf(record).color.getHexString()).toBe("ff0000");
+    expect(lineOf(drawer).color.getHexString()).toBe(new Color(opts.line).getHexString());
+    setHighlight(handle, null, "#ff0000");
+    expect(lineOf(record).color.getHexString()).toBe(new Color(opts.line).getHexString());
+  });
+
+  it("colours one item without its siblings", () => {
+    const { handle, record, lineOf } = build();
+    setHighlight(handle, "hs_crate__record_00", "#00ff00");
+    expect(lineOf(record).color.getHexString()).toBe("00ff00");
+  });
+
+  it("does not match a prefix that is only the start of another name", () => {
+    const { handle, drawer, lineOf } = build();
+    setHighlight(handle, "hs_draw", "#00ff00");
+    expect(lineOf(drawer).color.getHexString()).toBe(new Color(opts.line).getHexString());
+  });
+
+  it("keeps highlight lines the right width on resize", () => {
+    const { handle, drawer, lineOf } = build();
+    setLineResolution(handle, 800, 600);
+    expect(lineOf(drawer).resolution.toArray()).toEqual([800, 600]);
+  });
+
+  it("works without a highlightKey", () => {
+    const root = new Group();
+    root.add(new Mesh(new BoxGeometry()));
+    expect(applyCleanEdges(root, opts).highlights.size).toBe(0);
   });
 });

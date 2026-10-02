@@ -20,6 +20,8 @@ export type CleanEdgesOptions = {
   /** CSS pixels */
   lineWidth: number;
   thresholdDeg: number;
+  /** Groups meshes whose lines can be recoloured together (hover). Null keeps the shared line. */
+  highlightKey?: (mesh: Object3D) => string | null;
 };
 
 /** Meshes sharing one distance-fade setting. `centre` is their world-space bounding-sphere centre at apply time. */
@@ -32,7 +34,14 @@ export type EdgeFadeGroup = {
   centre: Vector3;
 };
 
-export type CleanEdgesHandle = { fill: MeshBasicMaterial; line: LineMaterial; fades: EdgeFadeGroup[] };
+export type CleanEdgesHandle = {
+  fill: MeshBasicMaterial;
+  line: LineMaterial;
+  fades: EdgeFadeGroup[];
+  /** One line material per highlight key. */
+  highlights: Map<string, LineMaterial>;
+  baseColor: string;
+};
 
 const DEFAULT_FADE_MIN = 0.15;
 
@@ -51,6 +60,7 @@ export function fadeOpacity(distance: number, near: number, far: number, min: nu
  * real edges as screen-space lines. Names, hierarchy and transforms are untouched, so hotspots and
  * Blender animations keep working. Calling it again on the same tree is a no-op for styled meshes.
  * A mesh (or its nearest ancestor) with `userData.edge_threshold_deg` in (0, 180) overrides `opts.thresholdDeg`.
+ * `opts.highlightKey` groups meshes into recolourable line materials, driven by `setHighlight`.
  * `edge_fade_near`/`edge_fade_far`/`edge_fade_min` give it a distance fade, driven by `updateEdgeFades`.
  */
 export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanEdgesHandle {
@@ -65,6 +75,7 @@ export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanE
   });
   const line = new LineMaterial({ color: opts.line, linewidth: opts.lineWidth, fog: true });
   const fades = new Map<string, EdgeFadeGroup>();
+  const highlights = new Map<string, LineMaterial>();
   const edgeCache = new Map<BufferGeometry, Map<number, LineSegmentsGeometry>>();
 
   root.updateWorldMatrix(true, true);
@@ -84,7 +95,16 @@ export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanE
       byThreshold.set(threshold, edges);
     }
     const fade = fadeFor(mesh);
+    const highlight = fade ? null : (opts.highlightKey?.(mesh) ?? null);
     let material = line;
+    if (highlight) {
+      let m = highlights.get(highlight);
+      if (!m) {
+        m = new LineMaterial({ color: opts.line, linewidth: opts.lineWidth, fog: true });
+        highlights.set(highlight, m);
+      }
+      material = m;
+    }
     if (fade) {
       const key = `${fade.near}|${fade.far}|${fade.min}`;
       let group = fades.get(key);
@@ -114,7 +134,7 @@ export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanE
     for (const o of group.objects) box.union(new Box3().setFromObject(o));
     box.getBoundingSphere(new Sphere()).center.clone().toArray().forEach((v, i) => group.centre.setComponent(i, v));
   }
-  const handle = { fill, line, fades: [...fades.values()] };
+  const handle = { fill, line, fades: [...fades.values()], highlights, baseColor: opts.line };
   handles.set(root, handle);
   return handle;
 }
@@ -145,8 +165,17 @@ export function updateEdgeFades(handle: CleanEdgesHandle, cameraPosition: Vector
   for (const g of handle.fades) g.material.opacity = fadeOpacity(cameraPosition.distanceTo(g.centre), g.near, g.far, g.min);
 }
 
+/** Recolours the lines of `prefix` and everything under it (`prefix__…`); every other highlight group goes back to the base colour. */
+export function setHighlight(handle: CleanEdgesHandle, prefix: string | null, color: string): void {
+  for (const [key, material] of handle.highlights) {
+    const on = prefix !== null && (key === prefix || key.startsWith(`${prefix}__`));
+    material.color.set(on ? color : handle.baseColor);
+  }
+}
+
 /** Line widths are in CSS pixels relative to this; call on every canvas resize. */
 export function setLineResolution(handle: CleanEdgesHandle, width: number, height: number): void {
   handle.line.resolution.set(width, height);
   for (const g of handle.fades) g.material.resolution.set(width, height);
+  for (const m of handle.highlights.values()) m.resolution.set(width, height);
 }
