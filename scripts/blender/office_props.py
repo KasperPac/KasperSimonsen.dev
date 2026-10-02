@@ -386,8 +386,9 @@ def build_pedestal(name, location, rotation_z, parent, col, width=0.4, depth=0.5
     """Three-drawer pedestal on a recessed plinth. The top drawer is its own child, <name>__drawer, with its origin
     on the front face: slide it along -y to open it. It has a real tray behind the front and the carcass is hollow
     there, so an open drawer has an inside to look into. With card, a blank business card (<name>__card, 90 x 55 x
-    3 mm, long edge left to right) lies centred in the tray on its floor, parented to the drawer so it slides out with
-    it."""
+    3 mm, long edge left to right) lies centred in the tray on its floor, with desk-drawer clutter round it
+    (<name>__clutter: two pens, a stapler, a sticky-note pad, a USB stick), all parented to the drawer so they slide out
+    with it."""
     root = _root(name, location, rotation_z, parent, col)
     t, plinth, gap = 0.016, 0.05, 0.003
     fronts = (0.12, 0.16, height - t - plinth - 0.12 - 0.16 - 3 * gap)  # top to bottom
@@ -425,10 +426,28 @@ def build_pedestal(name, location, rotation_z, parent, col, width=0.4, depth=0.5
     _box(bm, (inner_w, tray_d, 0.008), (0, 0.018 + tray_d / 2, floor - 0.004))
     drawer = _part(f"{name}__drawer", bm, root, col, location=(0, fy, height - t - gap - h / 2))
     if card:
+        card_y = 0.018 + tray_d / 2
         bm = bmesh.new()
         _box(bm, (0.09, 0.055, 0.003), (0, 0, 0))
-        _part(f"{name}__card", bm, drawer, col, location=(0, 0.018 + tray_d / 2, floor + 0.0015))
+        _part(f"{name}__card", bm, drawer, col, location=(0, card_y, floor + 0.0015))
+        bm = bmesh.new()
+        _drawer_clutter(bm, floor, card_y)
+        _part(f"{name}__clutter", bm, drawer, col)
     return root
+
+
+def _drawer_clutter(bm, floor, card_y):
+    """Desk-drawer odds and ends round a business card centred at (0, card_y) on a tray floor at height `floor`, in
+    the drawer's space (+y into the pedestal). Few facets: small things with many edges read as noise."""
+    pen = [(0, 0), (0.0045, 0.016), (0.0045, 0.105), (0.0052, 0.105), (0.0052, 0.14), (0, 0.14)]  # tip to cap
+    for x, y, turn in ((0.015, card_y + 0.065, 0.12), (-0.115, card_y - 0.03, 1.35)):
+        _lathe(bm, pen, 6, _m((x, y, floor + 0.0052), (0, math.pi / 2, turn)) @ Matrix.Translation((0, 0, -0.07)))
+    stapler = _m((0.112, card_y + 0.035, floor), (0, 0, -1.25))
+    _box(bm, (0.13, 0.034, 0.01), (0, 0, 0.005), stapler)  # base
+    _box(bm, (0.12, 0.03, 0.016), (0.004, 0, 0.02), stapler)  # arm
+    _box(bm, (0.018, 0.032, 0.022), (-0.056, 0, 0.011), stapler)  # hinge
+    _box(bm, (0.076, 0.076, 0.014), (0, 0, 0.007), _m((-0.095, card_y + 0.105, floor), (0, 0, 0.2)))  # sticky notes
+    _box(bm, (0.05, 0.018, 0.008), (0, 0, 0.004), _m((0.08, card_y - 0.075, floor), (0, 0, 0.4)))  # USB stick
 
 
 def build_monitor(name, location, rotation_z, parent, col, width=0.62, height=0.36):

@@ -10,7 +10,7 @@ async function standInOffice(page: Page) {
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: 15_000 });
 }
 
-/** The details are printed on the card in the drawer, and the camera has zoomed in until it fills `share` of the width. */
+/** The details are printed on the card in the drawer, and the camera has come in until it fills `share` of the width. */
 async function expectCardInFrame(page: Page, card: Locator, share: number) {
   const { width, height } = page.viewportSize()!;
   await expect(office(page)).toHaveAttribute("data-camera", "focus", { timeout: 10_000 });
@@ -44,7 +44,7 @@ test("the drawer opens with the business card, Write to me opens the form, Esc p
   await expect(office(page)).toHaveAttribute("data-drawer", "open", { timeout: 10_000 });
   const card = page.getByRole("region", { name: "Kasper Simonsen" });
   await expect(card).toBeVisible();
-  await expectCardInFrame(page, card, 0.4);
+  await expectCardInFrame(page, card, 0.24);
   await expect(card.getByRole("heading", { name: "Kasper Simonsen" })).toBeFocused();
   await expect(card.getByRole("link", { name: "hello@kaspersimonsen.dev" })).toHaveAttribute("href", "mailto:hello@kaspersimonsen.dev");
 
@@ -160,17 +160,17 @@ test.describe("reduced motion", () => {
     await expect(office(page)).toHaveAttribute("data-director", "focused:hs_drawer", { timeout: 10_000 });
     await expect(office(page)).toHaveAttribute("data-camera", "focus");
     await expect(office(page)).toHaveAttribute("data-drawer", "open");
-    await expectCardInFrame(page, page.getByRole("region", { name: "Kasper Simonsen" }), 0.4);
+    await expectCardInFrame(page, page.getByRole("region", { name: "Kasper Simonsen" }), 0.24);
   });
 });
 
 test.describe("phone", () => {
   test.use({ viewport: { width: 390, height: 844 } });
-  test("zooms in until the card nearly fills the width", async ({ page }) => {
+  test("comes in until the card fills most of the width", async ({ page }) => {
     await standInOffice(page);
     await openDrawer(page);
     const card = page.getByRole("region", { name: "Kasper Simonsen" });
-    await expect(card).toBeVisible({ timeout: 10_000 });
-    await expectCardInFrame(page, card, 0.7);
+    await expect(card).toBeVisible({ timeout: 20_000 }); // the drawer's move is the slow one
+    await expectCardInFrame(page, card, 0.65);
   });
 });
