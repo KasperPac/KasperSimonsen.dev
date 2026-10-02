@@ -386,8 +386,8 @@ def build_pedestal(name, location, rotation_z, parent, col, width=0.4, depth=0.5
     """Three-drawer pedestal on a recessed plinth. The top drawer is its own child, <name>__drawer, with its origin
     on the front face: slide it along -y to open it. It has a real tray behind the front and the carcass is hollow
     there, so an open drawer has an inside to look into. With card, a blank business card (<name>__card, 90 x 55 x
-    3 mm, long edge left to right) lies centred in the tray, its underside 1 cm above the tray floor, parented to the
-    drawer so it slides out with it."""
+    3 mm, long edge left to right) lies centred in the tray on its floor, parented to the drawer so it slides out with
+    it."""
     root = _root(name, location, rotation_z, parent, col)
     t, plinth, gap = 0.016, 0.05, 0.003
     fronts = (0.12, 0.16, height - t - plinth - 0.12 - 0.16 - 3 * gap)  # top to bottom
@@ -427,7 +427,7 @@ def build_pedestal(name, location, rotation_z, parent, col, width=0.4, depth=0.5
     if card:
         bm = bmesh.new()
         _box(bm, (0.09, 0.055, 0.003), (0, 0, 0))
-        _part(f"{name}__card", bm, drawer, col, location=(0, 0.018 + tray_d / 2, floor + 0.01 + 0.0015))
+        _part(f"{name}__card", bm, drawer, col, location=(0, 0.018 + tray_d / 2, floor + 0.0015))
     return root
 
 

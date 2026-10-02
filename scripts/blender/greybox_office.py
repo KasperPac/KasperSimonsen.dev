@@ -78,16 +78,17 @@ PILLOW_TURN = -math.pi / 2  # the pillow stood side-on to the couch, its top lea
 # Focus cameras (spec 3.5), room frame: (eye, look-at, vertical fov). Landscape frames (16:10) leave the right ~40% for
 # the panel, so the object's centre sits about a third in from the left; the monitor has no panel and is centred.
 # Portrait frames (390 x 844) centre the object, as the panel is a full-screen sheet there. Every eye is at least
-# 0.3 m from any mesh: the crate and monitor eyes pass closest, over the chair.
+# 0.3 m from any mesh (the crate and monitor eyes pass closest, over the chair), except the drawer's: it leans into the
+# open drawer under the desk, 0.2 m from the desk top.
 FOCUS = {
     # low, looking down into the crate over its front edge, so the front records read
     "crate": {"land": ((-1.1, 4.0, 1.0), (-0.87, 4.75, 0.2), 45.0),
               "portrait": ((-1.1, 3.95, 1.05), (-1.1, 4.8, 0.16), 70.0)},
-    # framed for the top drawer open 0.30 m (the runtime slides it), looking down into it at about 40 degrees: the
-    # business card a third in from the left on landscape, and centred in the top half on portrait, with the bottom
-    # clear for the docked HTML card
-    "drawer": {"land": ((0.3, 3.645, 1.043), (0.515, 4.334, 0.4645), 45.0),
-               "portrait": ((0.3, 3.75, 1.0), (0.3, 4.2, 0.25), 70.0)},
+    # framed for the top drawer open 0.30 m (the runtime slides it): zoomed into it, looking down 60 degrees at the
+    # business card, whose details the runtime prints on it. The card is centred, half the width on 16:10 and 88% on
+    # portrait; the narrow fovs keep the eye clear of the desk top
+    "drawer": {"land": ((0.3, 4.1679, 0.8106), (0.3, 4.368, 0.464), 16.0),
+               "portrait": ((0.3, 4.1383, 0.8619), (0.3, 4.368, 0.464), 28.0)},
     # square on to the screen, just far enough back for the duck on top to fit (the screen is 56% of the width); the
     # portrait eye rises over the chair's headrest to fit the monitor's width
     "monitor": {"land": ((-0.25, 4.02, 1.04), (-0.25, 4.957, 1.04), 40.0),
