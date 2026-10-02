@@ -1293,3 +1293,519 @@ git commit -m "Flick through the crate, pull a record out, read it on the back a
 - [ ] **Step 1:** Make sure the dev server is up at http://localhost:3010 (`curl` it; Kasper starts `npm run dev` himself if it isn't). Capture desktop and phone stills of: the crate browsing at dig 0 and at the last project, and a pulled sleeve's back, into the plan's workspace `shots/`. Look at them first; fix anything broken before asking him.
 - [ ] **Step 2:** Ask him to: click the crate; scroll, swipe and use the arrow keys to flick; click a record (and the crate) to pull one; Read more; Esc and Back out. List the new drafts in `office/copy.ts` (`sleeve`, `caseStudy`, `crate`). Ask about: flick speed and angle (`FLIP_SECONDS`, `FLIP_ANGLE`), pull-out speed and size (`PULL_SECONDS`, `PULL_FILL`), the logos' size and position (`ART_BOX`, `ART_TOP`), the crate camera, and the back's look. **End the turn** and wait.
 - [ ] **Step 3:** Apply his feedback with those knobs, re-running the affected tests and e2e after each change; commit each change separately.
+
+---
+
+## Addendum: Kasper's M2 review (2026-10-02), Tasks 8–12
+
+Kasper clicked through Tasks 1–6 and decided:
+- **Flick on mouseover**, not the wheel ("the scrolling … feels a bit awkward and buggy"): hovering a record makes it the front one.
+- **Clicking a record plays it:** the camera glides to the record player; the vinyl comes out of the sleeve onto the platter and spins; the sleeve stands on the now-playing stand and turns round to show its back (the details).
+- **Sleeves look like LPs:** the vinyl peeks out of the top; the logo is centred as cover art with a thin border.
+- **Arrival hints:** a quick tour lights each object with its label in turn (~3 s), then pulsing dots stay on the four objects until the visitor hovers, focuses or clicks one.
+
+Ruling (lead): a centred logo would sit behind the records flicked in front of it, so the hovered (front) record also **lifts** part way out of the crate (`LIFT_M`, measured in Task 8) to show its whole cover. Wheel flicking is removed (keys and swipe stay).
+
+These amend spec 3.2 (Flip, Pull) and 3.1 (arrival); Task 12 writes the amendment into the spec.
+
+### Addendum Review Focus
+
+1. **Hover zones under moving records:** as records flick and lift, the pointer would land on a different record each frame and the dig would oscillate. Expected: the hovered record is decided by where records *rest*, so it is stable. *Test: Task 10 (`pickHit` prefers a resting zone).*
+2. **Back while a record is still travelling to the player:** expected: it reverses from wherever it is, never jumps. *Test: Task 9 (`play` eases back from mid-sequence).*
+3. **The tour meets an early visitor:** someone who hovers or tabs during the tour; expected: the tour stops at once and never steals the label or highlight back. *Test: Task 12 e2e (`data-hints` clears on first focus).*
+4. **Reduced motion:** expected: no lift, no flight; the record is on the player and the sleeve turned on the stand at once; the tour still names each object (colour and label are not motion). *Test: Task 9 (reduced), Task 12 e2e.*
+5. **Phones:** the turned sleeve on the stand must be readable. *Test: Task 12 e2e (back ≥ 70% of the width).*
+
+### Execution waves
+
+1. **Parallel:** Task 8 (live Blender agent), Task 9 (agent A), Task 10 (agent B), Task 11 (agent C).
+2. **Lead:** Task 12 (wiring, spec amendment, e2e), then Kasper's click-through.
+
+---
+
+### Task 8: Vinyl, cover art, lift and the player camera (Blender)
+
+Live Blender session; edit `office_props.py` and `greybox_office.py` in `*_next.py` copies and swap in when verified.
+
+**Files:**
+- Modify: `scripts/blender/office_props.py` (`_sleeve`, `_sleeve_art`, `build_crate`), `scripts/blender/greybox_office.py` (`FOCUS`/focus cameras: add `player`), `art/office.blend`, `public/models/office.glb`, `office/manifest.json`, `office/nodes.test.ts`, `office/hotspots/registry.ts` (`FOCUS_CAMERA` comment only if needed — no code)
+- Test: `office/nodes.test.ts`
+
+**Interfaces:**
+- Produces:
+  - `hs_crate__record_NN__vinyl` for **every** record (00..08): a child of the record, origin at the disc's centre, the disc in the record's local x–y plane (glTF), 0.30 m across, 2 mm thick, with a raised centre label 0.10 m across; centred on x, its top 0.04 m above the sleeve's top edge (it peeks out).
+  - Cover art: the logo (and label) centred on the front as one block inside `ART_BOX = (0.2, 0.17)`, centre at `SLEEVE / 2`; a thin square border 12 mm inside the sleeve's edge (a 1.5 mm flat frame, 1 mm proud of the front), part of `__art`.
+  - Cameras `cam_focus_player` and `cam_focus_player_portrait` (manifest `office.cameras`): framing the turntable's platter and the now-playing stand, the stand's sleeve (as if turned round) at least 40% of the frame height on 16:10 and at least 70% of the width on 390×844; eye ≥ 0.3 m from any mesh.
+  - **Reports `LIFT_M`**: how far the front record rises (along the crate's up) so its whole border is visible from `cam_focus_crate` with every record in front flicked by `FLIP_ANGLE` (0.17). Measure with ray casts to the border's four corners for each project index k; take the largest k needs, plus 1 cm. Restore every transform.
+
+- [ ] **Step 1: Write the failing node test** (inside the `describe` in `office/nodes.test.ts`)
+
+```ts
+  it("every record has its vinyl, and the player has its focus cameras", () => {
+    for (let i = 0; i < RECORDS; i++) expect(manifest.office.nodes).toContain(`hs_crate__record_${String(i).padStart(2, "0")}__vinyl`);
+    expect(manifest.office.cameras).toContain("cam_focus_player");
+    expect(manifest.office.cameras).toContain("cam_focus_player_portrait");
+  });
+```
+
+with `RECORDS` imported from `@/office/hotspots/registry`.
+
+- [ ] **Step 2: Run it to see it fail**
+
+Run: `npx vitest run office/nodes.test.ts`
+Expected: FAIL on `hs_crate__record_00__vinyl`.
+
+- [ ] **Step 3: Build the vinyl, the cover art and the player cameras**
+
+In `office_props.py`:
+
+```python
+VINYL_R = 0.15
+VINYL_LABEL_R = 0.05
+VINYL_PEEK = 0.04  # how far the disc's top stands above the sleeve's open top edge
+
+
+def _vinyl(record, col):
+    """The LP inside `record`: a 2 mm disc with a raised label, origin at its centre, peeking out of the sleeve's top
+    (the runtime slides it out onto the platter)."""
+    bm = bmesh.new()
+    _lathe(bm, [(0, -0.001), (VINYL_R, -0.001), (VINYL_R, 0.001), (VINYL_LABEL_R, 0.001), (VINYL_LABEL_R, 0.0015), (0, 0.0015)], 48)
+    # the lathe's axis is z; stand the disc in the sleeve's plane (normal along y), centre up so its top peeks out
+    centre_z = SLEEVE + VINYL_PEEK - VINYL_R
+    _part(f"{record.name}__vinyl", bm, record, col, location=(0, 0, centre_z), rotation=(math.pi / 2, 0, 0))
+```
+
+Call `_vinyl(record, col)` for every record in `build_crate`'s loop (before the art). Change `_sleeve_art` to centre the block: fit into `ART_BOX = (0.2, 0.17)` (labelled: the mark in the top 70% of the box, the label under it), centred on `(0, SLEEVE / 2)`; and add the border:
+
+```python
+BORDER_INSET = 0.012
+BORDER_W = 0.0015
+
+
+def _cover_border(bm):
+    """A thin square frame inset on the sleeve's front (in the art's xy space, before it is stood up)."""
+    h = SLEEVE / 2 - BORDER_INSET
+    outer = [(-h, -h), (h, -h), (h, h), (-h, h)]
+    inner = [(-h + BORDER_W, -h + BORDER_W), (h - BORDER_W, -h + BORDER_W), (h - BORDER_W, h - BORDER_W), (-h + BORDER_W, h - BORDER_W)]
+    _strip(bm, outer, inner, 0.0, closed=True)
+```
+
+(the border is added to the art bmesh centred on the sleeve before the art is stood up; `_strip` with depth 0 gives a flat frame — if `_strip` needs depth > 0, use 0.0002). Add `player` to `FOCUS` in `greybox_office.py` and let `build_focus_cameras` make `cam_focus_player` (+ `_portrait`) like the others. Add the cameras and the nine `__vinyl` nodes to `office/manifest.json`.
+
+- [ ] **Step 4: Look, measure, tune**
+
+Render `cam_focus_crate` and `cam_focus_player` stills into `.superpowers/sdd/2026-10-02-office-interactions-m2/shots/` (white Freestyle edges on black, in a throwaway scene, as in Task 2). Check: each sleeve reads as an LP (disc arc above the top edge, border, centred logo); the crate camera still shows the front record's disc and top. Measure `LIFT_M` as the Interfaces block says, with the flicked records at 0.17. Tune the player cameras to the framing rules, rendering a still with sleeve 00 temporarily moved to the stand's pose (prop_now_playing__sleeve_00's world pose) and turned round, then restore.
+
+- [ ] **Step 5: Export, build, check**
+
+Run greybox + export in the live session, then: `npm run build:models && npm run check:models && npx vitest run office/nodes.test.ts office/hotspots content`
+Expected: models OK; tests pass.
+
+- [ ] **Step 6: Report** (the lead commits): files changed; RED and GREEN lines; build/check output; `LIFT_M`; the player FOCUS values; still paths; deviations.
+
+---
+
+### Task 9: Lift and play (pure crate motion)
+
+**Files:**
+- Modify: `office/objects/crate.ts`, `office/objects/crate.test.ts`, `office/idle/turntable.ts`, `office/idle/turntable.test.ts`, `office/idle/useTurntable.ts`
+- (The lead updates the one caller in `office/OfficeCanvas.tsx` in Task 12.)
+
+**Interfaces:**
+- Produces (in `office/objects/crate.ts`; pull-to-camera is replaced):
+  - `LIFT_M` (provisional 0.2; Task 8 measures it), `PLAY_SECONDS = 2.4`, `PLAY_BACK_SECONDS = 1.2`
+  - `playPhases(t: number): { travel: number; slideOut: number; lay: number; toStand: number; turn: number }` (each 0→1 across t's bands 0–0.35, 0.35–0.5, 0.5–0.65, 0.65–0.82, 0.82–1)
+  - `type PlayerPoses = { platter: Object3D; stand: { position: Vector3; quaternion: Quaternion } }`
+  - `type CrateNodes = { records: Object3D[]; vinyls: (Object3D | null)[]; restPosition: Vector3[]; restQuaternion: Quaternion[]; vinylRest: { position: Vector3; quaternion: Quaternion }[] }`, `findCrateNodes(records: Object3D[]): CrateNodes` (a record's vinyl is its child named `<record>__vinyl`)
+  - `class CrateMotion { get playDone(): boolean; update(nodes: CrateNodes, input: { dig: number; lifted: number | null; playing: number | null; player: PlayerPoses | null; reduced: boolean }, dt: number): void }`
+- In `office/idle/turntable.ts`: `applyTurntable(nodes, seconds, reducedMotion, hideSleeves = false)`: while `hideSleeves`, every now-playing sleeve is hidden (a project's sleeve is on the stand). `useTurntable(scene, hideSleeves?: RefObject<boolean>)`.
+
+- [ ] **Step 1: Write the failing tests**
+
+Replace `office/objects/crate.test.ts`'s pull-out tests (`pullDistance`, `pulledPose`, "brings the pulled record to the camera…") with:
+
+```ts
+import { Object3D } from "three";
+// ...existing imports, plus: LIFT_M, PLAY_SECONDS, PLAY_BACK_SECONDS, playPhases, type PlayerPoses
+
+function rigWithPlayer() {
+  const { root, nodes } = crate();
+  const platter = new Object3D(); // no geometry: its top is its origin
+  platter.position.set(-2, 0.7, 0);
+  const scene = new Group();
+  scene.add(root, platter);
+  scene.updateMatrixWorld(true);
+  const player: PlayerPoses = { platter, stand: { position: new Vector3(-2.6, 0.9, 0), quaternion: new Quaternion() } };
+  return { nodes, player, platter };
+}
+
+describe("playPhases", () => {
+  it("runs travel, slide out, lay, to the stand, then the turn, in order", () => {
+    expect(playPhases(0)).toEqual({ travel: 0, slideOut: 0, lay: 0, toStand: 0, turn: 0 });
+    expect(playPhases(0.35).travel).toBe(1);
+    expect(playPhases(0.35).slideOut).toBe(0);
+    expect(playPhases(0.65).lay).toBe(1);
+    expect(playPhases(1)).toEqual({ travel: 1, slideOut: 1, lay: 1, toStand: 1, turn: 1 });
+  });
+});
+
+describe("CrateMotion lift and play", () => {
+  it("lifts the front record while browsing, by LIFT_M", () => {
+    const { nodes } = crate();
+    const m = new CrateMotion();
+    m.update(nodes, { dig: 1, lifted: 1, playing: null, player: null, reduced: false }, FLIP_SECONDS);
+    expect(nodes.records[1].position.y).toBeCloseTo(nodes.restPosition[1].y + LIFT_M);
+    expect(nodes.records[2].position.y).toBeCloseTo(nodes.restPosition[2].y);
+  });
+  it("plays a record: its vinyl ends flat on the platter and its sleeve turned round on the stand", () => {
+    const { nodes, player, platter } = rigWithPlayer();
+    const m = new CrateMotion();
+    m.update(nodes, { dig: 0, lifted: 0, playing: 0, player, reduced: false }, PLAY_SECONDS);
+    expect(m.playDone).toBe(true);
+    const sleeve = nodes.records[0];
+    expect(sleeve.getWorldPosition(new Vector3()).distanceTo(player.stand.position)).toBeLessThan(1e-6);
+    const front = new Vector3(0, 0, 1).applyQuaternion(sleeve.getWorldQuaternion(new Quaternion()));
+    expect(front.z).toBeCloseTo(-1); // turned round: the front faces away from where the stand's front faced (+z)
+    const vinyl = nodes.vinyls[0]!;
+    const normal = new Vector3(0, 0, 1).applyQuaternion(vinyl.getWorldQuaternion(new Quaternion()));
+    expect(Math.abs(normal.y)).toBeCloseTo(1); // lying flat
+    const centre = vinyl.getWorldPosition(new Vector3());
+    expect(Math.hypot(centre.x - platter.position.x, centre.z - platter.position.z)).toBeLessThan(1e-6);
+    expect(centre.y).toBeGreaterThan(platter.position.y);
+  });
+  it("spins the vinyl with the platter", () => {
+    const { nodes, player, platter } = rigWithPlayer();
+    const m = new CrateMotion();
+    m.update(nodes, { dig: 0, lifted: 0, playing: 0, player, reduced: false }, PLAY_SECONDS);
+    const before = nodes.vinyls[0]!.getWorldQuaternion(new Quaternion());
+    platter.rotation.y = 1;
+    platter.updateMatrixWorld(true);
+    m.update(nodes, { dig: 0, lifted: 0, playing: 0, player, reduced: false }, 0.016);
+    expect(nodes.vinyls[0]!.getWorldQuaternion(new Quaternion()).angleTo(before)).toBeCloseTo(1, 5);
+  });
+  it("puts it all back from wherever it is (Back mid-flight), never jumping", () => {
+    const { nodes, player } = rigWithPlayer();
+    const m = new CrateMotion();
+    m.update(nodes, { dig: 0, lifted: 0, playing: 0, player, reduced: false }, PLAY_SECONDS * 0.3);
+    const mid = nodes.records[0].getWorldPosition(new Vector3());
+    m.update(nodes, { dig: 0, lifted: 0, playing: null, player, reduced: false }, 0.016);
+    expect(nodes.records[0].getWorldPosition(new Vector3()).distanceTo(mid)).toBeLessThan(0.1);
+    m.update(nodes, { dig: 0, lifted: null, playing: null, player, reduced: false }, PLAY_BACK_SECONDS + FLIP_SECONDS);
+    expect(nodes.records[0].position.toArray()).toEqual(nodes.restPosition[0].toArray());
+    expect(nodes.vinyls[0]!.position.toArray()).toEqual(nodes.vinylRest[0].position.toArray());
+  });
+  it("switches straight to playing under reduced motion", () => {
+    const { nodes, player } = rigWithPlayer();
+    const m = new CrateMotion();
+    m.update(nodes, { dig: 0, lifted: 0, playing: 0, player, reduced: true }, 0.001);
+    expect(m.playDone).toBe(true);
+  });
+});
+```
+
+and give `crate()`'s records a vinyl child each (`const v = new Mesh(new BoxGeometry(0.3, 0.3, 0.002)); v.name = `${r.name}__vinyl`; v.position.y = 0.2; r.add(v);` with `r.name = `hs_crate__record_0${i}``). In `office/idle/turntable.test.ts` add:
+
+```ts
+  it("hides every now-playing sleeve while a project's sleeve is on the stand", () => {
+    const { root, sleeves } = rig();
+    applyTurntable(findTurntable(root)!, 0.9, false, true);
+    expect(sleeves.every((s) => !s.visible)).toBe(true);
+  });
+```
+
+- [ ] **Step 2: Run them to see them fail**
+
+Run: `npx vitest run office/objects/crate.test.ts office/idle/turntable.test.ts`
+Expected: FAIL (missing exports `LIFT_M`, `playPhases`…; the turntable test sees a visible sleeve).
+
+- [ ] **Step 3: Implement**
+
+In `crate.ts`, remove `PULL_SECONDS`, `PULL_FILL`, `pullDistance`, `pulledPose` and the camera input; add:
+
+```ts
+/** How far the front record rises while browsing, so its whole cover shows over the flicked records (measured in Blender, Task 8). */
+export const LIFT_M = 0.2;
+export const PLAY_SECONDS = 2.4;
+export const PLAY_BACK_SECONDS = 1.2;
+/** The sleeve hovers this far above the platter while its vinyl comes out. */
+const PRESENT_ABOVE_M = 0.12;
+
+const band = (t: number, a: number, b: number) => Math.min(1, Math.max(0, (t - a) / (b - a)));
+
+/** Progress through each step of playing a record, from the overall progress `t`. */
+export function playPhases(t: number) {
+  return { travel: band(t, 0, 0.35), slideOut: band(t, 0.35, 0.5), lay: band(t, 0.5, 0.65), toStand: band(t, 0.65, 0.82), turn: band(t, 0.82, 1) };
+}
+
+export type PlayerPoses = { platter: Object3D; stand: { position: Vector3; quaternion: Quaternion } };
+```
+
+`findCrateNodes` also finds each record's `__vinyl` child and snapshots its local rest pose. `CrateMotion.update`, per record `i`:
+1. `flip[i]` as before; `lift[i] = approach(lift[i], input.lifted === i && input.playing === null ? 1 : 0, dt, reduced ? 0 : FLIP_SECONDS)`; `play[i] = approach(play[i], input.playing === i ? 1 : 0, dt, reduced ? 0 : (input.playing === i ? PLAY_SECONDS : PLAY_BACK_SECONDS))`.
+2. Local resting pose: `restPosition + up(0,1,0) × LIFT_M × easeInOutCubic(lift[i])`, quaternion `restQuaternion × Rx(FLIP_ANGLE × easeInOutCubic(flip[i]))`. If `play[i] === 0`: write it (keep the tease's y only when neither lifted nor just back, as now) and put the vinyl at its rest; done.
+3. Otherwise, with `p = playPhases(play[i])` (each eased with `easeInOutCubic`) and world poses: `S0` = the resting pose in world; `S1` = upright at the stand's orientation with its bottom edge centre at the platter's top centre + `PRESENT_ABOVE_M` up; `S2` = the stand pose; `S3` = the stand pose turned π about its local y. Sleeve world = `S0→S1` by `travel`, then `→S2` by `toStand`, then `→S3` by `turn` (position lerp, quaternion slerp); write it back in the parent's space as Task 3 did.
+4. Vinyl: `V0` = its rest pose (in the sleeve); `V1` = V0 moved `SLEEVE_M` along the sleeve's local +y (out of the top), applied while the sleeve is at `S1`; `V2` = flat on the platter: position the platter's world position + up × (the platter geometry's bounding-box max y if it is a mesh, else 0, plus 2 mm), quaternion `platterWorldQ × Rx(−π/2)` (the disc's normal, local z, turned to the platter's up). Before `slideOut` starts, the vinyl stays at `V0` (it moves with its sleeve). During `slideOut` it moves `V0→V1` in the sleeve's frame. During `lay` and after, its world pose is `V1(world)→V2` by `lay`, recomputed every frame (so it spins with the platter once laid), converted into the sleeve's frame (`inverse(sleeve.matrixWorld) × world`).
+5. `playDone` = the playing record's `play === 1`.
+
+`turntable.ts`: `applyTurntable(nodes, seconds, reducedMotion, hideSleeves = false)`: after the existing sleeve loop, `if (hideSleeves) sleeves.forEach((s) => (s.visible = false));`. `useTurntable(scene, hideSleeves?: RefObject<boolean>)` passes `hideSleeves?.current ?? false`.
+
+- [ ] **Step 4: Run them to see them pass**
+
+Run: `npx vitest run office/objects/crate.test.ts office/idle/turntable.test.ts`
+Expected: all pass. The "Back mid-flight" test allows 10 cm of movement in one 16 ms frame; if it fails, the reverse must start from the current pose (it does when `play[i]` is approached, not reset).
+
+- [ ] **Step 5: Report** (the lead commits; `office/OfficeCanvas.tsx` still calls the old `update` signature until Task 12, so `tsc` will flag that one call — expected).
+
+---
+
+### Task 10: Hover zones (flick on mouseover); no more wheel
+
+**Files:**
+- Create: `office/crate/zones.ts`, `office/crate/zones.test.ts`
+- Modify: `office/hotspots/registry.ts`, `office/hotspots/registry.test.ts`, `office/crate/dig.ts`, `office/crate/dig.test.ts`
+
+**Interfaces:**
+- Produces:
+  - `zoneName(index: number): string` (`hs_crate__zone_NN`), `addCrateZones(records: Object3D[], count: number, enabled: () => boolean): Mesh[]`
+  - registry: `hitFor` reads a crate zone as its record; `pickHit(objects, "hs_crate")` takes the nearest **zone** under the pointer when there is one, else the nearest object as before.
+  - `dig.ts`: `wheelStep`, `Wheel`, `WHEEL_STEP`, `WHEEL_COOLDOWN_MS` removed (and their tests).
+
+- [ ] **Step 1: Write the failing tests**
+
+```ts
+// office/crate/zones.test.ts
+import { describe, it, expect } from "vitest";
+import { BoxGeometry, Group, Mesh, Raycaster, Vector3 } from "three";
+import { hitFor } from "@/office/hotspots/registry";
+import { work } from "@/content/work";
+import { addCrateZones, zoneName } from "./zones";
+
+function crate() {
+  const root = new Group();
+  root.name = "hs_crate";
+  const records = [0, 1, 2, 3].map((i) => {
+    const r = new Mesh(new BoxGeometry(0.315, 0.315, 0.005).translate(0, 0.1575, 0));
+    r.name = `hs_crate__record_0${i}`;
+    r.position.z = -0.03 * i;
+    root.add(r);
+    return r;
+  });
+  root.updateMatrixWorld(true);
+  return { root, records };
+}
+const down = (x: number, y: number) => new Raycaster(new Vector3(x, y, 5), new Vector3(0, 0, -1));
+
+describe("addCrateZones", () => {
+  it("adds one zone per project record where it rests, beside the records", () => {
+    const { root, records } = crate();
+    const zones = addCrateZones(records, 2, () => true);
+    expect(zones.map((z) => z.name)).toEqual([zoneName(0), zoneName(1)]);
+    expect(zones.every((z) => z.parent === root)).toBe(true);
+  });
+  it("stays where the record rested when the record moves", () => {
+    const { root, records } = crate();
+    addCrateZones(records, 2, () => true);
+    records[0].position.y = 0.3; // lifted out
+    root.updateMatrixWorld(true);
+    const hits = down(0, 0.1).intersectObject(root, true).filter((h) => h.object.name.includes("zone"));
+    expect(hits[0].object.name).toBe(zoneName(0));
+  });
+  it("reads as its record, so hovering it means that project", () => {
+    const { records } = crate();
+    const [zone] = addCrateZones(records, 1, () => true);
+    expect(hitFor(zone, "hs_crate")).toEqual({ hotspot: "hs_crate", item: work[0].slug });
+  });
+  it("takes no pointer while disabled", () => {
+    const { root, records } = crate();
+    addCrateZones(records, 2, () => false);
+    expect(down(0, 0.1).intersectObject(root, true).some((h) => h.object.name.includes("zone"))).toBe(false);
+  });
+});
+```
+
+Append to `office/hotspots/registry.test.ts` (in the `pickHit` describe), using its `scene()` helper extended with a zone (`const zone1 = Object.assign(new Mesh(), { name: "hs_crate__zone_01" });` added under `hs_crate`, returned as `zone1`):
+
+```ts
+  it("browsing the crate: a resting zone wins over a record moving in front of it", () =>
+    expect(pickHit([s.rec0, s.zone1], "hs_crate")).toEqual({ hotspot: "hs_crate", item: work[1].slug }));
+```
+
+(`work[1]` must exist; `scene()` names records 00 and 05 — add the zone as `hs_crate__zone_01`.) In `dig.test.ts`, delete the `wheelStep` describe and its imports.
+
+- [ ] **Step 2: Run them to see them fail**
+
+Run: `npx vitest run office/crate office/hotspots`
+Expected: FAIL: cannot resolve `./zones`; the new `pickHit` test gets `null`.
+
+- [ ] **Step 3: Implement**
+
+```ts
+// office/crate/zones.ts
+import { BoxGeometry, Mesh, MeshBasicMaterial, Vector3, type Box3, type Intersection, type Object3D, type Raycaster } from "three";
+
+const material = new MeshBasicMaterial({ visible: false });
+
+/** Name of record `index`'s hover zone; the registry reads it as that record. */
+export const zoneName = (index: number) => `hs_crate__zone_${String(index).padStart(2, "0")}`;
+
+/**
+ * An invisible box where each of the first `count` records rests, beside the records in the crate, so hovering where a
+ * record stands means that record however the records flick and lift (no feedback between the pointer and the motion).
+ * Answers only while `enabled` says so: browsing the crate.
+ */
+export function addCrateZones(records: Object3D[], count: number, enabled: () => boolean): Mesh[] {
+  return records.slice(0, count).map((r, i) => {
+    const source = r as Mesh;
+    if (!source.geometry.boundingBox) source.geometry.computeBoundingBox();
+    const box = source.geometry.boundingBox as Box3;
+    const size = box.getSize(new Vector3());
+    const centre = box.getCenter(new Vector3());
+    const zone = new Mesh(new BoxGeometry(size.x, size.y, Math.max(size.z, 0.02)).translate(centre.x, centre.y, centre.z), material);
+    zone.name = zoneName(i);
+    zone.position.copy(r.position);
+    zone.quaternion.copy(r.quaternion);
+    zone.scale.copy(r.scale);
+    zone.userData.cleanEdges = true; // never filled or outlined
+    zone.userData.hitProxy = true; // not part of the crate's own hover box
+    zone.raycast = function (this: Mesh, raycaster: Raycaster, intersects: Intersection[]) {
+      if (enabled()) Mesh.prototype.raycast.call(this, raycaster, intersects);
+    };
+    r.parent?.add(zone);
+    zone.updateMatrixWorld();
+    return zone;
+  });
+}
+```
+
+In `registry.ts`: `const ITEM = /^(hs_crate)__(?:record|zone)_(\d\d)$|^(hs_shelf)__ornament_(\d\d)$/;` and in `pickHit`:
+
+```ts
+  if (focused !== null) {
+    // Browsing the crate, where records rest decides (they flick and lift under the pointer).
+    const zone = focused === "hs_crate" ? objects.find((o) => /^hs_crate__zone_\d\d$/.test(o.name)) : undefined;
+    return hitFor(zone ?? objects[0] ?? null, focused);
+  }
+```
+
+In `dig.ts` delete `Wheel`, `WHEEL_STEP`, `WHEEL_COOLDOWN_MS`, `wheelStep` and their doc comments.
+
+- [ ] **Step 4: Run them to see them pass**
+
+Run: `npx vitest run office/crate office/hotspots`
+Expected: all pass.
+
+- [ ] **Step 5: Report** (the lead commits; `OfficeExperience.tsx` still imports `wheelStep` until Task 12 — expected `tsc` error there only).
+
+---
+
+### Task 11: The arrival tour (pure) and the hint styles
+
+**Files:**
+- Create: `office/hints/tour.ts`, `office/hints/tour.test.ts`
+- Modify: `app/(office)/office.css`, `office/copy.ts`
+
+**Interfaces:**
+- Produces: `TOUR: HotspotName[]` (left to right as seen from the standing spot: crate, drawer, monitor, shelf), `TOUR_STEP_SECONDS = 0.8`, `TOUR_SECONDS`, `tourAt(seconds: number): HotspotName | null`. CSS: `.office[data-hints="dots"][data-director="idle"] .office-marker` shows and pulses on every device; `COPY.hints` (draft) `= "Have a look around."` shown with the dots.
+
+- [ ] **Step 1: Write the failing test**
+
+```ts
+// office/hints/tour.test.ts
+import { describe, it, expect } from "vitest";
+import { TOUR, TOUR_SECONDS, TOUR_STEP_SECONDS, tourAt } from "./tour";
+
+describe("tourAt", () => {
+  it("names each object in turn, left to right", () => {
+    expect(TOUR).toEqual(["hs_crate", "hs_drawer", "hs_monitor", "hs_shelf"]);
+    TOUR.forEach((h, i) => expect(tourAt(i * TOUR_STEP_SECONDS + 0.01)).toBe(h));
+  });
+  it("is over after the last one", () => expect(tourAt(TOUR_SECONDS)).toBeNull());
+  it("hasn't started before zero, or with no clock", () => {
+    expect(tourAt(-1)).toBeNull();
+    expect(tourAt(Number.NaN)).toBeNull();
+  });
+});
+```
+
+- [ ] **Step 2: Run it to see it fail**
+
+Run: `npx vitest run office/hints`
+Expected: FAIL, cannot resolve `./tour`.
+
+- [ ] **Step 3: Implement**
+
+```ts
+// office/hints/tour.ts
+import type { HotspotName } from "@/office/hotspots/registry";
+
+/** The arrival tour (spec 3.1): each object lit with its label in turn, left to right from the standing spot. */
+export const TOUR: HotspotName[] = ["hs_crate", "hs_drawer", "hs_monitor", "hs_shelf"];
+export const TOUR_STEP_SECONDS = 0.8;
+export const TOUR_SECONDS = TOUR.length * TOUR_STEP_SECONDS;
+
+/** The object the tour shows `seconds` after it starts, or null before it and once it's over. */
+export function tourAt(seconds: number): HotspotName | null {
+  if (!(seconds >= 0)) return null;
+  return TOUR[Math.floor(seconds / TOUR_STEP_SECONDS)] ?? null;
+}
+```
+
+CSS (after the existing marker rules):
+
+```css
+/* After the arrival tour, every device gets the pulsing dots until the visitor has used an object. */
+.office[data-hints="dots"][data-director="idle"] .office-marker { display: block; animation: office-pulse 1.8s ease-in-out infinite; }
+.office-hints-text { display: none; position: fixed; left: 50%; bottom: 20px; z-index: 3; translate: -50% 0; font: 11px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.7); }
+.office[data-hints="dots"][data-director="idle"] .office-hints-text { display: block; }
+```
+
+(the reduced-motion rule already stops the pulse). `office/copy.ts`: `hints: "Have a look around.",` (draft).
+
+- [ ] **Step 4: Run it to see it pass**
+
+Run: `npx vitest run office/hints`
+Expected: 3 passed.
+
+- [ ] **Step 5: Report** (the lead commits).
+
+---
+
+### Task 12: Wire it, amend the spec, e2e (lead)
+
+**Files:**
+- Modify: `office/OfficeCanvas.tsx`, `office/OfficeExperience.tsx`, `office/objects/crate.ts` (`LIFT_M` from Task 8), `e2e/office-crate.spec.ts`, `e2e/office.spec.ts` (hints), `docs/superpowers/specs/2026-10-02-office-interactions-design.md`
+
+- [ ] **Step 1: Write the failing e2e changes**
+
+In `e2e/office-crate.spec.ts`: delete "one wheel gesture flicks one record". In the keyboard test, after `Enter`, also expect the camera at the player: `await expect(office(page)).toHaveAttribute("data-camera", "focus", { timeout: 10_000 })` and `data-playing` equal to the slug; after the second Esc expect `data-playing` "". Append to `e2e/office.spec.ts`:
+
+```ts
+test("on arrival the office names what you can use, then leaves dots until you do", async ({ page }) => {
+  await openOffice(page); // the file's existing helper: loads and scrolls to the standing spot
+  await expect(page.locator(".office")).toHaveAttribute("data-hints", "dots", { timeout: 15_000 });
+  await expect(page.locator(".office-marker").first()).toBeVisible();
+  await page.getByRole("button", { name: "The work" }).focus();
+  await expect(page.locator(".office")).toHaveAttribute("data-hints", "");
+  await expect(page.locator(".office-marker").first()).toBeHidden();
+});
+```
+
+(adapt `openOffice` to the helper the file has.)
+
+Run: `npx playwright test e2e/office-crate.spec.ts e2e/office.spec.ts --workers=1 --reporter=line`
+Expected: FAIL on `data-playing` and `data-hints`.
+
+- [ ] **Step 2: Canvas**
+  - `info` gains `player: { land: Pose; portrait: Pose | null } | null` from `cam_focus_player(_portrait)`, and `stand` (the world pose of `prop_now_playing__sleeve_00`, read once at load) and `platter` (`prop_turntable__platter`).
+  - `Street`: the camera key becomes `d.kind + hotspot + (crate item ? ":playing" : "")`; for a crate target with an item, the focus pose comes from `info.player` (via `focusPose`), and a focused → focused key change moves the rig with `{ seconds: 1.6, arc: { lift: 0.3, swing: 0 } }` (reduced: cut).
+  - `Office`: `addCrateZones(crateNodes.records, work.length, () => browsing.current)` once at load (a `browsing` ref prop from the Experience), removed on unmount; `crateMotion.update(crateNodes, { dig, lifted: browsing ? dig : null, playing, player: { platter, stand }, reduced }, dt)`; `onSleeveOut` ← `crateMotion.playDone`; `useTurntable(office.scene, playingRef)` where `playingRef.current = playing !== null`; host `data-playing` = the playing slug or "".
+  - The sleeve back print uses the record that is playing (as now) — it is on the stand when `playDone`.
+- [ ] **Step 3: Experience**
+  - Remove the wheel listener and the `wheelStep` import (keep swipe and keys).
+  - Hover flicks: in `onHover`, when browsing the crate and the hit is a crate item, `setDig(index of that slug)`.
+  - Rename the canvas prop `crate.pulled` → `crate.playing` (same meaning: the index of the record on the player).
+  - Hints: `const [hints, setHints] = useState<"" | "tour" | "dots">("")`, `used` and `toured` refs. The first time the director is idle, unless `used`, run the tour: `requestAnimationFrame` loop showing `tourAt(elapsed)` through the hover display (highlight, label, tease) **without** marking `used`; at the end show nothing and `setHints("dots")`. Any user hover with a hit, nav focus or `activate` sets `used`, stops the tour and `setHints("")`. Host `data-hints={hints}`; render `<p className="office-hints-text" aria-hidden="true">{COPY.hints}</p>`.
+- [ ] **Step 4: `LIFT_M`** from Task 8 into `crate.ts`; `npx vitest run office/objects`.
+- [ ] **Step 5: Spec:** amend 3.1 (arrival tour, dots), 3.2 Flip ("hover a record to bring it to the front; it lifts to show its cover; arrow keys and swipes too"), 3.2 Pull ("click plays it: the vinyl goes on the record player, the sleeve on the now-playing stand turns round"), section 4 (motion: play ~2.4 s, back ~1.2 s), section 6 Blender (vinyl, cover art, player camera).
+- [ ] **Step 6: Run everything:** `npx vitest run && npx tsc --noEmit -p . && npx playwright test --workers=1 --reporter=line` → all pass.
+- [ ] **Step 7: Commit** (explicit paths) and capture stills (crate front, a hovered record lifted, the record on the player with the sleeve turned, desktop and phone) for Kasper; ask him to click through.
