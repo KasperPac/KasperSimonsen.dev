@@ -29,6 +29,7 @@ export const COPY = {
     sent: "Sent. Talk soon.",
     error: "That didn't go through. Email me instead:",
   },
+  hints: "Have a look around.",
   sleeve: { readMore: "Read more", stack: "Built with" },
   caseStudy: { stack: "Built with", live: "See it live" },
   crate: {
