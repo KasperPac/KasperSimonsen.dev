@@ -7,7 +7,7 @@ import { gsap, useGSAP } from "@/lib/gsap";
  * Walk-in progress through `track`: 0 when its top meets the viewport top, 1 when its bottom meets the
  * viewport bottom, smoothed by GSAP scrub. Read `.current` inside useFrame; it never causes a render.
  */
-export function useWalkInProgress(track: RefObject<HTMLElement | null>, smoothing = 0.8): RefObject<number> {
+export function useWalkInProgress(track: RefObject<HTMLElement | null>, smoothing = 1.5): RefObject<number> {
   const progress = useRef(0);
   useGSAP(
     () => {

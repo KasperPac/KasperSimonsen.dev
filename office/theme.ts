@@ -17,5 +17,5 @@ export const theme = {
   fogNear: 250,
   fogFar: 4000,
   /** Scroll track height in viewport heights; the walk-in spans it. */
-  walkInScreens: 6,
+  walkInScreens: 9,
 } as const;

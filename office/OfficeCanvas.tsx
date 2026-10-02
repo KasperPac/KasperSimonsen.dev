@@ -9,6 +9,7 @@ import { theme } from "./theme";
 import { applyCleanEdges, setLineResolution } from "./style/cleanEdges";
 import { findClipFor, makeClipSampler, progressToTime } from "./walkin/clipSampler";
 import { useTurntable } from "./idle/useTurntable";
+import { applySkippingGirl, findSkippingGirl } from "./walkin/skippingGirl";
 import { copyCameraPose, findCamera } from "./walkin/cameraPose";
 
 const WALKIN_CAMERA = "cam_walkin";
@@ -46,12 +47,18 @@ function Street({ progress, host }: OfficeCanvasProps) {
     const clip = findClipFor(street.animations, WALKIN_CAMERA);
     return { duration: clip.duration, sample: makeClipSampler(clip, street.scene), source: findCamera(street.scene, WALKIN_CAMERA) };
   }, [street]);
+  const skippingGirl = useMemo(() => findSkippingGirl(street.scene), [street]);
+  const reduced = useMemo(
+    () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    [],
+  );
   const written = useRef(-1);
 
   useFrame(() => {
     const p = progress.current;
     walkIn.sample(progressToTime(p, walkIn.duration));
     copyCameraPose(walkIn.source, camera);
+    if (skippingGirl) applySkippingGirl(skippingGirl, p, reduced);
     const el = host.current;
     if (el && Math.abs(p - written.current) > 0.00005) {
       el.dataset.walkinProgress = p.toFixed(4);
