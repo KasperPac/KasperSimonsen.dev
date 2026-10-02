@@ -202,6 +202,17 @@ describe("CrateMotion play", () => {
     expect(angle).toBeGreaterThan(Math.PI / 2 - 0.05); // the positive way, past half by halfway
     expect(angle).toBeLessThan(Math.PI);
   });
+  it("makes the stand's covers give way only once the sleeve hops over, and brings them back once it has left", () => {
+    const { nodes, player } = rigWithPlayer();
+    const m = new CrateMotion();
+    const hop = playPhaseStart("toStand");
+    m.update(nodes, { dig: 0, playing: 0, player, reduced: false }, PLAY_SECONDS * hop * 0.9);
+    expect(m.onStand).toBe(false); // still flying, or laying the vinyl
+    m.update(nodes, { dig: 0, playing: 0, player, reduced: false }, PLAY_SECONDS * 0.2);
+    expect(m.onStand).toBe(true);
+    m.update(nodes, { dig: 0, playing: null, player, reduced: false }, PLAY_SECONDS * (0.9 * hop + 0.2 - hop) + 0.05);
+    expect(m.onStand).toBe(false); // back over the platter
+  });
   it("spins the vinyl with the platter", () => {
     const { nodes, player, platter } = rigWithPlayer();
     const m = new CrateMotion();

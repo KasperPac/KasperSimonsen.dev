@@ -236,6 +236,12 @@ export class CrateMotion {
   private twist: number[] = [];
   private playingIndex: number | null = null;
 
+  /** True while a played record's sleeve is hopping to, standing on or leaving the stand: the stand's own covers make way. */
+  get onStand(): boolean {
+    const hop = playPhaseStart("toStand");
+    return this.play.some((p) => p > hop);
+  }
+
   /** True once the playing record's vinyl is on the platter and its sleeve turned round on the stand (its details wait for it). */
   get playDone(): boolean {
     return this.playingIndex !== null && this.play[this.playingIndex] === 1;

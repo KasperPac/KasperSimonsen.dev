@@ -14,6 +14,7 @@ import { findCamera, WALKIN_CAMERA } from "./walkin/cameraPose";
 import { applyPose, makePose, readPose, type Pose } from "./camera/pose";
 import { basePose, focusPose } from "./camera/basePose";
 import { CameraRig, FOCUS_MOVES, PLAYER_MOVE } from "./camera/rig";
+import { cameraKey } from "./camera/key";
 import { FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, hitFor, pickHit, type Hit, type HotspotName } from "./hotspots/registry";
 import { addHitProxies } from "./hotspots/proxies";
 import { focusedHotspot, IDLE_AT, type DirectorState } from "./director/director";
@@ -120,7 +121,7 @@ function Street({ progress, host, director, onProgressCross, onSettled, info }: 
     if (cams) focusPose(cams.land, cams.portrait, camera.aspect, poses.focus);
 
     // A new state or a new object starts a camera move from wherever the camera is.
-    const key = d.kind + (hotspot ?? "") + (playing ? ":playing" : "");
+    const key = cameraKey(d.kind, hotspot, playing, !!cams);
     if (key !== seen.current) {
       const was = seen.current;
       seen.current = key;
@@ -140,7 +141,10 @@ function Street({ progress, host, director, onProgressCross, onSettled, info }: 
         rig.moveTo(poses.now, { kind: "base" }, reduced || !move ? 0 : move.seconds, move?.arc ?? null);
       }
     }
-    if (rig.advance(dt) && (d.kind === "focusing" || d.kind === "returning")) onSettled();
+    // Settle while the move is over, every frame until the director has moved on (it ignores the extras), so a missed
+    // frame can never leave it waiting.
+    rig.advance(dt);
+    if (!rig.moving && (d.kind === "focusing" || d.kind === "returning")) onSettled();
     applyPose(rig.pose(poses.base, poses.out), camera);
 
     const end = p >= IDLE_AT;
@@ -256,7 +260,7 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
     }
     const c = crate.current;
     crateMotion.update(crateNodes, { dig: c.dig, playing: c.playing, player, reduced }, dt);
-    onStand.current = c.playing !== null;
+    onStand.current = crateMotion.onStand;
     if (crateMotion.playDone !== sleeveWasOut.current) {
       sleeveWasOut.current = crateMotion.playDone;
       onSleeveOut(crateMotion.playDone);
@@ -312,6 +316,8 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
   };
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
     if (!interactive()) return;
+    // A finger dragged over the crate is a swipe (the page flicks one record per swipe), not a pointer to follow.
+    if (crate.current.browsing && e.pointerType === "touch") return;
     e.stopPropagation();
     const hit = crate.current.browsing ? browsedHit(e) : pickHit(e.intersections.map((i) => i.object), focusedHotspot(director.current));
     onHover(hit);
