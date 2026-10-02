@@ -72,13 +72,15 @@ test("the director is idle at the standing spot and the camera follows the walk-
   await expect(office(page)).toHaveAttribute("data-camera", "base");
 });
 
-test("on arrival the office names what you can use, then leaves dots until you do", async ({ page }) => {
+test("on arrival the office names what you can use, then leaves dots until you open something", async ({ page }) => {
   await openOffice(page);
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: 15_000 });
   await expect(office(page)).toHaveAttribute("data-hints", "dots", { timeout: 15_000 });
   await expect(page.locator(".office-marker").first()).toBeVisible();
-  await page.getByRole("button", { name: "The work" }).focus();
+  await page.getByRole("button", { name: "The work" }).focus(); // looking around doesn't dismiss them
+  await expect(office(page)).toHaveAttribute("data-hints", "dots");
+  await page.keyboard.press("Enter"); // opening something does
   await expect(office(page)).toHaveAttribute("data-hints", "");
   await expect(page.locator(".office-marker").first()).toBeHidden();
 });

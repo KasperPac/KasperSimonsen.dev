@@ -72,6 +72,8 @@ export default function OfficeExperience() {
     setHovered(hit);
     if (host.current) host.current.dataset.hover = hit ? hit.hotspot : "";
   }, []);
+  // The tour gives way to the visitor's own pointer at once; the dots stay until they open something (Kasper).
+  const interacted = useRef(false);
   const markUsed = useCallback(() => {
     if (used.current) return;
     used.current = true;
@@ -80,7 +82,7 @@ export default function OfficeExperience() {
   // The visitor's own hover or keyboard focus: ends the hints, and in the crate brings the hovered record to the front.
   const onHover = useCallback(
     (hit: Hit | null) => {
-      if (hit) markUsed();
+      if (hit) interacted.current = true;
       if (hit?.hotspot === "hs_crate" && hit.item && browsingRef.current) {
         const i = work.findIndex((w) => w.slug === hit.item);
         if (i >= 0) setDig(i);
@@ -212,8 +214,8 @@ export default function OfficeExperience() {
     let done = false;
     const step = () => {
       if (used.current) return;
-      const at = tourAt((performance.now() - start) / 1000);
-      show(at ? { hotspot: at, item: null } : null);
+      const at = interacted.current ? null : tourAt((performance.now() - start) / 1000);
+      if (!interacted.current) show(at ? { hotspot: at, item: null } : null);
       if (at) frame = requestAnimationFrame(step);
       else {
         done = true;
@@ -224,7 +226,7 @@ export default function OfficeExperience() {
     return () => {
       cancelAnimationFrame(frame);
       if (!done && !used.current) {
-        show(null);
+        if (!interacted.current) show(null);
         setHints("dots");
       }
     };

@@ -19,7 +19,7 @@ import { addHitProxies } from "./hotspots/proxies";
 import { focusedHotspot, IDLE_AT, type DirectorState } from "./director/director";
 import { CARD_NODE, findMotionNodes, ObjectMotion } from "./objects/motion";
 import { CrateMotion, findCrateNodes, type PlayerPoses } from "./objects/crate";
-import { addCrateZones } from "./crate/zones";
+import { addDigPlane, DIG_PLANE, digFromDepth } from "./crate/scrub";
 import { PLATTER_NODE, STAND_NODE } from "./idle/turntable";
 import CardFace from "./cards/CardFace";
 import { SLEEVE_WIDTH_PX } from "./cards/SleeveBack";
@@ -204,11 +204,17 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
     return () => proxies.forEach((p) => p.removeFromParent());
   }, [office, director]);
 
-  // Hovering where a project's record rests brings it to the front (Kasper: flick on mouseover).
+  // Browsing the crate, the pointer's depth across its opening picks the front record (Kasper: flick on mouseover).
+  const digPlane = useRef<Mesh | null>(null);
   useEffect(() => {
-    const zones = addCrateZones(crateNodes.records, work.length, () => crate.current.browsing);
-    return () => zones.forEach((z) => z.removeFromParent());
-  }, [crateNodes, crate]);
+    const crateRoot = office.scene.getObjectByName("hs_crate");
+    const plane = crateRoot ? addDigPlane(crateRoot, crateNodes.records, () => crate.current.browsing) : null;
+    digPlane.current = plane;
+    return () => {
+      plane?.removeFromParent();
+      digPlane.current = null;
+    };
+  }, [office, crateNodes, crate]);
 
   useEffect(() => {
     const pose = (name: string) => {
@@ -244,7 +250,7 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
       if (host.current) host.current.dataset.drawer = motion.drawerOpen ? "open" : "shut";
     }
     const c = crate.current;
-    crateMotion.update(crateNodes, { dig: c.dig, lifted: c.browsing ? c.dig : null, playing: c.playing, player, reduced }, dt);
+    crateMotion.update(crateNodes, { dig: c.dig, playing: c.playing, player, reduced }, dt);
     onStand.current = c.playing !== null;
     if (crateMotion.playDone !== sleeveWasOut.current) {
       sleeveWasOut.current = crateMotion.playDone;
@@ -287,10 +293,22 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
     const d = director.current;
     return d.kind === "idle" || d.kind === "focused";
   };
+  const onCrate = (e: ThreeEvent<PointerEvent | MouseEvent>) => e.intersections.some((i) => hitFor(i.object, null)?.hotspot === "hs_crate");
+  /** Browsing the crate: the front record the pointer asks for (by its depth across the opening), else the current one. */
+  const browsedHit = (e: ThreeEvent<PointerEvent | MouseEvent>): Hit | null => {
+    const plane = digPlane.current;
+    const across = plane && e.intersections.find((i) => i.object.name === DIG_PLANE);
+    let dig = crate.current.dig;
+    if (plane?.parent && across) {
+      const z = plane.parent.worldToLocal(across.point.clone()).z;
+      dig = digFromDepth(z, plane.userData.front, plane.userData.back, work.length, dig);
+    }
+    return across || onCrate(e) ? { hotspot: "hs_crate", item: work[dig]?.slug ?? null } : null;
+  };
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
     if (!interactive()) return;
     e.stopPropagation();
-    const hit = pickHit(e.intersections.map((i) => i.object), focusedHotspot(director.current));
+    const hit = crate.current.browsing ? browsedHit(e) : pickHit(e.intersections.map((i) => i.object), focusedHotspot(director.current));
     onHover(hit);
     document.body.style.cursor = hit ? "pointer" : "";
   };
@@ -300,16 +318,8 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
   };
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     if (!interactive()) return;
-    const hit = pickHit(e.intersections.map((i) => i.object), focusedHotspot(director.current));
-    // A second click on the crate (not on a record) pulls the front record.
-    if (!hit && focusedHotspot(director.current) === "hs_crate" && e.intersections.some((i) => hitFor(i.object, null)?.hotspot === "hs_crate")) {
-      const slug = work[crate.current.dig]?.slug;
-      if (slug) {
-        e.stopPropagation();
-        onActivate({ hotspot: "hs_crate", item: slug });
-      }
-      return;
-    }
+    // Browsing the crate, a click anywhere on it plays the front record.
+    const hit = crate.current.browsing ? browsedHit(e) : pickHit(e.intersections.map((i) => i.object), focusedHotspot(director.current));
     if (!hit) return;
     e.stopPropagation();
     onActivate(hit);

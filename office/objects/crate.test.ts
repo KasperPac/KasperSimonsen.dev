@@ -6,10 +6,8 @@ import {
   findCrateNodes,
   FLIP_ANGLE,
   FLIP_SECONDS,
-  CLEAR_LIFT_M,
-  DISPLAY,
-  displayOffset,
-  LIFT_SECONDS,
+  FLIGHT,
+  flightPoint,
   PLAY_BACK_SECONDS,
   PLAY_SECONDS,
   playPhases,
@@ -59,28 +57,28 @@ describe("CrateMotion", () => {
   it("flicks the records in front of the dig forward over FLIP_SECONDS, leaving the rest", () => {
     const { nodes } = crate();
     const m = new CrateMotion();
-    m.update(nodes, { dig: 1, lifted: null, playing: null, player: null, reduced: false }, FLIP_SECONDS);
+    m.update(nodes, { dig: 1, playing: null, player: null, reduced: false }, FLIP_SECONDS);
     expect(nodes.records[0].rotation.x).toBeCloseTo(-0.14 + FLIP_ANGLE);
     expect(nodes.records[1].rotation.x).toBeCloseTo(-0.14);
   });
   it("is part way through a flick half way through it", () => {
     const { nodes } = crate();
     const m = new CrateMotion();
-    m.update(nodes, { dig: 1, lifted: null, playing: null, player: null, reduced: false }, FLIP_SECONDS / 2);
+    m.update(nodes, { dig: 1, playing: null, player: null, reduced: false }, FLIP_SECONDS / 2);
     expect(nodes.records[0].rotation.x).toBeGreaterThan(-0.14);
     expect(nodes.records[0].rotation.x).toBeLessThan(-0.14 + FLIP_ANGLE);
   });
   it("switches at once under reduced motion", () => {
     const { nodes } = crate();
     const m = new CrateMotion();
-    m.update(nodes, { dig: 2, lifted: null, playing: null, player: null, reduced: true }, 0.001);
+    m.update(nodes, { dig: 2, playing: null, player: null, reduced: true }, 0.001);
     expect(nodes.records[1].rotation.x).toBeCloseTo(-0.14 + FLIP_ANGLE);
   });
   it("keeps whatever height the tease gave a record that isn't lifted or playing", () => {
     const { nodes } = crate();
     const m = new CrateMotion();
     nodes.records[1].position.y = 0.05; // ObjectMotion's nudge, written earlier in the frame
-    m.update(nodes, { dig: 0, lifted: 0, playing: null, player: null, reduced: false }, 0.016);
+    m.update(nodes, { dig: 0, playing: null, player: null, reduced: false }, 0.016);
     expect(nodes.records[1].position.y).toBe(0.05);
   });
 });
@@ -109,38 +107,35 @@ describe("playPhases", () => {
   it("puts a record back by retracing it at the pace it came, never faster", () => expect(PLAY_BACK_SECONDS).toBe(PLAY_SECONDS));
 });
 
-describe("displayOffset (up, out, down: never through the records in front)", () => {
-  it("starts at rest", () => expect(displayOffset(0, 0)).toEqual({ lift: 0, slide: 0, tilt: 0 }));
-  it("rises straight up first, clear of the records in front", () => {
-    expect(displayOffset(1 / 3, 0)).toEqual({ lift: CLEAR_LIFT_M, slide: 0, tilt: 0 });
-    for (let t = 0; t <= 1 / 3; t += 0.02) expect(displayOffset(t, 0).slide).toBe(0);
+describe("flightPoint (the record arcs over the desk, never through it)", () => {
+  const from = new Vector3(0, 0.1, 0);
+  const to = new Vector3(-2, 0.8, 0);
+  const at = (t: number) => flightPoint(from, to, 0.9, 0.5, t, new Vector3());
+  it("starts and ends exactly where it should", () => {
+    expect(at(0).toArray()).toEqual(from.toArray());
+    expect(at(1).toArray()).toEqual(to.toArray());
   });
-  it("then comes out at that height, tipping back", () => {
-    expect(displayOffset(2 / 3, 0)).toEqual({ lift: CLEAR_LIFT_M, slide: DISPLAY.slide, tilt: DISPLAY.tilt });
-    for (let t = 1 / 3; t <= 2 / 3; t += 0.02) expect(displayOffset(t, 0).lift).toBeCloseTo(CLEAR_LIFT_M, 9);
-  });
-  it("then comes down into the display pose", () => expect(displayOffset(1, 0)).toEqual(DISPLAY));
-  it("comes further forward for records further back, a record's spacing each past the third", () => {
-    expect(displayOffset(1, 2).slide).toBe(DISPLAY.slide);
-    expect(displayOffset(1, 3).slide).toBeCloseTo(DISPLAY.slide + 0.0325, 9);
-    expect(displayOffset(1, 5).slide).toBeCloseTo(DISPLAY.slide + 3 * 0.0325, 9);
+  it("rises above the straight line between them, most in the middle", () => {
+    const mid = at(0.5);
+    expect(mid.y).toBeCloseTo((from.y + to.y) / 2 + (3 / 8) * (0.9 + 0.5), 9);
+    expect(mid.x).toBeCloseTo((from.x + to.x) / 2, 9);
   });
 });
 
-describe("CrateMotion lift and play", () => {
-  it("brings the front record out to its display pose while browsing: up, forward, the top tipped back", () => {
-    const { nodes } = crate();
+describe("CrateMotion play", () => {
+  it("flies a played record over in an arc, above the straight line", () => {
+    const { nodes, player } = rigWithPlayer();
     const m = new CrateMotion();
-    m.update(nodes, { dig: 1, lifted: 1, playing: null, player: null, reduced: false }, LIFT_SECONDS);
-    expect(nodes.records[1].position.y).toBeCloseTo(nodes.restPosition[1].y + DISPLAY.lift);
-    expect(nodes.records[1].position.z).toBeCloseTo(nodes.restPosition[1].z + DISPLAY.slide);
-    expect(nodes.records[1].rotation.x).toBeCloseTo(-0.14 + DISPLAY.tilt);
-    expect(nodes.records[2].position.toArray()).toEqual(nodes.restPosition[2].toArray());
+    const start = nodes.records[0].getWorldPosition(new Vector3());
+    m.update(nodes, { dig: 0, playing: 0, player, reduced: false }, (PLAYER_MOVE.seconds / 2));
+    const mid = nodes.records[0].getWorldPosition(new Vector3());
+    const end = player.platter.getWorldPosition(new Vector3());
+    expect(mid.y).toBeGreaterThan(Math.max(start.y, end.y) + FLIGHT.rise / 4);
   });
   it("plays a record: its vinyl ends flat on the platter and its sleeve turned round on the stand", () => {
     const { nodes, player, platter } = rigWithPlayer();
     const m = new CrateMotion();
-    m.update(nodes, { dig: 0, lifted: 0, playing: 0, player, reduced: false }, PLAY_SECONDS);
+    m.update(nodes, { dig: 0, playing: 0, player, reduced: false }, PLAY_SECONDS);
     expect(m.playDone).toBe(true);
     const sleeve = nodes.records[0];
     expect(sleeve.getWorldPosition(new Vector3()).distanceTo(player.stand.position)).toBeLessThan(1e-6);
@@ -156,28 +151,28 @@ describe("CrateMotion lift and play", () => {
   it("spins the vinyl with the platter", () => {
     const { nodes, player, platter } = rigWithPlayer();
     const m = new CrateMotion();
-    m.update(nodes, { dig: 0, lifted: 0, playing: 0, player, reduced: false }, PLAY_SECONDS);
+    m.update(nodes, { dig: 0, playing: 0, player, reduced: false }, PLAY_SECONDS);
     const before = nodes.vinyls[0]!.getWorldQuaternion(new Quaternion());
     platter.rotation.y = 1;
     platter.updateMatrixWorld(true);
-    m.update(nodes, { dig: 0, lifted: 0, playing: 0, player, reduced: false }, 0.016);
+    m.update(nodes, { dig: 0, playing: 0, player, reduced: false }, 0.016);
     expect(nodes.vinyls[0]!.getWorldQuaternion(new Quaternion()).angleTo(before)).toBeCloseTo(1, 5);
   });
   it("puts it all back from wherever it is (Back mid-flight), never jumping", () => {
     const { nodes, player } = rigWithPlayer();
     const m = new CrateMotion();
-    m.update(nodes, { dig: 0, lifted: 0, playing: 0, player, reduced: false }, PLAY_SECONDS * 0.3);
+    m.update(nodes, { dig: 0, playing: 0, player, reduced: false }, PLAY_SECONDS * 0.3);
     const mid = nodes.records[0].getWorldPosition(new Vector3());
-    m.update(nodes, { dig: 0, lifted: 0, playing: null, player, reduced: false }, 0.016);
+    m.update(nodes, { dig: 0, playing: null, player, reduced: false }, 0.016);
     expect(nodes.records[0].getWorldPosition(new Vector3()).distanceTo(mid)).toBeLessThan(0.1);
-    m.update(nodes, { dig: 0, lifted: null, playing: null, player, reduced: false }, PLAY_BACK_SECONDS + FLIP_SECONDS);
+    m.update(nodes, { dig: 0, playing: null, player, reduced: false }, PLAY_BACK_SECONDS + FLIP_SECONDS);
     expect(nodes.records[0].position.toArray()).toEqual(nodes.restPosition[0].toArray());
     expect(nodes.vinyls[0]!.position.toArray()).toEqual(nodes.vinylRest[0].position.toArray());
   });
   it("switches straight to playing under reduced motion", () => {
     const { nodes, player } = rigWithPlayer();
     const m = new CrateMotion();
-    m.update(nodes, { dig: 0, lifted: 0, playing: 0, player, reduced: true }, 0.001);
+    m.update(nodes, { dig: 0, playing: 0, player, reduced: true }, 0.001);
     expect(m.playDone).toBe(true);
   });
 });

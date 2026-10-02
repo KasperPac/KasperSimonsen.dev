@@ -121,14 +121,14 @@ html.office-locked {
   pointer-events: none;
 }
 @media (hover: none) {
-  .office[data-director="idle"] .office-marker { display: block; animation: office-pulse 1.8s ease-in-out infinite; }
+  .office[data-director="idle"] .office-marker { display: block; animation: office-pulse 2.4s ease-in-out infinite; }
 }
-@keyframes office-pulse {
-  0%, 100% { scale: 1; opacity: 0.9; }
-  50% { scale: 1.6; opacity: 0.2; }
+@keyframes office-pulse { /* a gentle breath that never fades away: Kasper read the old one as dots flying in and out */
+  0%, 100% { scale: 1; opacity: 0.95; }
+  50% { scale: 1.15; opacity: 0.6; }
 }
 /* After the arrival tour, every device gets the pulsing dots until the visitor has used an object. */
-.office[data-hints="dots"][data-director="idle"]:not([data-office-fallback="true"]) .office-marker { display: block; animation: office-pulse 1.8s ease-in-out infinite; }
+.office[data-hints="dots"][data-director="idle"]:not([data-office-fallback="true"]) .office-marker { display: block; animation: office-pulse 2.4s ease-in-out infinite; }
 .office-hints-text { display: none; position: fixed; left: 50%; bottom: 20px; z-index: 3; translate: -50% 0; font: 11px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.7); }
 .office[data-hints="dots"][data-director="idle"]:not([data-office-fallback="true"]) .office-hints-text { display: block; }
 

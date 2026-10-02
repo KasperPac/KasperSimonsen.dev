@@ -62,6 +62,44 @@ test("the keyboard flicks, pulls, reads and steps back out one layer at a time",
   await expect(button).toBeFocused();
 });
 
+test("sweeping the pointer back across the crate flicks through the records in order, and back again, without jumping", async ({ page }) => {
+  await standInOffice(page);
+  await openCrate(page);
+  await expect(office(page)).toHaveAttribute("data-camera", "focus", { timeout: 10_000 });
+  // the crate's marker sits over the middle of its opening (markers follow HOTSPOTS order: the crate first)
+  const at = await page.evaluate(() => {
+    const m = /translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec((document.querySelector(".office-marker") as HTMLElement).style.transform)!;
+    return { x: Number(m[1]), y: Number(m[2]) };
+  });
+  const dig = async () => Number(await office(page).getAttribute("data-dig"));
+  // software WebGL can hold React's update behind a slow frame: wait for two frames to pass before reading
+  const settle = () => page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(null)))));
+  const sweep = async (from: number, to: number) => {
+    const seen: number[] = [];
+    for (let dy = from; from > to ? dy >= to : dy <= to; dy += from > to ? -5 : 5) {
+      await page.mouse.move(at.x, at.y + dy);
+      await settle();
+      seen.push(await dig());
+    }
+    return seen;
+  };
+  const back = await sweep(140, -140); // front of the crate to its back
+  expect(back).toEqual([...back].sort((a, b) => a - b)); // only ever forward through the crate
+  expect(new Set(back)).toEqual(new Set(work.map((_, i) => i)));
+  const forward = await sweep(-140, 140);
+  expect(forward).toEqual([...forward].sort((a, b) => b - a)); // only ever back
+  expect(forward[forward.length - 1]).toBe(0);
+  // a pointer resting on the crate, trembling a pixel, holds its record
+  await page.mouse.move(at.x, at.y);
+  await settle();
+  const held = await dig();
+  for (const dy of [1, -1, 1, -1, 0]) {
+    await page.mouse.move(at.x, at.y + dy);
+    await settle();
+    expect(await dig()).toBe(held);
+  }
+});
+
 test("Forward onto a project's URL brings its record out again, the ones in front flicked", async ({ page }) => {
   const item = work[work.length - 1];
   await standInOffice(page);

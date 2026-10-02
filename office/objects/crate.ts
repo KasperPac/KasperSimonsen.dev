@@ -8,33 +8,25 @@ export const SLEEVE_M = 0.315;
 /** How far a flicked record tips forward on its bottom edge, radians from rest: it leans on the crate's front wall (measured in Blender, plan Task 2). */
 export const FLIP_ANGLE = 0.17;
 export const FLIP_SECONDS = 0.35;
-/** The front record rises straight up this far first, its bottom edge over the vinyl of the flicked record in front (measured in Blender). */
-export const CLEAR_LIFT_M = 0.38;
 /**
- * Where the front record is held while browsing, from its rest, in the crate's frame: forward (`slide`), up (`lift`),
- * its top tipped back (`tilt`, radians about its own x) so its cover faces the camera and the records behind stay in
- * sight to hover (measured in Blender). Like pulling a record forward in a shop.
+ * How a played record flies over to the player: it rises `rise` above where it leaves and comes down from `land` above
+ * where it hovers over the platter (a cubic arc), clear of the desk and everything else (measured in Blender).
  */
-export const DISPLAY = { lift: 0.14, slide: 0.22, tilt: -0.3927 };
-/** Records further back come further forward to clear the ones in front: a record's spacing for each past the third (Blender). */
-const SLIDE_PER_RECORD_M = 0.0325;
-export const LIFT_SECONDS = 0.75;
+export const FLIGHT = { rise: 0.9, land: 0.5 };
 
-const third = (t: number, n: number) => easeInOutCubic(Math.min(1, Math.max(0, t * 3 - n)));
-
-/**
- * Record `index`'s offset from rest at lift progress `t`, in three equal parts that never pass through the records in
- * front: straight up to CLEAR_LIFT_M, out at that height (sliding forward and tipping back), then down into DISPLAY.
- */
-export function displayOffset(t: number, index: number): { lift: number; slide: number; tilt: number } {
-  const slide = DISPLAY.slide + SLIDE_PER_RECORD_M * Math.max(0, index - 2);
-  if (t <= 1 / 3) return { lift: CLEAR_LIFT_M * third(t, 0), slide: 0, tilt: 0 };
-  if (t <= 2 / 3) {
-    const e = third(t, 1);
-    return { lift: CLEAR_LIFT_M, slide: slide * e, tilt: DISPLAY.tilt * e };
-  }
-  const e = third(t, 2);
-  return { lift: DISPLAY.lift * e + CLEAR_LIFT_M * (1 - e), slide, tilt: DISPLAY.tilt };
+/** The point `t` (0→1) along the flight's arc from `from` to `to`, rising `rise` above the one and `land` above the other. */
+export function flightPoint(from: Vector3, to: Vector3, rise: number, land: number, t: number, out: Vector3): Vector3 {
+  const u = 1 - t;
+  const a = u * u * u;
+  const b = 3 * u * u * t;
+  const c = 3 * u * t * t;
+  const d = t * t * t;
+  out.set(
+    a * from.x + b * from.x + c * to.x + d * to.x,
+    a * from.y + b * (from.y + rise) + c * (to.y + land) + d * to.y,
+    a * from.z + b * from.z + c * to.z + d * to.z,
+  );
+  return out;
 }
 
 /**
@@ -103,6 +95,7 @@ const resting = { position: new Vector3(), quaternion: new Quaternion() };
 const sleeveAt = { position: new Vector3(), quaternion: new Quaternion(), scale: new Vector3() };
 const discAt = { position: new Vector3(), quaternion: new Quaternion(), scale: new Vector3() };
 const hover = new Vector3();
+const leaving = new Vector3();
 const world = new Matrix4();
 const parentInverse = new Matrix4();
 const unusedScale = new Vector3();
@@ -135,7 +128,7 @@ function placeSleeve(sleeve: Object3D, parent: Object3D, stand: Placement, p: Ph
   world.compose(resting.position, resting.quaternion, sleeve.scale).premultiply(parent.matrixWorld);
   world.decompose(sleeveAt.position, sleeveAt.quaternion, sleeveAt.scale);
   hover.copy(deck.top).addScaledVector(deck.up, PRESENT_ABOVE_M);
-  sleeveAt.position.lerp(hover, p.travel);
+  flightPoint(leaving.copy(sleeveAt.position), hover, FLIGHT.rise, FLIGHT.land, p.travel, sleeveAt.position);
   sleeveAt.quaternion.slerp(stand.quaternion, p.travel);
   sleeveAt.position.lerp(stand.position, p.toStand);
   sleeveAt.quaternion.slerp(stand.quaternion, p.toStand);
@@ -178,10 +171,9 @@ const eased = (p: Phases): Phases => ({
   turn: easeInOutCubic(p.turn),
 });
 
-/** Per-frame easing of the flicks, the front record's lift and playing a record. Pure state: no React, no clocks. Runs after ObjectMotion (the tease). */
+/** Per-frame easing of the flicks and of playing a record. Pure state: no React, no clocks. Runs after ObjectMotion (the tease). */
 export class CrateMotion {
   private flip: number[] = [];
-  private lift: number[] = [];
   private play: number[] = [];
   private twist: number[] = [];
   private playingIndex: number | null = null;
@@ -193,7 +185,7 @@ export class CrateMotion {
 
   update(
     nodes: CrateNodes,
-    input: { dig: number; lifted: number | null; playing: number | null; player: PlayerPoses | null; reduced: boolean },
+    input: { dig: number; playing: number | null; player: PlayerPoses | null; reduced: boolean },
     dt: number,
   ): void {
     this.playingIndex = input.playing;
@@ -202,22 +194,14 @@ export class CrateMotion {
       const wasPlaying = (this.play[i] ?? 0) > 0;
       const playing = input.playing === i;
       this.flip[i] = approach(this.flip[i] ?? 0, i < input.dig ? 1 : 0, dt, input.reduced ? 0 : FLIP_SECONDS);
-      this.lift[i] = approach(this.lift[i] ?? 0, input.lifted === i && input.playing === null ? 1 : 0, dt, input.reduced ? 0 : LIFT_SECONDS);
-      const out = displayOffset(this.lift[i], i);
       this.play[i] = approach(this.play[i] ?? 0, playing ? 1 : 0, dt, input.reduced ? 0 : playing ? PLAY_SECONDS : PLAY_BACK_SECONDS);
 
-      // where it rests in the crate: tipped forward on its bottom edge if flicked, raised if it is the front one
+      // where it rests in the crate: tipped forward on its bottom edge if flicked
       resting.position.copy(nodes.restPosition[i]);
-      // up the crate and toward its front; untouched at rest, so it lands back exactly (adding 0 would turn -0 into +0)
-      if (out.lift) resting.position.y += out.lift;
-      if (out.slide) resting.position.z += out.slide;
-      resting.quaternion
-        .copy(nodes.restQuaternion[i])
-        .multiply(tip.setFromAxisAngle(X, FLIP_ANGLE * easeInOutCubic(this.flip[i])))
-        .multiply(tip.setFromAxisAngle(X, out.tilt)); // the front one held up, its cover to you
+      resting.quaternion.copy(nodes.restQuaternion[i]).multiply(tip.setFromAxisAngle(X, FLIP_ANGLE * easeInOutCubic(this.flip[i])));
       const vinyl = nodes.vinyls[i];
       if (this.play[i] === 0 || !input.player || !r.parent) {
-        if (this.lift[i] > 0 || wasPlaying) r.position.copy(resting.position); // lifted, or just put back: all the way home
+        if (wasPlaying) r.position.copy(resting.position); // just put back: all the way home
         else {
           r.position.x = resting.position.x; // y is the tease's (ObjectMotion), left alone
           r.position.z = resting.position.z;
