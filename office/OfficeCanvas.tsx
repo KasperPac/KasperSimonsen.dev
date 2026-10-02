@@ -10,9 +10,7 @@ import { applyCleanEdges, setLineResolution, updateEdgeFades } from "./style/cle
 import { findClipFor, makeClipSampler, progressToTime } from "./walkin/clipSampler";
 import { useTurntable } from "./idle/useTurntable";
 import { applySkippingGirl, findSkippingGirl } from "./walkin/skippingGirl";
-import { copyCameraPose, findCamera } from "./walkin/cameraPose";
-
-const WALKIN_CAMERA = "cam_walkin";
+import { copyCameraPose, findCamera, WALKIN_CAMERA } from "./walkin/cameraPose";
 
 export type OfficeCanvasProps = {
   /** Walk-in progress 0 → 1. Read every frame; never causes a render. */

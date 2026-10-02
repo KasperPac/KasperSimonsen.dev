@@ -1,6 +1,7 @@
 import type { Object3D } from "three";
 
-const POSE = /^prop_skipping_girl__pose_(\d\d)$/;
+/** The Skipping Girl's pose nodes (street.glb; required by office/manifest.json). */
+export const POSE_NODE = /^prop_skipping_girl__pose_(\d\d)$/;
 
 /** Pose index for walk-in progress: `count` poses per rope cycle, `cycles` cycles over the whole walk-in. */
 export function skipPose(progress: number, count: number, cycles = 24): number {
@@ -16,7 +17,7 @@ let warned = false;
 export function findSkippingGirl(root: Object3D): Object3D[] | null {
   const found: { n: number; obj: Object3D }[] = [];
   root.traverse((o) => {
-    const m = POSE.exec(o.name);
+    const m = POSE_NODE.exec(o.name);
     if (m) found.push({ n: Number(m[1]), obj: o });
   });
   if (found.length === 0) {

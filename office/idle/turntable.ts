@@ -3,7 +3,9 @@ import type { Object3D } from "three";
 const TAU = Math.PI * 2;
 const SWAP_SECONDS = 0.8;
 const SWAP_TRAVEL = 0.25;
-const SLEEVE = /^prop_now_playing__sleeve_(\d\d)$/;
+/** Node names the turntable animation drives (office.glb; required by office/manifest.json). */
+export const PLATTER_NODE = "prop_turntable__platter";
+export const SLEEVE_NODE = /^prop_now_playing__sleeve_(\d\d)$/;
 
 /** Platter angle in radians, wrapped to [0, 2π). Defaults to 33 1/3 rpm. */
 export function platterAngle(seconds: number, rpm = 100 / 3): number {
@@ -32,10 +34,10 @@ let warned = false;
 
 /** Finds the platter and sleeves by name. Returns null (and logs once) if the model lacks them. */
 export function findTurntable(root: Object3D): TurntableNodes | null {
-  const platter = root.getObjectByName("prop_turntable__platter");
+  const platter = root.getObjectByName(PLATTER_NODE);
   const found: { n: number; obj: Object3D }[] = [];
   root.traverse((o) => {
-    const m = SLEEVE.exec(o.name);
+    const m = SLEEVE_NODE.exec(o.name);
     if (m) found.push({ n: Number(m[1]), obj: o });
   });
   if (!platter || found.length === 0) {

@@ -1,0 +1,31 @@
+import { describe, it, expect } from "vitest";
+import manifest from "./manifest.json";
+import { WALKIN_CAMERA } from "./walkin/cameraPose";
+import { PLATTER_NODE, SLEEVE_NODE } from "./idle/turntable";
+import { POSE_NODE } from "./walkin/skippingGirl";
+
+// The runtime finds these nodes by name. check:models enforces the manifest, so the manifest must name
+// them too, or a rename in Blender leaves the build green while the animation silently stops.
+describe("runtime node names are required by the manifest", () => {
+  const numbered = (names: string[], pattern: RegExp) =>
+    names.map((n) => pattern.exec(n)?.[1]).filter((n): n is string => n !== undefined).map(Number).sort((a, b) => a - b);
+
+  it("the walk-in camera exists and is animated", () => {
+    expect(manifest.street.cameras).toContain(WALKIN_CAMERA);
+    expect(manifest.street.animated).toContain(WALKIN_CAMERA);
+  });
+
+  it("the turntable platter exists", () => expect(manifest.office.nodes).toContain(PLATTER_NODE));
+
+  it("the now-playing sleeves exist, numbered from 00 without gaps", () => {
+    const sleeves = numbered(manifest.office.nodes, SLEEVE_NODE);
+    expect(sleeves.length).toBeGreaterThanOrEqual(2);
+    expect(sleeves).toEqual(sleeves.map((_, i) => i));
+  });
+
+  it("the Skipping Girl poses exist, numbered from 00 without gaps", () => {
+    const poses = numbered(manifest.street.nodes, POSE_NODE);
+    expect(poses.length).toBeGreaterThanOrEqual(2);
+    expect(poses).toEqual(poses.map((_, i) => i));
+  });
+});

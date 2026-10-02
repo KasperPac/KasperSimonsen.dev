@@ -1,5 +1,8 @@
 import { Vector3, type Camera, type Object3D, type PerspectiveCamera } from "three";
 
+/** The animated walk-in camera in street.glb (required by office/manifest.json). */
+export const WALKIN_CAMERA = "cam_walkin";
+
 const scale = new Vector3();
 
 /** A perspective camera exported from Blender, by node name. */
