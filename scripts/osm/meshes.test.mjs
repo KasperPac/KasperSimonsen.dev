@@ -5,6 +5,9 @@ import {
   COMMONS_WAY_IDS,
   MCG_HEIGHT,
   MCG_WAY_ID,
+  NYLEX_SILOS_WAY_ID,
+  SIGHTLINE_DEPTH,
+  SIGHTLINE_HEIGHT,
   meshesToDocument,
   osmToMeshes,
 } from "./meshes.mjs";
@@ -25,7 +28,7 @@ const fixture = [
   way(946747659, { building: "yes" }, square(-20, 10, 0, 20)),
   way(946747654, { building: "yes" }, square(-20, 0, 0, 10)),
   way(1290625051, { building: "yes" }, square(-20, -10, 0, 0)),
-  way(1, { building: "yes", height: "20 m" }, square(40, 0, 50, 10)),
+  way(1, { building: "yes", height: "20 m" }, square(40, 60, 50, 70)), // clear of the sightline cap
   way(2, { building: "yes" }, [ll(60, 0), ll(61, 0)]),
   way(3, { highway: "residential", name: "Gwynne Street" }, [ll(12, -50), ll(12, 50)]),
   way(4, { highway: "service" }, [ll(30, 0)]),
@@ -187,6 +190,126 @@ describe("buildings inside a landmark", () => {
 
   it("doesn't move the landmark's own centre", () => {
     [495, -497.5].forEach((v, i) => expect(result.landmarks.mcg.centre[i]).toBeCloseTo(v, 2));
+  });
+});
+
+describe("sightline to the door", () => {
+  // Facade at x 10 facing +x (normal [1, 0]); The Commons spans z -15…15, so the window is z -35…35, x 10…70.
+  const extract = [
+    ...fixture,
+    way(301, { building: "yes" }, square(30, 0, 40, 10)), // across the street, 35 m out: capped
+    way(302, { building: "yes" }, square(70, 0, 80, 10)), // 75 m out: beyond the depth
+    way(303, { building: "yes" }, square(30, 50, 40, 60)), // 50 m north of the frontage: outside ± 20 m
+    way(304, { building: "yes" }, square(-60, 0, -50, 10)), // behind The Commons
+    way(305, { building: "yes", height: "3" }, square(30, 12, 40, 20)), // already under the cap
+  ];
+  const result = osmToMeshes(extract);
+  /** Roof height of the building with a corner at local [x, z]. */
+  const topAt = ({ positions }, [x, z]) =>
+    Math.max(
+      ...positions.filter((_, i) => i % 3 === 1 && Math.abs(positions[i - 1] - x) < 0.01 && Math.abs(positions[i + 1] - z) < 0.01),
+    );
+
+  it("caps a building across the street to one storey", () => {
+    expect(SIGHTLINE_HEIGHT).toBe(4);
+    expect(topAt(result.meshes.osm_buildings, [40, 5])).toBeCloseTo(SIGHTLINE_HEIGHT);
+  });
+
+  it("leaves one beyond the sightline depth alone", () => {
+    expect(SIGHTLINE_DEPTH).toBe(60);
+    expect(topAt(result.meshes.osm_buildings, [80, 5])).toBeCloseTo(7);
+  });
+
+  it("leaves one beside the frontage's extent alone", () => {
+    expect(topAt(result.meshes.osm_buildings, [40, -45])).toBeCloseTo(7);
+  });
+
+  it("leaves one behind The Commons alone", () => {
+    expect(topAt(result.meshes.osm_buildings, [-50, 5])).toBeCloseTo(7);
+  });
+
+  it("leaves one already under the cap untouched", () => {
+    expect(topAt(result.meshes.osm_buildings, [40, -7])).toBeCloseTo(3);
+  });
+
+  it("lists exactly the capped buildings as lowered", () => {
+    expect(result.lowered).toEqual([301]);
+    expect(maxY(result.meshes.osm_commons)).toBeCloseTo(COMMONS_GREYBOX_HEIGHT);
+  });
+});
+
+describe("rails under a landmark", () => {
+  // The MCG stand-in sits due east (real centre x 800, z 0) and pulls to x 350…450, z -50…50,
+  // so the cut line, 1 m inside its wall, is x 351 / 449. A 3 m rail runs east–west through it at z 10;
+  // a tram passes 10 m outside it at z 60.
+  const mcg = way(MCG_WAY_ID, { leisure: "stadium" }, square(740, -45, 840, 55));
+  const through = way(401, { railway: "rail" }, [ll(200, -5), ll(600, -5)]);
+  const near = way(402, { railway: "tram" }, [ll(200, -55), ll(600, -55)]);
+  const result = osmToMeshes([...fixture, mcg, through, near]);
+  /** x of every osm_rail vertex on the ribbon centred on z. */
+  const railXs = (z, half) => {
+    const { positions } = result.meshes.osm_rail;
+    return positions.filter((_, i) => i % 3 === 0 && Math.abs(positions[i + 2] - z) <= half + 1e-6);
+  };
+  const portal = (portals, sign) => portals.find((p) => Math.sign(p.direction[0]) === sign);
+  const expectPortal = (p, centre, direction, width) => {
+    centre.forEach((v, i) => expect(p.centre[i]).toBeCloseTo(v, 2));
+    direction.forEach((v, i) => expect(p.direction[i]).toBeCloseTo(v, 4));
+    expect(p.width).toBeCloseTo(width, 2);
+  };
+
+  it("keeps the MCG at half distance on its real bearing, with no nudge", () => {
+    const { centre, real } = result.landmarks.mcg;
+    centre.forEach((v, i) => expect(v).toBeCloseTo(real[i] / 2, 2));
+    expect(result.landmarks.mcg).not.toHaveProperty("nudge");
+    expect(result).not.toHaveProperty("warnings");
+  });
+
+  it("cuts a rail through a landmark 1 m inside its wall, leaving nothing in between", () => {
+    const xs = railXs(10, 1.5);
+    expect(xs).toHaveLength(8);
+    [210, 351, 449, 610].forEach((v) => expect(xs.some((x) => Math.abs(x - v) < 0.01)).toBe(true));
+    expect(xs.every((x) => x <= 351.01 || x >= 448.99)).toBe(true);
+  });
+
+  it("leaves a rail that only passes nearby alone", () => {
+    const xs = railXs(60, 1.25);
+    expect(xs).toHaveLength(4);
+    [210, 610].forEach((v) => expect(xs.filter((x) => Math.abs(x - v) < 0.01)).toHaveLength(2));
+  });
+
+  it("records a portal where the rail goes in and another, far off, where it comes out", () => {
+    const { portals } = result.landmarks.mcg;
+    expect(portals).toHaveLength(2);
+    expectPortal(portal(portals, 1), [351, 10], [1, 0], 3 + 2);
+    expectPortal(portal(portals, -1), [449, 10], [-1, 0], 3 + 2);
+  });
+
+  it("groups three parallel tracks crossing together into one portal spanning them plus 2 m", () => {
+    // Trams at z 0, 4 and 8 run in from the west and stop inside the stadium.
+    const trams = [0, 4, 8].map((z, i) => way(410 + i, { railway: "tram" }, [ll(200, 5 - z), ll(390, 5 - z)]));
+    const { portals } = osmToMeshes([...fixture, mcg, ...trams]).landmarks.mcg;
+    expect(portals).toHaveLength(1);
+    expectPortal(portals[0], [351, 4], [1, 0], 8 + 2.5 + 2);
+  });
+});
+
+describe("Nylex silos", () => {
+  // Centre east -195, north -100 → local x -185, z 105, beside the Nylex Clock node.
+  const silos = way(NYLEX_SILOS_WAY_ID, { building: "silo", height: "36" }, square(-200, -110, -190, -90));
+  const result = osmToMeshes([...fixture, silos]);
+
+  it("go into their own bucket at their tagged height, not into osm_buildings", () => {
+    expect(maxY(result.meshes.osm_nylex_silos)).toBeCloseTo(36);
+    expect(hasCorner(result.meshes.osm_nylex_silos, [-190, 115])).toBe(true);
+    expect(hasCorner(result.meshes.osm_buildings, [-190, 115])).toBe(false);
+  });
+
+  it("stay where they really are", () => {
+    expect(result.landmarks.nylex_silos.height).toBe(36);
+    [-185, 105].forEach((v, i) => expect(result.landmarks.nylex_silos.centre[i]).toBeCloseTo(v, 2));
+    expect(result.merged).toEqual([]);
+    expect(result.displaced).toEqual([]);
   });
 });
 

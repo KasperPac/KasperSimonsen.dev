@@ -191,6 +191,81 @@ function segmentGap(a, b, c, d) {
   );
 }
 
+/** The ring moved `distance` inward along every edge's normal, with mitred corners. Either winding. */
+export function insetRing(ring, distance) {
+  const n = ring.length;
+  const inward = Math.sign(ringArea(ring));
+  const normals = ring.map((p, i) => {
+    const q = ring[(i + 1) % n];
+    const length = Math.hypot(q[0] - p[0], q[1] - p[1]);
+    return [(-(q[1] - p[1]) / length) * inward, ((q[0] - p[0]) / length) * inward];
+  });
+  return ring.map(([x, z], i) => {
+    const a = normals[(i - 1 + n) % n];
+    const b = normals[i];
+    const scale = distance / Math.max(1 + a[0] * b[0] + a[1] * b[1], 0.25); // mitre, capped at sharp corners
+    return [x + (a[0] + b[0]) * scale, z + (a[1] + b[1]) * scale];
+  });
+}
+
+/** Where along a→b (0 < t < 1) it crosses the segment c→d, or null. */
+function crossingAlong(a, b, c, d) {
+  const rx = b[0] - a[0];
+  const rz = b[1] - a[1];
+  const sx = d[0] - c[0];
+  const sz = d[1] - c[1];
+  const denom = rx * sz - rz * sx;
+  if (denom === 0) return null;
+  const qx = c[0] - a[0];
+  const qz = c[1] - a[1];
+  const t = (qx * sz - qz * sx) / denom;
+  const u = (qx * rz - qz * rx) / denom;
+  return t > 0 && t < 1 && u >= 0 && u <= 1 ? t : null;
+}
+
+/**
+ * The parts of a polyline outside a ring, cut exactly on its boundary, and every crossing of that boundary:
+ * the point, and the unit direction along the line that leads into the ring.
+ */
+export function clipLineOutside(line, ring) {
+  const pieces = [];
+  const crossings = [];
+  let current = null;
+  let wasInside = null;
+  for (let i = 0; i < line.length - 1; i++) {
+    const a = line[i];
+    const b = line[i + 1];
+    const length = distance(a, b);
+    if (length === 0) continue;
+    const along = [(b[0] - a[0]) / length, (b[1] - a[1]) / length];
+    const at = (t) => (t === 0 ? a : t === 1 ? b : [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
+    const cuts = [0, 1];
+    for (let j = 0; j < ring.length; j++) {
+      const t = crossingAlong(a, b, ring[j], ring[(j + 1) % ring.length]);
+      if (t !== null) cuts.push(t);
+    }
+    cuts.sort((p, q) => p - q);
+    for (let k = 0; k < cuts.length - 1; k++) {
+      if (cuts[k + 1] - cuts[k] < 1e-9) continue;
+      const start = at(cuts[k]);
+      const inside = pointInRing(at((cuts[k] + cuts[k + 1]) / 2), ring);
+      if (wasInside !== null && inside !== wasInside) {
+        crossings.push({ point: start, direction: inside ? along : [-along[0], -along[1]] });
+      }
+      if (inside) {
+        if (current) pieces.push(current);
+        current = null;
+      } else {
+        current ??= [start];
+        current.push(at(cuts[k + 1]));
+      }
+      wasInside = inside;
+    }
+  }
+  if (current) pieces.push(current);
+  return { pieces, crossings };
+}
+
 /** True when two rings overlap, one contains the other, or they come within `margin` metres. */
 export function ringsWithin(a, b, margin) {
   const [ax0, az0, ax1, az1] = bounds(a);

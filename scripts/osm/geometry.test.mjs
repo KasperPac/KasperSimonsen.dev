@@ -1,6 +1,18 @@
 import { describe, it, expect } from "vitest";
 import { BufferGeometry, EdgesGeometry, Float32BufferAttribute } from "three";
-import { cleanRing, closestPointOnSegment, extrudeFootprint, ribbon, ringArea, stripWidth } from "./geometry.mjs";
+import {
+  cleanRing,
+  clipLineOutside,
+  closestPointOnSegment,
+  extrudeFootprint,
+  insetRing,
+  ribbon,
+  ringArea,
+  stripWidth,
+} from "./geometry.mjs";
+
+/** Rounds every number to 6 places (and -0 to 0) so float results compare with toEqual. */
+const round = (value) => JSON.parse(JSON.stringify(value, (_, v) => (typeof v === "number" ? Math.round(v * 1e6) / 1e6 : v)));
 
 /** How many line segments the clean-edge renderer would draw for this mesh. */
 function edgeSegments({ positions, indices }, thresholdDeg = 20) {
@@ -96,4 +108,41 @@ describe("closestPointOnSegment", () => {
   it("projects onto the segment", () => expect(closestPointOnSegment([5, 3], [0, 0], [10, 0])).toEqual([5, 0]));
   it("clamps to the ends", () => expect(closestPointOnSegment([-4, 2], [0, 0], [10, 0])).toEqual([0, 0]));
   it("handles a zero-length segment", () => expect(closestPointOnSegment([1, 1], [2, 2], [2, 2])).toEqual([2, 2]));
+});
+
+describe("insetRing", () => {
+  it.each([
+    ["anticlockwise", [[0, 0], [10, 0], [10, 10], [0, 10]], [[1, 1], [9, 1], [9, 9], [1, 9]]],
+    ["clockwise", [[0, 0], [0, 10], [10, 10], [10, 0]], [[1, 1], [1, 9], [9, 9], [9, 1]]],
+  ])("shrinks a square wound %s by the distance", (_, ring, expected) => expect(round(insetRing(ring, 1))).toEqual(expected));
+});
+
+describe("clipLineOutside", () => {
+  const box = [[0, 0], [10, 0], [10, 10], [0, 10]];
+
+  it("keeps the parts outside and reports each crossing with the direction into the ring", () => {
+    const { pieces, crossings } = clipLineOutside([[-5, 4], [15, 4]], box);
+    expect(round(pieces)).toEqual([[[-5, 4], [0, 4]], [[10, 4], [15, 4]]]);
+    expect(round(crossings)).toEqual([
+      { point: [0, 4], direction: [1, 0] },
+      { point: [10, 4], direction: [-1, 0] },
+    ]);
+  });
+
+  it("cuts across a bend in the line", () => {
+    const { pieces, crossings } = clipLineOutside([[-5, 4], [5, 4], [5, 15]], box);
+    expect(round(pieces)).toEqual([[[-5, 4], [0, 4]], [[5, 10], [5, 15]]]);
+    expect(round(crossings.map((c) => c.direction))).toEqual([[1, 0], [0, -1]]);
+  });
+
+  it("drops the end of a line that stops inside", () => {
+    const { pieces, crossings } = clipLineOutside([[-5, 4], [5, 4]], box);
+    expect(round(pieces)).toEqual([[[-5, 4], [0, 4]]]);
+    expect(crossings).toHaveLength(1);
+  });
+
+  it("returns a line that stays outside unchanged", () => {
+    const line = [[-5, 12], [15, 12]];
+    expect(clipLineOutside(line, box)).toEqual({ pieces: [line], crossings: [] });
+  });
 });
