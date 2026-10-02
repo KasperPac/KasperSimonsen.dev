@@ -1,20 +1,25 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useReducer, useRef, useState, type CSSProperties } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import OfficeErrorBoundary from "./OfficeErrorBoundary";
 import { theme } from "./theme";
 import { COPY } from "./copy";
 import { useWalkInProgress } from "./walkin/useWalkInProgress";
-import { describeDirector, initialDirector, isLocked, reduceDirector, type DirectorState } from "./director/director";
+import { describeDirector, focusedHotspot, initialDirector, isLocked, reduceDirector, type DirectorState } from "./director/director";
 import { pathForTarget } from "./scene/targets";
 import { layerOf, sceneFor } from "./scene/location";
 import { clearLayer, pushLayer, useOfficeLocation } from "./history";
 import { HOTSPOTS, labelFor, sameHit, type Hit } from "./hotspots/registry";
 import type { OverlayElements } from "./OfficeCanvas";
 import BusinessCard from "./cards/BusinessCard";
+import SleeveBack from "./cards/SleeveBack";
+import { clampDig } from "./objects/crate";
+import { canPull, digFor, swipeStep, wheelStep, type Wheel } from "./crate/dig";
+import { findWork, work } from "@/content/work";
 import Panel from "@/panels/Panel";
 import ContactForm from "@/panels/ContactForm";
+import CaseStudy from "@/panels/CaseStudy";
 
 // three.js never runs on the server and never ships to pages that don't render the office.
 const OfficeCanvas = dynamic(() => import("./OfficeCanvas"), { ssr: false });
@@ -68,6 +73,7 @@ export default function OfficeExperience() {
   const activate = useCallback((hit: Hit) => {
     const now = live().scene.target;
     if (now && sameHit(now, hit)) return;
+    if (now?.hotspot === "hs_crate" && now.item && hit.hotspot === "hs_crate") return; // one record out at a time
     // Keyboard users opened it from the nav: focus moves into what opened, and comes back here when it closes.
     const active = document.activeElement as HTMLElement | null;
     if (active && navRef.current?.contains(active)) trigger.current = active;
@@ -98,12 +104,80 @@ export default function OfficeExperience() {
   const focusedOn = state.kind === "focused" ? state.target.hotspot : null;
   const showCard = focusedOn === "hs_drawer" && drawerOpen;
 
+  // The crate (spec 3.2): flick through the records, pull the front one out, read it on its back and in the panel.
+  const pulledSlug = scene.target?.hotspot === "hs_crate" ? scene.target.item : null;
+  const pulledIndex = pulledSlug ? work.findIndex((w) => w.slug === pulledSlug) : -1;
+  const [dig, setDig] = useState(0);
+  const [sleeveOut, setSleeveOut] = useState(false);
+  const crate = useRef({ dig: 0, pulled: null as number | null });
+  crate.current = { dig: digFor(dig, pulledSlug), pulled: pulledIndex < 0 ? null : pulledIndex };
+  const wheel = useRef<Wheel>({ acc: 0, quietUntil: 0 });
+  const crateRef = useRef<HTMLDivElement | null>(null);
+
+  // A pulled record (a click, Enter or Forward) is at the front; the dig starts again at the front of a fresh visit.
+  useEffect(() => {
+    if (pulledSlug) setDig((d) => digFor(d, pulledSlug));
+  }, [pulledSlug]);
+  useEffect(() => {
+    if (state.kind === "idle") setDig(0);
+  }, [state.kind]);
+
+  const browsing = focusedOn === "hs_crate" && !pulledSlug && !scene.reading;
+  const flick = useCallback((step: number) => setDig((d) => clampDig(d + step, work.length)), []);
+  const pull = useCallback(() => {
+    if (!canPull(focusedHotspot(director.current), live().scene.target?.item ?? null)) return;
+    activate({ hotspot: "hs_crate", item: work[crate.current.dig].slug });
+  }, [activate]);
+
+  // Wheel and swipe flick while browsing the crate (the page is scroll-locked then).
+  useEffect(() => {
+    if (!browsing) return;
+    const onWheel = (e: WheelEvent) => {
+      const r = wheelStep(wheel.current, e.deltaY, performance.now());
+      wheel.current = r.w;
+      if (r.step) flick(r.step);
+    };
+    let startY: number | null = null;
+    const onDown = (e: PointerEvent) => {
+      if (e.pointerType === "touch") startY = e.clientY;
+    };
+    const onUp = (e: PointerEvent) => {
+      if (startY === null) return;
+      const step = swipeStep(e.clientY - startY);
+      startY = null;
+      if (step) flick(step);
+    };
+    window.addEventListener("wheel", onWheel, { passive: true });
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointerup", onUp);
+    return () => {
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointerup", onUp);
+    };
+  }, [browsing, flick]);
+
+  const onCrateKey = (e: ReactKeyboardEvent) => {
+    const step = e.key === "ArrowDown" || e.key === "ArrowRight" ? 1 : e.key === "ArrowUp" || e.key === "ArrowLeft" ? -1 : 0;
+    if (step) {
+      e.preventDefault();
+      flick(step);
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      pull();
+    }
+  };
+
   // Focus follows what's open (spec 7.3): the card's title when a card shows (CardFace moves it there), else the back
   // control; home again at idle.
   const hasCard = focusedOn === "hs_drawer";
   useEffect(() => {
-    if (focusedOn && !hasCard && trigger.current) backRef.current?.focus({ preventScroll: true });
+    if (focusedOn && !hasCard && focusedOn !== "hs_crate" && trigger.current) backRef.current?.focus({ preventScroll: true });
   }, [focusedOn, hasCard]);
+  // Browsing the crate, its control has focus (the arrow keys flick, Enter pulls), again when a record goes back.
+  useEffect(() => {
+    if (browsing) crateRef.current?.focus({ preventScroll: true });
+  }, [browsing]);
   useEffect(() => {
     if (state.kind === "idle" && trigger.current) {
       trigger.current.focus({ preventScroll: true });
@@ -114,7 +188,7 @@ export default function OfficeExperience() {
   const navProps = (hit: Hit) => ({ onFocus: () => onHover(hit), onBlur: () => onHover(null) });
 
   return (
-    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut">
+    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig}>
       <div className="office-stage">
         <OfficeErrorBoundary host={host}>
           <OfficeCanvas
@@ -124,6 +198,13 @@ export default function OfficeExperience() {
             hover={hover}
             overlay={overlay}
             drawerCard={showCard ? { titleId: "card-title", content: <BusinessCard titleId="card-title" onWrite={read} /> } : null}
+            crate={crate}
+            sleeveBack={
+              pulledSlug && sleeveOut && pulledIndex >= 0
+                ? { index: pulledIndex, titleId: "sleeve-title", content: <SleeveBack item={work[pulledIndex]} titleId="sleeve-title" onReadMore={read} /> }
+                : null
+            }
+            onSleeveOut={setSleeveOut}
             onProgressCross={(value) => dispatch({ type: "progress", value })}
             onSettled={() => dispatch({ type: "settled" })}
             onHover={onHover}
@@ -193,9 +274,32 @@ export default function OfficeExperience() {
         </button>
       )}
 
+      {browsing && (
+        <>
+          <div
+            ref={crateRef}
+            className="office-crate"
+            role="group"
+            tabIndex={0}
+            aria-roledescription="record crate"
+            aria-label={COPY.crate.label(work[crate.current.dig].name, crate.current.dig + 1, work.length)}
+            onKeyDown={onCrateKey}
+          />
+          <p className="office-hint" aria-hidden="true">
+            {COPY.crate.hint}
+          </p>
+        </>
+      )}
+
       {scene.reading && scene.target?.hotspot === "hs_drawer" && (
         <Panel hotspot="hs_drawer" titleId="panel-title" onClose={back}>
           <ContactForm titleId="panel-title" level={2} />
+        </Panel>
+      )}
+
+      {scene.reading && pulledSlug && findWork(pulledSlug) && (
+        <Panel hotspot="hs_crate" titleId="case-title" onClose={back}>
+          <CaseStudy item={findWork(pulledSlug)!} titleId="case-title" />
         </Panel>
       )}
 

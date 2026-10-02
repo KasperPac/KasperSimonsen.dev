@@ -98,7 +98,9 @@ test("the crate, shelf and monitor focus locally with no URL change", async ({ p
     await page.keyboard.press("Enter");
     await expect(office(page)).toHaveAttribute("data-director", `focused:${hotspot}`, { timeout: 10_000 });
     expect(new URL(page.url()).pathname).toBe("/");
-    await expect(page.getByRole("button", { name: "Back" })).toBeFocused();
+    // the crate's own control takes focus (arrow keys flick, Enter pulls); the shelf and monitor give it to Back
+    const into = hotspot === "hs_crate" ? page.locator('[aria-roledescription="record crate"]') : page.getByRole("button", { name: "Back" });
+    await expect(into).toBeFocused();
     await page.getByRole("button", { name: "Back" }).click();
     await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: 10_000 });
   }

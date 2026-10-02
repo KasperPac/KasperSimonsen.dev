@@ -5,7 +5,7 @@ import { approach } from "./motion";
 /** An LP sleeve's side, metres (office_props.SLEEVE). */
 export const SLEEVE_M = 0.315;
 /** How far a flicked record tips forward on its bottom edge, radians from rest: it leans on the crate's front wall (measured in Blender, plan Task 2). */
-export const FLIP_ANGLE = 0.3;
+export const FLIP_ANGLE = 0.17;
 export const FLIP_SECONDS = 0.35;
 export const PULL_SECONDS = 0.6;
 /** A pulled sleeve fills at most this share of the screen's height and width. */

@@ -14,11 +14,14 @@ import { findCamera, WALKIN_CAMERA } from "./walkin/cameraPose";
 import { applyPose, makePose, readPose, type Pose } from "./camera/pose";
 import { basePose, focusPose } from "./camera/basePose";
 import { CameraRig, FOCUS_MOVES } from "./camera/rig";
-import { FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, pickHit, type Hit, type HotspotName } from "./hotspots/registry";
+import { FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, hitFor, pickHit, type Hit, type HotspotName } from "./hotspots/registry";
 import { addHitProxies } from "./hotspots/proxies";
 import { focusedHotspot, IDLE_AT, type DirectorState } from "./director/director";
 import { CARD_NODE, findMotionNodes, ObjectMotion } from "./objects/motion";
+import { CrateMotion, findCrateNodes } from "./objects/crate";
 import CardFace from "./cards/CardFace";
+import { SLEEVE_WIDTH_PX } from "./cards/SleeveBack";
+import { work } from "@/content/work";
 
 /** DOM the canvas positions each frame: the hover label and the touch markers. */
 export type OverlayElements = { label: HTMLElement | null; markers: Partial<Record<HotspotName, HTMLElement | null>> };
@@ -34,6 +37,12 @@ export type OfficeCanvasProps = {
   overlay: RefObject<OverlayElements>;
   /** What's printed on the business card in the drawer while it shows, or null. */
   drawerCard: { titleId: string; content: ReactNode } | null;
+  /** The crate: the front record of the dig and the pulled record's index (or null). Read every frame. */
+  crate: RefObject<{ dig: number; pulled: number | null }>;
+  /** What's printed on the pulled sleeve's back while it shows, or null. */
+  sleeveBack: { index: number; titleId: string; content: ReactNode } | null;
+  /** The pulled record arrived in front of the camera (true) or left (false). */
+  onSleeveOut: (out: boolean) => void;
   onProgressCross: (progress: number) => void;
   onSettled: () => void;
   onHover: (hit: Hit | null) => void;
@@ -146,12 +155,15 @@ function Street({ progress, host, director, onProgressCross, onSettled, info }: 
   return <primitive object={street.scene} />;
 }
 
-type OfficeProps = Pick<OfficeCanvasProps, "host" | "director" | "hover" | "overlay" | "drawerCard" | "onHover" | "onActivate" | "onDrawerOpen"> & {
+type OfficeProps = Pick<
+  OfficeCanvasProps,
+  "host" | "director" | "hover" | "overlay" | "drawerCard" | "crate" | "sleeveBack" | "onHover" | "onActivate" | "onDrawerOpen" | "onSleeveOut"
+> & {
   info: RefObject<OfficeInfo | null>;
 };
 
 /** The office model: hover, click, highlight, object motion, where the label and markers go, and the business card's print. */
-function Office({ host, director, hover, overlay, drawerCard, onHover, onActivate, onDrawerOpen, info }: OfficeProps) {
+function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack, onHover, onActivate, onDrawerOpen, onSleeveOut, info }: OfficeProps) {
   const { gltf: office, handle } = useCleanEdges(manifest.office.url, highlightKey);
   useTurntable(office.scene);
   const motion = useMemo(() => new ObjectMotion(), []);
@@ -160,6 +172,9 @@ function Office({ host, director, hover, overlay, drawerCard, onHover, onActivat
   const reduced = useMemo(reducedMotion, []);
   const shown = useRef<string | null>("");
   const drawerWasOpen = useRef(false);
+  const crateNodes = useMemo(() => findCrateNodes(nodes.records), [nodes]);
+  const crateMotion = useMemo(() => new CrateMotion(), []);
+  const sleeveWasOut = useRef(false);
   const v = useMemo(() => new Vector3(), []);
 
   // Each object's whole outline takes the pointer while nothing is focused (thin shelf, gaps between ornaments).
@@ -198,6 +213,14 @@ function Office({ host, director, hover, overlay, drawerCard, onHover, onActivat
       drawerWasOpen.current = motion.drawerOpen;
       onDrawerOpen(motion.drawerOpen);
       if (host.current) host.current.dataset.drawer = motion.drawerOpen ? "open" : "shut";
+    }
+    const c = crate.current;
+    const cam = camera as PerspectiveCamera;
+    crateMotion.update(crateNodes, { dig: c.dig, pulled: c.pulled, camera: { position: cam.position, quaternion: cam.quaternion, fov: cam.fov }, aspect: size.width / size.height, reduced }, dt);
+    if (crateMotion.pulledDone !== sleeveWasOut.current) {
+      sleeveWasOut.current = crateMotion.pulledDone;
+      onSleeveOut(crateMotion.pulledDone);
+      if (host.current) host.current.dataset.sleeve = crateMotion.pulledDone ? "out" : "in";
     }
 
     const lit = hover.current ?? focused;
@@ -249,6 +272,15 @@ function Office({ host, director, hover, overlay, drawerCard, onHover, onActivat
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     if (!interactive()) return;
     const hit = pickHit(e.intersections.map((i) => i.object), focusedHotspot(director.current));
+    // A second click on the crate (not on a record) pulls the front record.
+    if (!hit && focusedHotspot(director.current) === "hs_crate" && e.intersections.some((i) => hitFor(i.object, null)?.hotspot === "hs_crate")) {
+      const slug = work[crate.current.dig]?.slug;
+      if (slug) {
+        e.stopPropagation();
+        onActivate({ hotspot: "hs_crate", item: slug });
+      }
+      return;
+    }
     if (!hit) return;
     e.stopPropagation();
     onActivate(hit);
@@ -260,6 +292,11 @@ function Office({ host, director, hover, overlay, drawerCard, onHover, onActivat
       {drawerCard && card && (
         <CardFace surface={card} hotspot="hs_drawer" titleId={drawerCard.titleId}>
           {drawerCard.content}
+        </CardFace>
+      )}
+      {sleeveBack && crateNodes.records[sleeveBack.index] && (
+        <CardFace surface={crateNodes.records[sleeveBack.index] as Mesh} place="back" widthPx={SLEEVE_WIDTH_PX} hotspot="hs_crate" titleId={sleeveBack.titleId}>
+          {sleeveBack.content}
         </CardFace>
       )}
     </>
