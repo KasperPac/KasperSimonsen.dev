@@ -1,5 +1,6 @@
 import { Matrix4, Quaternion, Vector3, type Object3D } from "three";
 import { easeInOutCubic } from "@/office/camera/pose";
+import { PLAYER_MOVE } from "@/office/camera/rig";
 import { approach } from "./motion";
 
 /** An LP sleeve's side, metres (office_props.SLEEVE). */
@@ -9,8 +10,16 @@ export const FLIP_ANGLE = 0.17;
 export const FLIP_SECONDS = 0.35;
 /** How far the front record rises while browsing, so its whole cover shows over the flicked records (measured in Blender, Task 8). */
 export const LIFT_M = 0.235;
-export const PLAY_SECONDS = 2.4;
-export const PLAY_BACK_SECONDS = 1.2;
+/** How far the lifted record tips toward the viewer on its bottom edge, radians, so the records behind still show over it (measured in Blender). */
+export const LIFT_TILT = 0.35;
+/**
+ * How long each step of playing a record takes, in order. The flight over matches the camera's move to the player, so
+ * the record and the camera arrive together; the vinyl and the sleeve then play out in front of the parked camera.
+ */
+const PLAY_STEPS = { travel: PLAYER_MOVE.seconds, slideOut: 0.35, lay: 0.35, toStand: 0.4, turn: 0.45 };
+export const PLAY_SECONDS = Object.values(PLAY_STEPS).reduce((a, b) => a + b, 0);
+/** Back retraces it at the same pace: the camera heads home first and the record follows it back into view. */
+export const PLAY_BACK_SECONDS = PLAY_SECONDS;
 /** The sleeve hovers this far above the platter while its vinyl comes out. */
 const PRESENT_ABOVE_M = 0.12;
 /** A laid vinyl rests this far above the platter's top. */
@@ -25,8 +34,15 @@ export function clampDig(dig: number, count: number): number {
 const band = (t: number, a: number, b: number) => Math.min(1, Math.max(0, (t - a) / (b - a)));
 
 /** Progress through each step of playing a record, from the overall progress `t`. */
-export function playPhases(t: number) {
-  return { travel: band(t, 0, 0.35), slideOut: band(t, 0.35, 0.5), lay: band(t, 0.5, 0.65), toStand: band(t, 0.65, 0.82), turn: band(t, 0.82, 1) };
+export function playPhases(t: number): Record<keyof typeof PLAY_STEPS, number> {
+  let at = 0;
+  const out = { travel: 0, slideOut: 0, lay: 0, toStand: 0, turn: 0 };
+  for (const step of Object.keys(PLAY_STEPS) as (keyof typeof PLAY_STEPS)[]) {
+    const from = at;
+    at += PLAY_STEPS[step];
+    out[step] = band(t, from / PLAY_SECONDS, at / PLAY_SECONDS);
+  }
+  return out;
 }
 
 type Phases = ReturnType<typeof playPhases>;
@@ -167,7 +183,10 @@ export class CrateMotion {
       // where it rests in the crate: tipped forward on its bottom edge if flicked, raised if it is the front one
       resting.position.copy(nodes.restPosition[i]);
       resting.position.y += LIFT_M * easeInOutCubic(this.lift[i]); // up the crate; x and z stay exactly at rest
-      resting.quaternion.copy(nodes.restQuaternion[i]).multiply(tip.setFromAxisAngle(X, FLIP_ANGLE * easeInOutCubic(this.flip[i])));
+      resting.quaternion
+        .copy(nodes.restQuaternion[i])
+        .multiply(tip.setFromAxisAngle(X, FLIP_ANGLE * easeInOutCubic(this.flip[i])))
+        .multiply(tip.setFromAxisAngle(X, LIFT_TILT * easeInOutCubic(this.lift[i]))); // the front one leans toward you
       const vinyl = nodes.vinyls[i];
       if (this.play[i] === 0 || !input.player || !r.parent) {
         if (this.lift[i] > 0 || wasPlaying) r.position.copy(resting.position); // lifted, or just put back: all the way home

@@ -7,12 +7,14 @@ import {
   FLIP_ANGLE,
   FLIP_SECONDS,
   LIFT_M,
+  LIFT_TILT,
   PLAY_BACK_SECONDS,
   PLAY_SECONDS,
   playPhases,
   SLEEVE_M,
   type PlayerPoses,
 } from "./crate";
+import { PLAYER_MOVE } from "@/office/camera/rig";
 
 function crate() {
   const root = new Group();
@@ -82,13 +84,27 @@ describe("CrateMotion", () => {
 });
 
 describe("playPhases", () => {
-  it("runs travel, slide out, lay, to the stand, then the turn, in order", () => {
+  it("runs travel, slide out, lay, to the stand, then the turn, in order, each starting as the last ends", () => {
     expect(playPhases(0)).toEqual({ travel: 0, slideOut: 0, lay: 0, toStand: 0, turn: 0 });
-    expect(playPhases(0.35).travel).toBe(1);
-    expect(playPhases(0.35).slideOut).toBe(0);
-    expect(playPhases(0.65).lay).toBe(1);
+    const steps = ["travel", "slideOut", "lay", "toStand", "turn"] as const;
+    let previous = 0;
+    for (const step of steps) {
+      // find where this step finishes, and check the next one hasn't started before it
+      let t = previous;
+      while (t < 1 && playPhases(t)[step] < 1) t += 0.001;
+      expect(t).toBeGreaterThan(previous);
+      const next = steps[steps.indexOf(step) + 1];
+      if (next) expect(playPhases(t - 0.002)[next]).toBe(0);
+      previous = t;
+    }
     expect(playPhases(1)).toEqual({ travel: 1, slideOut: 1, lay: 1, toStand: 1, turn: 1 });
   });
+  it("flies the record over in step with the camera's move to the player, so they arrive together", () => {
+    expect(playPhases(PLAYER_MOVE.seconds / PLAY_SECONDS).travel).toBeCloseTo(1, 6);
+    expect(playPhases(PLAYER_MOVE.seconds / 2 / PLAY_SECONDS).travel).toBeCloseTo(0.5, 6);
+    expect(playPhases(PLAYER_MOVE.seconds / PLAY_SECONDS).slideOut).toBe(0);
+  });
+  it("puts a record back by retracing it at the pace it came, never faster", () => expect(PLAY_BACK_SECONDS).toBe(PLAY_SECONDS));
 });
 
 describe("CrateMotion lift and play", () => {
@@ -98,6 +114,13 @@ describe("CrateMotion lift and play", () => {
     m.update(nodes, { dig: 1, lifted: 1, playing: null, player: null, reduced: false }, FLIP_SECONDS);
     expect(nodes.records[1].position.y).toBeCloseTo(nodes.restPosition[1].y + LIFT_M);
     expect(nodes.records[2].position.y).toBeCloseTo(nodes.restPosition[2].y);
+  });
+  it("tips the lifted record toward the viewer, so the records behind still show over it", () => {
+    const { nodes } = crate();
+    const m = new CrateMotion();
+    m.update(nodes, { dig: 1, lifted: 1, playing: null, player: null, reduced: false }, FLIP_SECONDS);
+    expect(nodes.records[1].rotation.x).toBeCloseTo(-0.14 + LIFT_TILT);
+    expect(nodes.records[2].rotation.x).toBeCloseTo(-0.14);
   });
   it("plays a record: its vinyl ends flat on the platter and its sleeve turned round on the stand", () => {
     const { nodes, player, platter } = rigWithPlayer();
