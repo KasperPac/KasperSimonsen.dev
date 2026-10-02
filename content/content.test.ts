@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { findWork, work } from "./work";
 import { findService, services } from "./services";
-import { CONTACT_EMAIL, subjectForTopic } from "./contact";
+import { CONTACT_EMAIL, CONTACT_LINKS, CONTACT_NAME, subjectForTopic } from "./contact";
 
 describe("work", () => {
   it("has the three case studies, newest first", () =>
@@ -41,4 +41,12 @@ describe("contact", () => {
     ["other", ""],
     [undefined, ""],
   ])("subject for %j", (topic, subject) => expect(subjectForTopic(topic)).toBe(subject));
+});
+
+describe("business card", () => {
+  it("has the name", () => expect(CONTACT_NAME).toBe("Kasper Simonsen"));
+  it("has at least one link, all absolute https", () => {
+    expect(CONTACT_LINKS.length).toBeGreaterThan(0);
+    for (const l of CONTACT_LINKS) expect(l.href).toMatch(/^https:\/\//);
+  });
 });

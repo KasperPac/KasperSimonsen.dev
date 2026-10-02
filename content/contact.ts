@@ -10,3 +10,8 @@ const SUBJECTS: Record<string, string> = {
 export function subjectForTopic(topic: string | undefined): string {
   return (topic && SUBJECTS[topic]) || "";
 }
+
+export const CONTACT_NAME = "Kasper Simonsen";
+
+/** Links on the business card. LinkedIn goes here when Kasper sends the URL. */
+export const CONTACT_LINKS: { label: string; href: string }[] = [{ label: "GitHub", href: "https://github.com/kaspersimonsen" }];
