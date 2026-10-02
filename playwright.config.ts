@@ -3,7 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "e2e",
   globalSetup: "./e2e/warm.ts",
-  timeout: 90_000,
+  timeout: 180_000, // software WebGL can stall for seconds at a time late in a run (see MOVE_WAIT in the specs)
   use: {
     ...devices["Desktop Chrome"],
     baseURL: "http://localhost:3010",
