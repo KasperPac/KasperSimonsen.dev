@@ -1,5 +1,7 @@
 # Office redesign, phase 3 (Office and director): implementation plan
 
+> **SUPERSEDED (2026-10-02).** Kasper redirected the design (content lives in the scene). Tasks 1–5 were built and are kept; the rest is replaced by `2026-10-02-office-interactions-m1.md` and its follow-on milestones, per `docs/superpowers/specs/2026-10-02-office-interactions-design.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make the office interactive. Hovering or tabbing to an object lights it in its section colour with a label. Clicking it moves the camera to that object. URLs such as `/work/manuva`, `/contact` and `/services/<slug>` open a panel over the scene, and Back, Esc or the close control return the camera to the standing spot. Phones get tap markers and portrait framing.

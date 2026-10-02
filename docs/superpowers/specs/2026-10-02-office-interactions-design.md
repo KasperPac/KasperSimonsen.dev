@@ -29,7 +29,7 @@ memorable without ever standing between a visitor and the work or the contact de
 | Crate | Dig: records flip forward one at a time; the front one pulls out |
 | Drawer | Business card with email and links, plus "Write to me", which opens the contact form panel |
 | Shelf | Four services, one ornament each; the two engagement models close every service's Read more |
-| Content in 3D | Real HTML placed in the scene (drei `Html` with `transform`); static labels stay line geometry |
+| Content in 3D | Real HTML pinned beside the object (a DOM overlay positioned by projecting the object each frame; cards face the camera, so no CSS 3D transform is needed); static labels stay line geometry |
 | Phones | The same cards, docked at the bottom of the screen instead of floating in the scene |
 | Routing | `window.history.pushState`, synced with the Next router; no intercepting or parallel routes |
 
@@ -140,7 +140,7 @@ until the standalone restyle (old phase 5). `/services/<slug>` is new, in the of
 | `office/scene/targets.ts` | URL ↔ scene state (as built, with the shelf's four services) |
 | `office/history.ts` | `pushState`/`popstate` bridge: local layers (crate browsing, shelf browsing, monitor, panel open) get history entries without changing the path |
 | `office/objects/{crate,drawer,shelf,monitor}` | Each object's motion as pure, tested functions of its state and time, plus its card |
-| `office/cards/Card.tsx` | HTML card in the scene (drei `Html` with `transform`), or docked at the bottom on narrow screens |
+| `office/cards/Card.tsx` | HTML card pinned beside its object (projected each frame), or docked at the bottom on narrow screens |
 | `panels/Panel.tsx` | Read-more dialog (client only, no route) |
 | `office/camera/*`, `office/style/cleanEdges.ts` | Camera rig and hover highlight (as built) |
 
