@@ -33,6 +33,8 @@ export type OverlayElements = { label: HTMLElement | null; markers: Partial<Reco
 export type OfficeCanvasProps = {
   /** Walk-in progress 0 → 1. Read every frame; never causes a render. */
   progress: RefObject<number>;
+  /** Where the phone's standing view is panned to, -1 → 1 (camera/pan.ts); the camera eases after it. */
+  pan: RefObject<number>;
   /** Carries data-scene-ready, data-walkin-progress, data-street, data-camera and data-drawer for the page and for tests. */
   host: RefObject<HTMLElement | null>;
   director: RefObject<DirectorState>;
@@ -89,10 +91,10 @@ function useCleanEdges(url: string, keyFor?: (mesh: Object3D) => string | null) 
   return { gltf, handle };
 }
 
-type StreetProps = Pick<OfficeCanvasProps, "progress" | "host" | "director" | "onProgressCross" | "onSettled"> & { info: RefObject<OfficeInfo | null> };
+type StreetProps = Pick<OfficeCanvasProps, "progress" | "pan" | "host" | "director" | "onProgressCross" | "onSettled"> & { info: RefObject<OfficeInfo | null> };
 
 /** The street, the walk-in and the one place the render camera is driven from. */
-function Street({ progress, host, director, onProgressCross, onSettled, info }: StreetProps) {
+function Street({ progress, pan, host, director, onProgressCross, onSettled, info }: StreetProps) {
   const { gltf: street } = useCleanEdges(manifest.street.url);
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const walkIn = useMemo(() => {
@@ -107,6 +109,7 @@ function Street({ progress, host, director, onProgressCross, onSettled, info }: 
   const left = useRef<HotspotName | null>(null); // the object a return move leaves, so it retraces that object's arc
   const band = useRef<number | null>(null);
   const written = useRef({ progress: -1, camera: "" });
+  const panNow = useRef(0);
 
   useFrame((_, dt) => {
     const p = progress.current;
@@ -114,7 +117,9 @@ function Street({ progress, host, director, onProgressCross, onSettled, info }: 
     if (skippingGirl) applySkippingGirl(skippingGirl, p, reduced);
     readPose(walkIn.source, poses.walk);
     const office = info.current;
-    basePose(poses.walk, office?.standPortrait ?? null, p, camera.aspect, poses.base);
+    // The pan follows the finger closely but not rigidly (under reduced motion, exactly).
+    panNow.current = reduced ? pan.current : panNow.current + (pan.current - panNow.current) * (1 - Math.exp(-dt * 14));
+    basePose(poses.walk, office?.standPortrait ?? null, p, camera.aspect, poses.base, panNow.current);
 
     const d = director.current;
     const hotspot = focusedHotspot(d);

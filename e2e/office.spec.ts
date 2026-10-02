@@ -204,3 +204,20 @@ test("a small scroll back keeps you in the office, dots and all", async ({ page 
   await expect(office(page)).toHaveAttribute("data-director", "idle");
   await expect(dot(page, "hs_crate")).toBeVisible();
 });
+
+test.describe("phone panning", () => {
+  test.use({ viewport: { width: 390, height: 844 } });
+  test("a sideways drag pans along the room, and doesn't open what it ends on", async ({ page }) => {
+    await standWithDots(page);
+    const x = () => dot(page, "hs_shelf").evaluate((m) => m.getBoundingClientRect().x);
+    const before = await x();
+    await page.mouse.move(330, 600);
+    await page.mouse.down();
+    await page.mouse.move(200, 604, { steps: 8 });
+    await page.mouse.move(60, 606, { steps: 8 });
+    await page.mouse.up();
+    await expect.poll(x, { timeout: MOVE_WAIT }).toBeLessThan(before - 60); // the room slid left: looking right
+    await page.waitForTimeout(800);
+    await expect(office(page)).toHaveAttribute("data-director", "idle");
+  });
+});

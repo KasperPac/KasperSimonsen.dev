@@ -32,6 +32,7 @@ export const COPY = {
   /** On the street, for anyone who doesn't think to scroll (Kasper). */
   arrive: { comeIn: "Come in", scroll: "or scroll" },
   hints: "Have a look around.",
+  hintsPan: "Drag sideways to look around.",
   sleeve: { readMore: "Read more", stack: "Built with" },
   caseStudy: { stack: "Built with", live: "See it live" },
   crate: {

@@ -58,9 +58,13 @@ short hint line shows; after that the dots stay as the way round. Kasper picked 
 A dot is tappable. Standing holds through a small scroll back (progress down to 0.97, ~200 px), so a wheel notch or a
 nudge on a phone doesn't walk the visitor out.
 
-**Phones** (2026-10-03, Kasper: "meant for mobile, not cropped"): the portrait standing view looks down from high at
-the front wall with the whole room centred; it is authored for a 0.64-wide screen and narrower phones widen it (to
-105 degrees) so the room always fits across. The crate's hint says swipe and tap on touch screens.
+**Phones** (2026-10-03, Kasper: "meant for mobile, not cropped", then "pannable, there's a lot of negative space"):
+the portrait standing view is in close on the desk, filling the tall screen, and a sideways drag pans it (slides and
+turns a little) to the couch and crate one way and the record player, shelf and telly the other; vertical drags stay
+the walk-in's scroll, and a drag never opens what it ends on. It is authored for a 0.64-wide screen; narrower phones
+widen it. The arrival tour pans to each object it lights; glints only light what's on screen; the hint line says
+"Drag sideways to look around." On the record player, phones play the record in a wider view with the platter in shot
+and come in close once the sleeve has turned round. The crate's hint says swipe and tap on touch screens.
 
 ### 3.2 Crate (work)
 

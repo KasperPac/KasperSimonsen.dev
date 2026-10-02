@@ -7,6 +7,7 @@ import { theme } from "./theme";
 import { COPY } from "./copy";
 import { useWalkInProgress } from "./walkin/useWalkInProgress";
 import { startAutoWalk } from "./walkin/autoWalk";
+import { dragPan, inView, isPanGesture, panFor } from "./camera/pan";
 import { describeDirector, focusedHotspot, initialDirector, isLocked, reduceDirector, type DirectorState } from "./director/director";
 import { pathForTarget } from "./scene/targets";
 import { layerOf, sceneFor } from "./scene/location";
@@ -30,6 +31,7 @@ const OfficeCanvas = dynamic(() => import("./OfficeCanvas"), { ssr: false });
 const toEnd = () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const back = () => window.history.back();
+const portrait = () => window.innerWidth < window.innerHeight;
 
 /** Fixed full-screen office over a scroll track exactly as long as the walk-in. The location drives everything. */
 export default function OfficeExperience() {
@@ -118,6 +120,7 @@ export default function OfficeExperience() {
     return { layer: l, scene: sceneFor(window.location.pathname, l) };
   };
   const activate = useCallback((hit: Hit) => {
+    if (panning.current) return; // the end of a pan, not a tap
     const now = live().scene.target;
     if (now && sameHit(now, hit)) return;
     if (now?.hotspot === "hs_crate" && now.item && hit.hotspot === "hs_crate") return; // one record out at a time
@@ -175,6 +178,43 @@ export default function OfficeExperience() {
     if (!canPull(focusedHotspot(director.current), live().scene.target?.item ?? null)) return;
     activate({ hotspot: "hs_crate", item: work[crate.current.dig].slug });
   }, [activate]);
+
+  // On a phone, standing in the office, a sideways drag pans the view along the room (Kasper: a tall screen has a lot of
+  // empty space). Up and down stays the walk-in's scroll. A drag never also opens what it ended on.
+  const pan = useRef(0);
+  const panning = useRef(false);
+  useEffect(() => {
+    if (state.kind !== "idle") return;
+    let start: { x: number; y: number; pan: number } | null = null;
+    const onDown = (e: PointerEvent) => {
+      panning.current = false;
+      start = window.innerWidth < window.innerHeight ? { x: e.clientX, y: e.clientY, pan: pan.current } : null;
+    };
+    const onMove = (e: PointerEvent) => {
+      if (!start) return;
+      const dx = e.clientX - start.x;
+      if (!panning.current && isPanGesture(dx, e.clientY - start.y)) panning.current = interacted.current = true;
+      if (panning.current) pan.current = dragPan(start.pan, dx, window.innerWidth);
+    };
+    let clear = 0;
+    const onUp = () => {
+      start = null;
+      // the click that follows this pointerup still sees `panning`, then it's over
+      window.clearTimeout(clear);
+      clear = window.setTimeout(() => (panning.current = false), 60);
+    };
+    window.addEventListener("pointerdown", onDown);
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      window.removeEventListener("pointerdown", onDown);
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      window.clearTimeout(clear);
+    };
+  }, [state.kind]);
 
   // Swipes flick while browsing the crate on a touch screen (hovering does it with a pointer).
   useEffect(() => {
@@ -240,7 +280,10 @@ export default function OfficeExperience() {
     const step = () => {
       if (used.current) return;
       const at = interacted.current ? null : tourAt((performance.now() - start) / 1000);
-      if (!interacted.current) show(at ? { hotspot: at, item: null } : null);
+      if (!interacted.current) {
+        show(at ? { hotspot: at, item: null } : null);
+        if (portrait()) pan.current = at ? panFor(at) : 0; // on a phone the tour pans to each object, and back to the desk
+      }
       if (at) frame = requestAnimationFrame(step);
       else {
         done = true;
@@ -267,7 +310,10 @@ export default function OfficeExperience() {
     const wait = () => (timer = window.setTimeout(glint, glintGap(Math.random()) * 1000));
     const glint = () => {
       if (visitorHover.current) return wait();
-      last = nextGlint(last, Math.random());
+      // on a phone, only what's on screen at the current pan
+      const among = portrait() ? HOTSPOTS.filter((h) => inView(h, pan.current)) : HOTSPOTS;
+      if (!among.length) return wait();
+      last = nextGlint(last, Math.random(), among);
       lit = true;
       show({ hotspot: last, item: null });
       timer = window.setTimeout(() => {
@@ -301,6 +347,7 @@ export default function OfficeExperience() {
         <OfficeErrorBoundary host={host}>
           <OfficeCanvas
             progress={progress}
+            pan={pan}
             host={host}
             director={director}
             hover={hover}
@@ -424,7 +471,8 @@ export default function OfficeExperience() {
       )}
 
       <p className="office-hints-text" aria-hidden="true">
-        {COPY.hints}
+        <span className="office-hints-wide">{COPY.hints}</span>
+        <span className="office-hints-tall">{COPY.hintsPan}</span>
       </p>
 
       <div ref={track} className="office-track" style={{ height: `${theme.walkInScreens * 100}vh` }} aria-hidden="true" />

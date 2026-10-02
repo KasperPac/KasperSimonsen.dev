@@ -137,6 +137,14 @@ html.office-locked {
 .office[data-director="idle"]:is([data-hints="dots"], [data-hints="used"]) .office-label { margin-top: -64px; }
 .office-hints-text { display: none; position: fixed; left: 16px; right: 16px; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 3; text-align: center; font: 11px/1.5 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.7); }
 .office[data-hints="dots"][data-director="idle"]:not([data-office-fallback="true"]) .office-hints-text { display: block; }
+/* Phones pan the standing view sideways (camera/pan.ts): the page keeps vertical drags (the walk-in's scroll) and hands
+   sideways ones to the office. */
+.office-hints-tall { display: none; }
+@media (orientation: portrait) {
+  .office[data-director="idle"] .office-stage { touch-action: pan-y; }
+  .office-hints-wide { display: none; }
+  .office-hints-tall { display: inline; }
+}
 
 /* On the street: a way in for anyone who doesn't think to scroll (Kasper). Gone once the camera is on its way down,
    back if they scroll up to the top again. Fades rather than cuts; hidden, it can't be tabbed to. The street fades to

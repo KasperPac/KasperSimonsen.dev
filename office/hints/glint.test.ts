@@ -23,3 +23,10 @@ describe("glintGap", () => {
     expect(glintGap(0.5)).toBeGreaterThan(min);
   });
 });
+
+describe("nextGlint among some", () => {
+  it("only lights objects it's given", () => {
+    for (const r of [0, 0.5, 0.99]) expect(["hs_drawer", "hs_monitor"]).toContain(nextGlint(null, r, ["hs_drawer", "hs_monitor"]));
+  });
+  it("lights the one it's given even if it just did", () => expect(nextGlint("hs_drawer", 0.5, ["hs_drawer"])).toBe("hs_drawer"));
+});

@@ -3,6 +3,7 @@ import { Object3D, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { applyPose, blendPose, copyPose, DESIGN_ASPECT, easeInOutCubic, makePose, MAX_FOV, readPose, smoothstep, widenForAspect, type Pose } from "./pose";
 import { basePose, focusPose, playerPose, PORTRAIT_ASPECT, PORTRAIT_FROM, PORTRAIT_MAX_FOV } from "./basePose";
 import { CameraRig, FOCUS_MOVES, FOCUS_SECONDS, PLAYER_MOVE } from "./rig";
+import { applyPan } from "./pan";
 
 const pose = (x: number, fov = 50, yaw = 0): Pose => ({
   position: new Vector3(x, 0, 0),
@@ -102,6 +103,13 @@ describe("basePose", () => {
   });
   it("keeps the portrait standing pose as authored on its own phone shape and wider ones", () =>
     expect(basePose(walk, pose(10, 82), 1, 0.7, makePose()).fov).toBeCloseTo(82));
+  it("pans the phone's standing view", () => {
+    const panned = basePose(walk, pose(10, 82), 1, 0.46, makePose(), 1);
+    expect(panned.position.distanceTo(applyPan(pose(10, 82), 1, makePose()).position)).toBeCloseTo(0);
+  });
+  it("never pans a landscape view", () => expect(basePose(walk, portrait, 1, 1.6, makePose(), 1).position.x).toBe(0));
+  it("brings the pan in only as the walk-in hands over", () =>
+    expect(basePose(walk, pose(10, 82), PORTRAIT_FROM, 0.46, makePose(), 1).position.x).toBeCloseTo(0));
   it("eases the widening in with the rest of the hand-over", () => {
     const half = basePose(walk, pose(10, 82), (PORTRAIT_FROM + 1) / 2, 0.46, makePose()).fov;
     expect(half).toBeGreaterThan(widenForAspect(50, 0.46));

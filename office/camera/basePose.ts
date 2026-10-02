@@ -1,4 +1,5 @@
-import { blendPose, copyPose, smoothstep, widenForAspect, type Pose } from "./pose";
+import { blendPose, copyPose, makePose, smoothstep, widenForAspect, type Pose } from "./pose";
+import { applyPan } from "./pan";
 
 /** On portrait screens the walk-in hands over to the portrait standing pose over the last stretch. */
 export const PORTRAIT_FROM = 0.9;
@@ -7,15 +8,20 @@ export const PORTRAIT_ASPECT = 0.64;
 /** Narrower phones widen the portrait standing pose to keep the room across them (Kasper: "not cropped"), up to this. */
 export const PORTRAIT_MAX_FOV = 105;
 
-/** The walk-in's camera for this frame: widened for narrow screens, ending at the portrait standing pose on portrait screens. */
-export function basePose(walkIn: Pose, standPortrait: Pose | null, progress: number, aspect: number, out: Pose): Pose {
+const panned = makePose();
+
+/**
+ * The walk-in's camera for this frame: widened for narrow screens, ending at the portrait standing pose on portrait
+ * screens, panned there by `pan` (see pan.ts).
+ */
+export function basePose(walkIn: Pose, standPortrait: Pose | null, progress: number, aspect: number, out: Pose, pan = 0): Pose {
   copyPose(walkIn, out);
   out.fov = widenForAspect(out.fov, aspect);
   if (aspect < 1 && standPortrait) {
     const k = smoothstep(PORTRAIT_FROM, 1, progress);
     if (k > 0) {
       const from = out.fov;
-      blendPose(out, standPortrait, k, out);
+      blendPose(out, applyPan(standPortrait, pan, panned), k, out);
       out.fov = from + (widenForAspect(standPortrait.fov, aspect, PORTRAIT_ASPECT, PORTRAIT_MAX_FOV) - from) * k;
     }
   }

@@ -5,9 +5,10 @@ export const GLINT_SECONDS = 1.1;
 /** The wait between glints, in seconds: anywhere in this range, so they come now and then rather than on a beat. */
 export const GLINT_GAP_SECONDS = [2.4, 4.4] as const;
 
-/** The next object to glint, for a random number in [0, 1): any object but the one that just did. */
-export function nextGlint(last: HotspotName | null, random: number): HotspotName {
-  const pool = HOTSPOTS.filter((h) => h !== last);
+/** The next object to glint, for a random number in [0, 1): one of `among` (all of them by default), not the last if it can. */
+export function nextGlint(last: HotspotName | null, random: number, among: readonly HotspotName[] = HOTSPOTS): HotspotName {
+  const others = among.filter((h) => h !== last);
+  const pool = others.length ? others : among;
   return pool[Math.min(pool.length - 1, Math.floor(random * pool.length))];
 }
 
