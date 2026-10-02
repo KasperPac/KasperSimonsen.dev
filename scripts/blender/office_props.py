@@ -574,9 +574,89 @@ def _sleeve(name, parent, col, location, rotation=(0, 0, 0)):
     return _part(name, bm, parent, col, location, rotation, uv=lambda co: (co.x / SLEEVE + 0.5, co.z / SLEEVE))
 
 
-def build_crate(name, location, rotation_z, parent, col, records=9):
+ART_BOX = (0.24, 0.12)  # largest logo width and height on a sleeve front, metres
+ART_BOX_LABELLED = (0.2, 0.09)
+ART_TOP = 0.29  # the art's top edge above the sleeve's bottom: the top of the sleeve shows between flicked records
+LABEL_SIZE = 0.032
+
+
+def _svg_mesh(path):
+    """An SVG's filled shapes as one flat bmesh in xy (y up), any scale; None if the file draws nothing."""
+    before, mats = set(bpy.data.objects), set(bpy.data.materials)
+    bpy.ops.import_curve.svg(filepath=str(common.REPO / path))
+    curves = [o for o in bpy.data.objects if o not in before]
+    dg = bpy.context.evaluated_depsgraph_get()
+    bm = bmesh.new()
+    for o in curves:
+        o.data.resolution_u = 4  # few facets per curve: many short edges read as noise
+        o.data.fill_mode = "BOTH"
+    dg.update()
+    for o in curves:
+        mesh = bpy.data.meshes.new_from_object(o.evaluated_get(dg))
+        mesh.transform(o.matrix_world)
+        bm.from_mesh(mesh)
+        bpy.data.meshes.remove(mesh)
+    cols = {c for o in curves for c in o.users_collection}
+    for o in curves:
+        data = o.data
+        bpy.data.objects.remove(o, do_unlink=True)
+        bpy.data.curves.remove(data)
+    for c in cols:
+        if c is not bpy.context.scene.collection and not c.objects:
+            bpy.data.collections.remove(c)
+    for m in set(bpy.data.materials) - mats:  # the importer's fill colours; the site draws lines, not materials
+        if not m.users:
+            bpy.data.materials.remove(m)
+    if not bm.verts:
+        bm.free()
+        return None
+    bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-6)
+    return bm
+
+
+def _bounds(bm):
+    xs = [v.co.x for v in bm.verts]
+    ys = [v.co.y for v in bm.verts]
+    return min(xs), max(xs), min(ys), max(ys)
+
+
+def _sleeve_art(record, row, col):
+    """A project's logo (its SVGs side by side) in line geometry on the front of `record`, top-aligned at ART_TOP and
+    centred, with `row['label']` set under it in the built-in font when given."""
+    parts = [bm for bm in (_svg_mesh(p) for p in row["logos"]) if bm]
+    if not parts:
+        return
+    # lay the SVGs out left to right at a common height, a gap of 15% of that height between them
+    height = max(_bounds(bm)[3] - _bounds(bm)[2] for bm in parts)
+    art = bmesh.new()
+    x = 0.0
+    for bm in parts:
+        x0, x1, y0, y1 = _bounds(bm)
+        k = height / (y1 - y0)
+        bmesh.ops.transform(bm, matrix=Matrix.Translation((x, 0, 0)) @ Matrix.Diagonal((k, k, 1, 1)) @ Matrix.Translation((-x0, -y0, 0)), verts=bm.verts)
+        x += (x1 - x0) * k + 0.15 * height
+        mesh = bpy.data.meshes.new("tmp")
+        bm.to_mesh(mesh)
+        bm.free()
+        art.from_mesh(mesh)
+        bpy.data.meshes.remove(mesh)
+    x0, x1, y0, y1 = _bounds(art)
+    box = ART_BOX_LABELLED if row.get("label") else ART_BOX
+    k = min(box[0] / (x1 - x0), box[1] / (y1 - y0))
+    # centre on x, top at ART_TOP; stand it up on the sleeve front (xz plane), 1 mm proud of it, facing -y
+    place = (Matrix.Translation((0, -0.0035, ART_TOP)) @ Matrix.Rotation(math.pi / 2, 4, "X")
+             @ Matrix.Diagonal((k, k, 1, 1)) @ Matrix.Translation((-(x0 + x1) / 2, -y1, 0)))
+    bmesh.ops.transform(art, matrix=place, verts=art.verts)
+    _part(f"{record.name}__art", art, record, col)
+    if row.get("label"):
+        common.text_mesh(f"{record.name}__label", row["label"], LABEL_SIZE, 0.0005,
+                         (0, -0.0025, ART_TOP - box[1] - 0.035), record, col)
+
+
+def build_crate(name, location, rotation_z, parent, col, records=9, sleeves=()):
     """Open-top slatted record crate with hand holes, and LPs standing in it as children <name>__record_00.. with
-    their origins on their bottom edges, so each one flips forward by rotating about x."""
+    their origins on their bottom edges, so each one flips forward by rotating about x. The front records carry the
+    `sleeves` rows' logos, one row each from record 00."""
     root = _root(name, location, rotation_z, parent, col)
     w, t, slats = 0.36, 0.015, ((0.0, 0.07), (0.095, 0.165), (0.19, 0.26))
     bm = bmesh.new()
@@ -598,7 +678,9 @@ def build_crate(name, location, rotation_z, parent, col, records=9):
     for i in range(records):
         y = -span / 2 + span * i / max(records - 1, 1)
         jitter = (i * 7) % 3 - 1, (i * 5) % 3 - 1  # -1, 0 or 1, so the LPs don't stand in perfect order
-        _sleeve(f"{name}__record_{i:02d}", root, col, (0.004 * jitter[0], y, 0.012), (-0.14 + 0.012 * (i % 3), 0, 0.01 * jitter[1]))
+        record = _sleeve(f"{name}__record_{i:02d}", root, col, (0.004 * jitter[0], y, 0.012), (-0.14 + 0.012 * (i % 3), 0, 0.01 * jitter[1]))
+        if i < len(sleeves):
+            _sleeve_art(record, sleeves[i], col)
     return root
 
 

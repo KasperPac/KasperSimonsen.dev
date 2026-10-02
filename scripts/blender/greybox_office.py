@@ -11,6 +11,7 @@ Tune the walk-in by editing WALKIN_KEYS, re-running this, then export.py.
 """
 import bisect
 import importlib
+import json
 import math
 import sys
 from pathlib import Path
@@ -44,6 +45,8 @@ COPY = {
 # The parts of build_desk_mess kept: the pen, can, paper balls and cables read only as stray lines from the standing
 # spot, so they're left out.
 DESK_MESS = ("mug", "chips", "papers", "notes", "headphones")
+# One row per project, in `work` order: the logo files laid out on its sleeve front, and an optional label under them.
+SLEEVES = json.loads((common.REPO / "art" / "sleeves.json").read_text(encoding="utf-8"))
 
 # The office frame: metres, origin at meta.door on The Commons' frontage, +x north along Gwynne St (right when facing
 # in), +y west into the building, +z up. The lobby (commons.lobby) runs along the frontage from the south blade to
@@ -76,14 +79,17 @@ CHAIR = (-0.35, -0.75, math.pi - 0.35)  # x and y from the desk's centre, turn: 
 RESERVED = {"couch": (-1.825, 4.2, math.pi / 2, 1.7, 0.85), "tv": (2.0, 4.0, -math.pi / 2, 0.7, 0.5)}
 PILLOW_TURN = -math.pi / 2  # the pillow stood side-on to the couch, its top leaning into the far arm
 # Focus cameras (spec 3.5), room frame: (eye, look-at, vertical fov). Landscape frames (16:10) leave the right ~40% for
-# the panel, so the object's centre sits about a third in from the left; the monitor has no panel and is centred.
-# Portrait frames (390 x 844) centre the object, as the panel is a full-screen sheet there. Every eye is at least
-# 0.3 m from any mesh (the crate and monitor eyes pass closest, over the chair), except the drawer's: it looks into the
-# open drawer under the desk, 0.17 m from the drawer front on portrait.
+# the panel, so the object's centre sits about a third in from the left; the monitor and the crate have no panel beside
+# them and are centred. Portrait frames (390 x 844) centre the object, as the panel is a full-screen sheet there. Every
+# eye is at least 0.3 m from any mesh (the crate and monitor eyes pass closest, by the desk top and over the chair),
+# except the drawer's: it looks into the open drawer under the desk, 0.17 m from the drawer front on portrait.
 FOCUS = {
-    # low, looking down into the crate over its front edge, so the front records read
-    "crate": {"land": ((-1.1, 4.0, 1.0), (-0.87, 4.75, 0.2), 45.0),
-              "portrait": ((-1.1, 3.95, 1.05), (-1.1, 4.8, 0.16), 70.0)},
+    # square on to the crate's front and 63 degrees down: a flicked record stands upright against the corner posts, and
+    # the next sleeve's logo only shows over its top from 57 degrees down (the front sleeve's label over the crate's
+    # front wall likewise). Centred, as the pulled record carries its details on its back, not on a card beside it; the
+    # crate fills 60% of the height on 16:10 and 82% of the width on portrait
+    "crate": {"land": ((-1.059, 4.393, 0.988), (-1.101, 4.809, 0.167), 45.0),
+              "portrait": ((-1.056, 4.36, 1.05), (-1.101, 4.808, 0.167), 60.0)},
     # framed for the top drawer open 0.30 m (the runtime slides it): looking down into it at the business card, whose
     # details the runtime prints on it. On 16:10 the card is centred at ~30% of the width with the clutter round it in
     # frame (45 degrees down); on portrait it is ~72% of the width with the back of the drawer above it (40 degrees)
@@ -255,7 +261,7 @@ def furnish(room, col, w, back):
     props.build_bin("prop_bin", (0.85, 3.95, 0), 0.3, room, col, missed=False, balls=3)
 
     # record crate on the floor left of the desk; sideboard with the turntable right of it, the shelf above
-    props.build_crate("hs_crate", (desk.x - 1.0, back - 0.3, 0), 0.1, room, col)
+    props.build_crate("hs_crate", (desk.x - 1.0, back - 0.3, 0), 0.1, room, col, sleeves=SLEEVES)
     sideboard = Vector((1.3, back - 0.23, 0))
     props.build_turntable("prop_turntable", sideboard, 0, room, col)
     # in the 0.2 m between the deck and the right speaker
