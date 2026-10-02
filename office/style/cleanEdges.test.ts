@@ -53,6 +53,14 @@ describe("applyCleanEdges", () => {
     expect(edgesOf(crate).geometry).toBe(edgesOf(twin).geometry);
   });
 
+  it("returns the live handle when applied again (a remount must still control the lines)", () => {
+    const { root, crate } = scene();
+    const first = applyCleanEdges(root, opts);
+    const second = applyCleanEdges(root, opts);
+    expect(second).toBe(first);
+    expect(edgesOf(crate).material).toBe(second.line);
+  });
+
   it("is idempotent", () => {
     const { root, crate } = scene();
     applyCleanEdges(root, opts);

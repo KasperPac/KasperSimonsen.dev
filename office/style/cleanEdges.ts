@@ -36,6 +36,9 @@ export type CleanEdgesHandle = { fill: MeshBasicMaterial; line: LineMaterial; fa
 
 const DEFAULT_FADE_MIN = 0.15;
 
+// drei caches loaded scenes, so a remount restyles the same root: hand back the handle that owns its lines.
+const handles = new WeakMap<Object3D, CleanEdgesHandle>();
+
 /** Line opacity at `distance`: 1 up to `near`, easing (smoothstep) down to `min` at `far`. Invalid params mean no fade. */
 export function fadeOpacity(distance: number, near: number, far: number, min: number): number {
   if (![distance, near, far, min].every(Number.isFinite) || near >= far) return 1;
@@ -51,6 +54,8 @@ export function fadeOpacity(distance: number, near: number, far: number, min: nu
  * `edge_fade_near`/`edge_fade_far`/`edge_fade_min` give it a distance fade, driven by `updateEdgeFades`.
  */
 export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanEdgesHandle {
+  const existing = handles.get(root);
+  if (existing) return existing;
   const fill = new MeshBasicMaterial({
     color: opts.background,
     side: DoubleSide,
@@ -109,7 +114,9 @@ export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanE
     for (const o of group.objects) box.union(new Box3().setFromObject(o));
     box.getBoundingSphere(new Sphere()).center.clone().toArray().forEach((v, i) => group.centre.setComponent(i, v));
   }
-  return { fill, line, fades: [...fades.values()] };
+  const handle = { fill, line, fades: [...fades.values()] };
+  handles.set(root, handle);
+  return handle;
 }
 
 /** Nearest valid `edge_threshold_deg` (a Blender custom property, exported as glTF extras) up the tree. */
