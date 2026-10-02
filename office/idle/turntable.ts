@@ -53,8 +53,8 @@ export function findTurntable(root: Object3D): TurntableNodes | null {
 
 const ease = (t: number) => t * t * (3 - 2 * t);
 
-/** Per-frame update. Pure with respect to `seconds`, so it can be tested without React. */
-export function applyTurntable(nodes: TurntableNodes, seconds: number, reducedMotion: boolean): void {
+/** Per-frame update. Pure with respect to `seconds`, so it can be tested without React. `hideSleeves` while a project's sleeve is on the stand. */
+export function applyTurntable(nodes: TurntableNodes, seconds: number, reducedMotion: boolean, hideSleeves = false): void {
   const { platter, sleeves, platterY, restY } = nodes;
   // glTF is Y-up, so a Blender object's local up axis is +Y. Negative = clockwise seen from above.
   platter.rotation.y = platterY - (reducedMotion ? 0 : platterAngle(seconds));
@@ -68,4 +68,5 @@ export function applyTurntable(nodes: TurntableNodes, seconds: number, reducedMo
     if (swapping && i === index) s.position.y -= SWAP_TRAVEL * e;
     else if (swapping && i === incoming) s.position.y -= SWAP_TRAVEL * (1 - e);
   });
+  if (hideSleeves) sleeves.forEach((s) => (s.visible = false));
 }

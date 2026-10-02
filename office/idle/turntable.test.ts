@@ -115,6 +115,12 @@ describe("applyTurntable", () => {
     expect(sleeves.map((s) => s.visible)).toEqual([true, false, false, false]);
     expect(sleeves.every((s) => s.position.y === 1)).toBe(true);
   });
+
+  it("hides every now-playing sleeve while a project's sleeve is on the stand", () => {
+    const { root, sleeves } = rig();
+    applyTurntable(findTurntable(root)!, 0.9, false, true);
+    expect(sleeves.every((s) => !s.visible)).toBe(true);
+  });
 });
 
 describe("findTurntable", () => {
