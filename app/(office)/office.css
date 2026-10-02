@@ -35,6 +35,11 @@ body {
   color: inherit;
 }
 
+/* With no 3D there is no walk-in to scroll through. */
+.office[data-office-fallback="true"] .office-track {
+  display: none;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

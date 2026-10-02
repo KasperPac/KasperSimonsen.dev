@@ -54,6 +54,9 @@ test("a missing model shows the fallback with links, not a blank screen", async 
   await expect(page.locator(".office-fallback")).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole("link", { name: "See the work" })).toHaveAttribute("href", "/work");
   await expect(page.getByRole("link", { name: "Get in touch" })).toHaveAttribute("href", "/contact");
+  // No empty walk-in track to scroll through behind the fallback.
+  const overflow = await page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight);
+  expect(overflow).toBeLessThanOrEqual(1);
 });
 
 test("the old pages still work while the office takes over /", async ({ page }) => {
