@@ -1225,11 +1225,15 @@ In `applyCleanEdges`, declare `const highlights = new Map<string, LineMaterial>(
     if (fade) {
 ```
 
-Keep the rest of the fade block as it is. Change the return to:
+Keep the rest of the fade block as it is. The function ends by caching the handle per root (a phase 1 review fix: drei caches scenes, so a remount must get the live handle back). Change the handle it builds to:
 
 ```ts
-  return { fill, line, fades: [...fades.values()], highlights, baseColor: opts.line };
+  const handle = { fill, line, fades: [...fades.values()], highlights, baseColor: opts.line };
+  handles.set(root, handle);
+  return handle;
 ```
+
+A cached handle is returned as-is on later calls, so `highlightKey` only takes effect on a root's first styling. That's fine: the office is always styled with it.
 
 Add `setHighlight`, and extend `setLineResolution`:
 
@@ -1416,14 +1420,12 @@ import { applyCleanEdges, setHighlight, setLineResolution, updateEdgeFades, type
 import { findClipFor, makeClipSampler, progressToTime } from "./walkin/clipSampler";
 import { useTurntable } from "./idle/useTurntable";
 import { applySkippingGirl, findSkippingGirl } from "./walkin/skippingGirl";
-import { findCamera } from "./walkin/cameraPose";
+import { findCamera, WALKIN_CAMERA } from "./walkin/cameraPose";
 import { applyPose, makePose, readPose, type Pose } from "./camera/pose";
 import { basePose, focusPose } from "./camera/basePose";
 import { CameraRig, FOCUS_SECONDS } from "./camera/rig";
 import { FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, hitFor, type Hit, type HotspotName } from "./hotspots/registry";
 import { focusedHotspot, IDLE_AT, type DirectorState } from "./director/director";
-
-const WALKIN_CAMERA = "cam_walkin";
 
 /** DOM elements the canvas positions over hotspots each frame: the hover label and the touch markers. */
 export type OverlayElements = { label: HTMLElement | null; markers: Partial<Record<HotspotName, HTMLElement | null>> };
@@ -2045,6 +2047,11 @@ export default function OfficeExperience() {
 /* Scrolling would replay the walk-in under an open object. */
 html.office-locked {
   overflow: hidden;
+}
+
+/* With no 3D, the fallback's own links are the navigation (and "Get in touch" must not appear twice). */
+.office[data-office-fallback="true"] :is(.office-nav, .office-label, .office-marker, .office-browse, .office-back) {
+  display: none;
 }
 
 /* Real links for every object (spec 7.3): hidden until a keyboard user tabs into them. */
