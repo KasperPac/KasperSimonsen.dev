@@ -258,7 +258,7 @@ function Office({ host, director, hover, overlay, drawerCard, onHover, onActivat
     <>
       <primitive object={office.scene} onPointerMove={onPointerMove} onPointerOut={onPointerOut} onClick={onClick} />
       {drawerCard && card && (
-        <CardFace card={card} hotspot="hs_drawer" titleId={drawerCard.titleId}>
+        <CardFace surface={card} hotspot="hs_drawer" titleId={drawerCard.titleId}>
           {drawerCard.content}
         </CardFace>
       )}

@@ -29,4 +29,10 @@ export const COPY = {
     sent: "Sent. Talk soon.",
     error: "That didn't go through. Email me instead:",
   },
+  sleeve: { readMore: "Read more", stack: "Built with" },
+  caseStudy: { stack: "Built with", live: "See it live" },
+  crate: {
+    label: (name: string, n: number, of: number) => `Record crate: ${name}, ${n} of ${of}. Arrow keys flick, Enter pulls it out.`,
+    hint: "Scroll to flick through. Click a record to pull it out.",
+  },
 } as const;
