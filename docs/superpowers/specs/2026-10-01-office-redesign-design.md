@@ -4,6 +4,9 @@
 - **Branch:** `redesign/office` (Vercel preview per push; current site stays live until switch-over)
 - **Status:** design approved in brainstorming, awaiting spec review
 
+> **2026-10-02:** sections 3.4 (hover/touch), 3.5 (interactive objects), 5.1 (routes), 5.2 (URL drives the scene)
+> and delivery phases 3–4 are superseded by `2026-10-02-office-interactions-design.md` (content lives in the scene).
+
 ## 1. Goal
 
 Replace the current site with a 3D, clean-edge wireframe experience. The visitor scrolls from an elevated view of
