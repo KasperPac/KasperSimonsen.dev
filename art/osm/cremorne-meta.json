@@ -102,6 +102,9 @@
     }
   },
   "skipped": 0,
+  "hidden": [
+    626299691
+  ],
   "displaced": [
     45367251,
     131312008,
@@ -181,7 +184,7 @@
     1297659173
   ],
   "triangles": {
-    "osm_buildings": 45363,
+    "osm_buildings": 45311,
     "osm_commons": 48,
     "osm_aami_park": 394,
     "osm_mcg": 577,

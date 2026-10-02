@@ -17,6 +17,9 @@ export const COMMONS_WAY_IDS = [946747659, 946747654, 1290625051]; // 10–12, 1
 export const AAMI_PARK_WAY_ID = 60116158; // tagged leisure=stadium + height, no building tag
 export const MCG_WAY_ID = 210337258; // tagged leisure=stadium, no building or height tag
 export const NYLEX_SILOS_WAY_ID = 325324976; // Richmond Maltings silos under the Nylex Clock, building=silo, 36 m
+/** Buildings left out of the street: a 65 m tower right behind the Skipping Girl from the opening camera (Kasper: it
+ * makes her hard to see). */
+export const HIDDEN_WAY_IDS = [626299691];
 export const COMMONS_GREYBOX_HEIGHT = 14; // OSM has no height for The Commons; phase 2 models it from photos
 export const MCG_HEIGHT = 40; // OSM has no height for the MCG outline; its grandstands carry their own
 export const LANDMARK_PULL = 0.5; // landmarks sit at half their real distance, on the same bearing
@@ -159,6 +162,7 @@ export function osmToMeshes(elements) {
     osm_rail: bucket(),
   };
   const skipped = [];
+  const hidden = [];
   const displaced = [];
   const merged = [];
   const lowered = [];
@@ -201,6 +205,10 @@ export function osmToMeshes(elements) {
   for (const { id, tags, points } of ways) {
     const fixed = FIXED_LANDMARKS.find((landmark) => landmark.id === id);
     if (!(tags.building || fixed) || landmarkIds.includes(id)) continue;
+    if (HIDDEN_WAY_IDS.includes(id)) {
+      hidden.push(id);
+      continue;
+    }
     const ring = cleanRing(points);
     if (!ring) {
       skipped.push(id);
@@ -266,7 +274,7 @@ export function osmToMeshes(elements) {
   for (const [name, b] of Object.entries(buckets)) {
     if (b.indices.length) meshes[name] = { positions: b.positions, indices: b.indices };
   }
-  return { origin, meshes, skipped, displaced, merged, lowered, landmarks, frontage, nylex };
+  return { origin, meshes, skipped, hidden, displaced, merged, lowered, landmarks, frontage, nylex };
 }
 
 /** Mesh buckets → a glTF Document with one node + mesh per bucket, named after it. No normals, no materials. */

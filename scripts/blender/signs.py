@@ -54,7 +54,7 @@ DIGITS = {"0": "abcdef", "1": "bc", "2": "abged", "3": "abgcd", "4": "fgbc", "5"
           "8": "abcdefg", "9": "abcdfg"}
 
 # Pelaco: 14-foot box letters, double sided, on an open steel frame (metres).
-PELACO = {"height": 4.3, "depth": 0.45, "lift": 2.0, "frame": 1.2}
+PELACO = {"height": 4.3, "depth": 0.12, "lift": 2.0, "frame": 1.2}
 # Skipping Girl: a flat painted cut-out outlined in neon. The rope lights in four positions round the cycle; tubes
 # under her feet suggest the jump; painted lettering below.
 GIRL = {"height": 7.5, "feet": 5.1, "rope": 0.58, "hands": 0.25, "cutout": 0.12}
@@ -207,23 +207,50 @@ def triangles(obj):
 # --- Pelaco -----------------------------------------------------------------------------------------------------------
 
 
+# PELACO as single strokes on the 6-unit letter grid, (width, polylines): box letters read as a smudge of double
+# outlines from the opening camera (Kasper); a thin stroke's two edges merge into one bold line, like neon tube.
+STROKES = {
+    "P": (4, [[(0, 0), (0, 6), (3, 6), (4, 5), (4, 4), (3, 3), (0, 3)]]),
+    "E": (4, [[(4, 6), (0, 6), (0, 0), (4, 0)], [(0, 3), (3, 3)]]),
+    "L": (4, [[(0, 6), (0, 0), (4, 0)]]),
+    "A": (4.4, [[(0, 0), (2.2, 6), (4.4, 0)], [(0.85, 2.3), (3.55, 2.3)]]),
+    "C": (4, [[(4, 5), (3, 6), (1, 6), (0, 5), (0, 1), (1, 0), (3, 0), (4, 1)]]),
+    "O": (4, [[(1, 0), (3, 0), (4, 1), (4, 5), (3, 6), (1, 6), (0, 5), (0, 1), (1, 0)]]),
+}
+STROKE_WEIGHT = 0.5  # units of the 6-unit grid
+STROKE_GAP = 1.4
+
+
+def _stroke_width(text, height):
+    unit = height / 6
+    return sum(STROKES[ch][0] * unit for ch in text) + STROKE_GAP * unit * (len(text) - 1)
+
+
+def _stroke_text(bm, text, height, x, z, y0, y1):
+    """Single-stroke letters `height` tall from (x, z) along +x, each stroke a thin plate from y0 to y1."""
+    unit = height / 6
+    for ch in text:
+        width, lines = STROKES[ch]
+        for line in lines:
+            _plate(bm, [_strip(line, STROKE_WEIGHT)], y0, y1, unit, (x, z))
+        x += (width + STROKE_GAP) * unit
+
+
 def pelaco(location, rotation_z, col, scale=1.0):
-    """prop_pelaco: PELACO in 14-foot box letters on an open steel frame. One mesh."""
+    """prop_pelaco: PELACO in 14-foot letters, single strokes like neon tube, on an open steel frame. One mesh."""
     _remove("prop_pelaco")
     p = PELACO
     bm = bmesh.new()
-    width = _text_width("PELACO", p["height"])
-    _text(bm, "PELACO", p["height"], -width / 2, p["lift"], -p["depth"], 0.0)
-    # the frame behind, in two planes: a post behind each letter (so none shows in the gaps between them) and one at
-    # each end, rails under and over the letters, braced in every other bay below them, raking struts to the roof
-    unit, x, centres = p["height"] / 6, -width / 2, []
-    for ch in "PELACO":
-        centres.append(x + GLYPHS[ch][0] * unit / 2)
-        x += (GLYPHS[ch][0] + 1) * unit
-    xs = [-width / 2 - 0.3, *centres, width / 2 + 0.3]
+    width = _stroke_width("PELACO", p["height"])
+    _stroke_text(bm, "PELACO", p["height"], -width / 2, p["lift"], -p["depth"], 0.0)
+    # a board behind the letters: thin strokes hide nothing, and the city's lines through them made the word hard to read
+    _box(bm, (-width / 2 - 0.5, 0.0, p["lift"] - 0.4), (width / 2 + 0.5, 0.1, p["lift"] + p["height"] + 0.4))
+    # the frame behind, in two planes: posts at the ends and the middle (thin letters would show one behind each),
+    # rails under and over the letters, raking struts to the roof
+    xs = [-width / 2 - 0.3, 0.0, width / 2 + 0.3]
     zs = [0.1, p["lift"] - 0.1, p["lift"] + p["height"] + 0.2]
-    _lattice(bm, xs, zs, (0.1, p["frame"]), brace=[(c, 0) for c in range(0, len(xs) - 1, 2)])
-    for x in xs[::2]:
+    _lattice(bm, xs, zs, (0.1, p["frame"]))
+    for x in xs:
         _beam(bm, (x, p["frame"], p["lift"] + p["height"] / 2), (x, p["frame"] + 2.5, 0.1))
     return _root("prop_pelaco", location, rotation_z, col, _scaled(bm, scale))
 

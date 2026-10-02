@@ -4,7 +4,7 @@ import { NodeIO } from "@gltf-transform/core";
 import { meshesToDocument, osmToMeshes } from "./meshes.mjs";
 
 const source = JSON.parse(await readFile("art/osm/cremorne.json", "utf8"));
-const { origin, meshes, skipped, displaced, merged, lowered, landmarks, frontage, nylex } = osmToMeshes(source.elements);
+const { origin, meshes, skipped, hidden, displaced, merged, lowered, landmarks, frontage, nylex } = osmToMeshes(source.elements);
 await new NodeIO().write("art/osm/cremorne-osm.glb", meshesToDocument(meshes));
 
 const meta = {
@@ -19,6 +19,7 @@ const meta = {
   nylex,
   landmarks,
   skipped: skipped.length,
+  hidden,
   displaced,
   merged,
   lowered,

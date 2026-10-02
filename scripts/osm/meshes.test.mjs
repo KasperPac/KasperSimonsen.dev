@@ -3,6 +3,7 @@ import {
   AAMI_PARK_WAY_ID,
   COMMONS_GREYBOX_HEIGHT,
   COMMONS_WAY_IDS,
+  HIDDEN_WAY_IDS,
   MCG_HEIGHT,
   MCG_WAY_ID,
   NYLEX_SILOS_WAY_ID,
@@ -56,6 +57,13 @@ describe("osmToMeshes", () => {
   it("extrudes tagged heights, and The Commons at its grey-box height", () => {
     expect(maxY(result.meshes.osm_buildings)).toBeCloseTo(20);
     expect(maxY(result.meshes.osm_commons)).toBeCloseTo(COMMONS_GREYBOX_HEIGHT);
+  });
+
+  it("leaves out buildings that hide a landmark from the opening shot", () => {
+    const tall = way(HIDDEN_WAY_IDS[0], { building: "yes", height: "65 m" }, square(40, 60, 50, 70));
+    const hidden = osmToMeshes([...fixture.filter((e) => e.id !== 1), tall]);
+    expect(hidden.meshes.osm_buildings).toBeUndefined();
+    expect(hidden.hidden).toEqual([HIDDEN_WAY_IDS[0]]);
   });
 
   it("skips degenerate buildings and roads instead of crashing", () => {

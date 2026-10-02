@@ -164,7 +164,7 @@ NAMEPLATE = (0.08, 1.55)  # font size (~5.6 cm capitals) and height of the plate
 # down, where she stays in frame longest. Pelaco is on the right, near enough to leave the frame before the descent
 # gets low, as anything further back on that side ends up peering over The Commons' roof. The Nylex sign stands on its
 # real silos (prop_nylex_silos, built by setup_street.py).
-SIGNS = {"skipping_girl": (-404.0, -100.0, 3.6), "pelaco": (-107.8, 164.3, 2.5)}
+SIGNS = {"skipping_girl": (-404.0, -100.0, 3.6), "pelaco": (-107.8, 164.3, 3.2)}
 NYLEX_SCALE = 2.5
 
 

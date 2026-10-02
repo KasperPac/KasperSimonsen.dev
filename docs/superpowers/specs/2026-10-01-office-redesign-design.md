@@ -52,7 +52,8 @@ AAMI Park and the MCG are pulled in to **half their real distance**, on their re
 opening shot (Kasper, grey-box review 2026-10-01). Buildings under their new footprints are dropped. The Nylex
 Clock, The Commons and the skyline stay where they really are.
 
-Round 4 (Kasper): Melbourne's heritage signs join the opening shot. The **Pelaco** sign and the **Skipping Girl
+Round 4 (Kasper): Melbourne's heritage signs join the opening shot. (2026-10-03: the 65 m tower behind the
+Skipping Girl is left out of the street, and PELACO is single-stroke letters on a dark board, so both read from afar.) The **Pelaco** sign and the **Skipping Girl
 Vinegar** sign really stand north-east of The Commons, behind the opening camera, so they are placed on rooftops in
 frame (artistic licence). The Skipping Girl skips as the visitor scrolls: her neon poses swap with walk-in
 progress (reduced motion: one pose). The Nylex sign is modelled in detail. On heritage signs the lettering is the
@@ -115,8 +116,8 @@ One fixed view that takes in every interactive object. Composition (finalised on
 
 Review round 2 (Kasper, pulled forward into phase 1): a smaller, modern one-person office, lived-in and a bit messy
 rather than bare. A proper ergonomic chair; plants; records on show; a laptop beside the monitor; books; a corny
-"Hang in there" poster; a Melbourne Victory poster (crest-free: club colours, a V and the name, no badge, same rule as
-AAMI Park's signage); a couch and an old CRT TV. The tone is tongue-in-cheek: a sleep-deprived developer's office
+"Hang in there" poster; a Melbourne Victory poster (the club's crest in line art: Kasper got the club's OK,
+2026-10-03); a couch and an old CRT TV. The tone is tongue-in-cheek: a sleep-deprived developer's office
 (energy-can pyramid, abandoned mugs, pizza box, pillow and blanket on the couch, rubber duck, clock at 3:47, a
 wilted plant). Any words on props (sticky notes, mug, whiteboard) are visitor-facing copy in Kasper's voice and
 need his approval, like the monitor gag.
