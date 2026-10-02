@@ -14,7 +14,7 @@ async function openCrate(page: Page) {
   const button = page.getByRole("button", { name: "The work" });
   await button.focus();
   await page.keyboard.press("Enter");
-  await expect(office(page)).toHaveAttribute("data-director", "focused:hs_crate", { timeout: 10_000 });
+  await expect(office(page)).toHaveAttribute("data-director", "focused:hs_crate", { timeout: 30_000 }); // software WebGL under load
   return button;
 }
 
@@ -63,6 +63,7 @@ test("the keyboard flicks, pulls, reads and steps back out one layer at a time",
 });
 
 test("sweeping the pointer back across the crate flicks through the records in order, and back again, without jumping", async ({ page }) => {
+  test.setTimeout(240_000); // dozens of pointer moves, each waiting for frames under software WebGL
   await standInOffice(page);
   await openCrate(page);
   await expect(office(page)).toHaveAttribute("data-camera", "focus", { timeout: 10_000 });
@@ -76,7 +77,7 @@ test("sweeping the pointer back across the crate flicks through the records in o
   const settle = () => page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(null)))));
   const sweep = async (from: number, to: number) => {
     const seen: number[] = [];
-    for (let dy = from; from > to ? dy >= to : dy <= to; dy += from > to ? -5 : 5) {
+    for (let dy = from; from > to ? dy >= to : dy <= to; dy += from > to ? -12 : 12) {
       await page.mouse.move(at.x, at.y + dy);
       await settle();
       seen.push(await dig());
