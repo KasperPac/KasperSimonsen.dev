@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Group, Mesh } from "three";
 import { work } from "@/content/work";
 import { services } from "@/content/services";
-import { hitFor, highlightFor, highlightKey, itemAt, itemNode, labelFor, ORNAMENTS, RECORDS, sameHit } from "./registry";
+import { hitFor, highlightFor, highlightKey, itemAt, itemNode, labelFor, ORNAMENTS, pickHit, RECORDS, sameHit } from "./registry";
 
 /** office_root › hs_crate › (hs_crate__body mesh, record_00 › mesh, record_05 › mesh), hs_shelf › ornament_01 › mesh, hs_drawer › mesh, prop_chair mesh */
 function scene() {
@@ -47,6 +47,18 @@ describe("hitFor", () => {
   it("focused on the shelf: an ornament with content is that service", () =>
     expect(hitFor(s.orn1, "hs_shelf")).toEqual({ hotspot: "hs_shelf", item: services[1].slug }));
   it("nothing under the pointer is nothing", () => expect(hitFor(null, null)).toBeNull());
+});
+
+describe("pickHit (everything under the pointer, nearest first)", () => {
+  const s = scene();
+  it("idle: set dressing in front of a hotspot doesn't hide it", () =>
+    expect(pickHit([s.chair, s.body], null)).toEqual({ hotspot: "hs_crate", item: null }));
+  it("idle: nothing but set dressing is nothing", () => expect(pickHit([s.chair], null)).toBeNull());
+  it("focused: only the nearest object counts", () => {
+    expect(pickHit([s.chair, s.rec0], "hs_crate")).toBeNull();
+    expect(pickHit([s.rec0, s.chair], "hs_crate")).toEqual({ hotspot: "hs_crate", item: work[0].slug });
+  });
+  it("nothing under the pointer is nothing", () => expect(pickHit([], null)).toBeNull());
 });
 
 describe("items", () => {

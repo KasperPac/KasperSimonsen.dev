@@ -66,6 +66,19 @@ export function hitFor(object: Object3D | null, focused: HotspotName | null): Hi
   return null;
 }
 
+/**
+ * What the pointer means, given everything under it nearest first. Idle, set dressing in front of a hotspot (the chair
+ * before the crate) doesn't hide it. Focused, only the nearest object counts: the records and ornaments are close up.
+ */
+export function pickHit(objects: Object3D[], focused: HotspotName | null): Hit | null {
+  if (focused !== null) return hitFor(objects[0] ?? null, focused);
+  for (const o of objects) {
+    const hit = hitFor(o, null);
+    if (hit) return hit;
+  }
+  return null;
+}
+
 /** Edge-highlight group of a mesh: its record or ornament, else its hotspot, else none. */
 export function highlightKey(object: Object3D): string | null {
   for (let o: Object3D | null = object; o; o = o.parent) {

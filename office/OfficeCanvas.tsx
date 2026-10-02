@@ -14,7 +14,8 @@ import { findCamera, WALKIN_CAMERA } from "./walkin/cameraPose";
 import { applyPose, makePose, readPose, type Pose } from "./camera/pose";
 import { basePose, focusPose } from "./camera/basePose";
 import { CameraRig, FOCUS_SECONDS } from "./camera/rig";
-import { FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, hitFor, type Hit, type HotspotName } from "./hotspots/registry";
+import { FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, pickHit, type Hit, type HotspotName } from "./hotspots/registry";
+import { addHitProxies } from "./hotspots/proxies";
 import { focusedHotspot, IDLE_AT, type DirectorState } from "./director/director";
 import { DRAWER_NODE, findMotionNodes, ObjectMotion } from "./objects/motion";
 import { placeCard } from "./overlay/place";
@@ -158,6 +159,12 @@ function Office({ host, director, hover, overlay, cardShown, onHover, onActivate
   const drawerWasOpen = useRef(false);
   const v = useMemo(() => new Vector3(), []);
 
+  // Each object's whole outline takes the pointer while nothing is focused (thin shelf, gaps between ornaments).
+  useEffect(() => {
+    const proxies = addHitProxies(office.scene, () => focusedHotspot(director.current) === null);
+    return () => proxies.forEach((p) => p.removeFromParent());
+  }, [office, director]);
+
   useEffect(() => {
     const pose = (name: string) => {
       const node = office.scene.getObjectByName(name);
@@ -235,7 +242,7 @@ function Office({ host, director, hover, overlay, cardShown, onHover, onActivate
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
     if (!interactive()) return;
     e.stopPropagation();
-    const hit = hitFor(e.object, focusedHotspot(director.current));
+    const hit = pickHit(e.intersections.map((i) => i.object), focusedHotspot(director.current));
     onHover(hit);
     document.body.style.cursor = hit ? "pointer" : "";
   };
@@ -245,7 +252,7 @@ function Office({ host, director, hover, overlay, cardShown, onHover, onActivate
   };
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     if (!interactive()) return;
-    const hit = hitFor(e.object, focusedHotspot(director.current));
+    const hit = pickHit(e.intersections.map((i) => i.object), focusedHotspot(director.current));
     if (!hit) return;
     e.stopPropagation();
     onActivate(hit);
