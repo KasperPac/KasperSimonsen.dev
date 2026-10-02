@@ -181,5 +181,11 @@ test.describe("phone", () => {
     const card = page.getByRole("region", { name: "Kasper Simonsen" });
     await expect(card).toBeVisible({ timeout: MOVE_WAIT }); // the drawer's move is the slow one
     await expectCardInFrame(page, card, 0.65);
+    // readable on the phone itself: the print's CSS size times its 3D scale
+    const px = await card.evaluate((el) => {
+      const scale = el.getBoundingClientRect().width / (el as HTMLElement).offsetWidth;
+      return parseFloat(getComputedStyle(el.querySelector(".office-card-text")!).fontSize) * scale;
+    });
+    expect(px).toBeGreaterThanOrEqual(13);
   });
 });

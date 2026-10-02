@@ -51,14 +51,18 @@ Touch devices get white pulsing markers instead (no hover); a tap opens directly
 
 **Arriving** (amended after Kasper's M2 review): the first time a visitor reaches the standing spot, a short tour lights
 each object with its label in turn, left to right (crate, drawer, monitor, shelf; ~0.8 s each). Then white pulsing dots
-stay on the four objects, on every device, with a short hint line, until the visitor hovers, focuses or clicks one.
+stay on the four objects, on every device, with a short hint line, until the visitor opens one (hovering or focusing
+only ends the tour; Kasper: the dots should stay). They breathe gently rather than pulse in and out.
 
 ### 3.2 Crate (work)
 
 1. **Click the crate:** the camera drops to it. This is local browsing with no URL change.
-2. **Flip:** hovering a record brings it to the front (amended after Kasper's M2 review; the wheel no longer flicks):
-   the records in front of it tip forward on their bottom edges and it lifts part way out of the crate, so its whole
-   front shows. Arrow keys and swipes flick one at a time. Each sleeve reads as an LP: the vinyl's edge peeks out of the
+2. **Flip:** the pointer flicks through the crate (amended after Kasper's M2 review; the wheel no longer flicks, and
+   nothing lifts out): how far back it is across the crate's opening picks the front record, and the records in front
+   of that one tip forward on their bottom edges over the crate's low front, so its whole cover shows. The pointer has
+   to go a little past each record's band before the next comes up, so it never flickers. Arrow keys and swipes flick
+   one at a time; a screen reader hears each record's name. Only project records have a vinyl, and each project
+   sleeve reads as an LP: the vinyl's edge peeks out of the
    top, and the project's logo is centred as cover art in white line geometry inside a thin border (the Pac Tech
    logomark stands in where a project has no logo of its own, with the project's name under it). Kasper's projects sit
    at the front, and flipping stops at the last of them. The blank sleeves behind never come up.
@@ -123,7 +127,9 @@ until the standalone restyle (old phase 5). `/services/<slug>` is new, in the of
   card.
 - **Motion** is short, eased and reversible, so Back plays it backwards:
   - record flip ~0.35 s;
-  - playing a record ~2.4 s (back ~1.2 s), the camera's move between the crate and the player ~1.6 s;
+  - playing a record ~3.2 s and back the same way: the flight over takes the camera's ~1.6 s move to the player, so
+    they arrive together; it climbs straight out of the crate, arcs over the desk and comes in under the shelf, then
+    the vinyl goes onto the platter and the sleeve hops to the stand, turning round on the way;
   - drawer ~0.5 s;
   - ornament ~0.6 s;
   - teases ≤ 0.3 s;

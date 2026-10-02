@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
 import { work } from "../content/work";
 
 /**
@@ -27,6 +27,14 @@ async function openCrate(page: Page) {
 
 const crate = (page: Page) => page.locator('[aria-roledescription="record crate"]');
 
+/** Rendered size in screen px of the printed text in `region`'s body (`selector`): its CSS size times the 3D print's scale. */
+async function printedPx(region: Locator, selector: string) {
+  return region.evaluate((el, sel) => {
+    const scale = el.getBoundingClientRect().width / (el as HTMLElement).offsetWidth;
+    return parseFloat(getComputedStyle(el.querySelector(sel)!).fontSize) * scale;
+  }, selector);
+}
+
 test("the keyboard flicks, pulls, reads and steps back out one layer at a time", async ({ page }) => {
   await standInOffice(page);
   const button = await openCrate(page);
@@ -34,6 +42,7 @@ test("the keyboard flicks, pulls, reads and steps back out one layer at a time",
   await expect(office(page)).toHaveAttribute("data-dig", "0");
   await page.keyboard.press("ArrowDown");
   await expect(office(page)).toHaveAttribute("data-dig", "1");
+  await expect(page.locator('[aria-live="polite"]').filter({ hasText: work[1].name })).toHaveCount(1); // read out as it flicks
   await page.keyboard.press("ArrowUp");
   await expect(office(page)).toHaveAttribute("data-dig", "0");
   for (let i = 0; i < work.length + 2; i++) await page.keyboard.press("ArrowDown");
@@ -93,7 +102,7 @@ test("sweeping the pointer back across the crate flicks through the records in o
   };
   const back = await sweep(200, -200); // from in front of the crate, over the leaning records, to its back
   expect(back).toEqual([...back].sort((a, b) => a - b)); // only ever forward through the crate
-  expect(new Set(back)).toEqual(new Set(work.map((_, i) => i)));
+  expect(new Set(back), `back sweep: ${back.join(" ")}`).toEqual(new Set(work.map((_, i) => i)));
   const forward = await sweep(-200, 200);
   expect(forward).toEqual([...forward].sort((a, b) => b - a)); // only ever back
   expect(forward[forward.length - 1]).toBe(0);
@@ -149,5 +158,31 @@ test.describe("phone", () => {
     const back = page.getByRole("region", { name: work[0].name });
     await expect(back).toBeVisible({ timeout: MOVE_WAIT });
     expect((await back.boundingBox())!.width).toBeGreaterThan(390 * 0.7);
+    expect(await printedPx(back, ".office-card-text")).toBeGreaterThanOrEqual(13); // readable on the phone itself
+  });
+});
+
+test.describe("touch", () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
+  test("a swipe up across the crate flicks exactly one record", async ({ page }) => {
+    await standInOffice(page);
+    await openCrate(page);
+    await expect(office(page)).toHaveAttribute("data-camera", "focus", { timeout: MOVE_WAIT });
+    const at = await page.evaluate(() => {
+      const m = /translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec((document.querySelector(".office-marker") as HTMLElement).style.transform)!;
+      return { x: Number(m[1]), y: Number(m[2]) };
+    });
+    // one finger dragged up the crate: down, a run of moves, up (the canvas's event source is its parent)
+    await page.evaluate(({ x, y }) => {
+      const target = document.querySelector(".office-stage canvas")!.parentElement!;
+      const fire = (type: string, cy: number) =>
+        target.dispatchEvent(new PointerEvent(type, { pointerType: "touch", pointerId: 7, isPrimary: true, clientX: x, clientY: cy, bubbles: true }));
+      fire("pointerdown", y + 70);
+      for (let d = 70; d >= -70; d -= 10) fire("pointermove", y + d);
+      fire("pointerup", y - 70);
+    }, at);
+    await expect(office(page)).toHaveAttribute("data-dig", "1");
+    await page.waitForTimeout(500);
+    await expect(office(page)).toHaveAttribute("data-dig", "1"); // and stays there
   });
 });
