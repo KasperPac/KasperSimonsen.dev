@@ -8,21 +8,33 @@ export const SLEEVE_M = 0.315;
 /** How far a flicked record tips forward on its bottom edge, radians from rest: it leans on the crate's front wall (measured in Blender, plan Task 2). */
 export const FLIP_ANGLE = 0.17;
 export const FLIP_SECONDS = 0.35;
-/** The front record rises straight up this far first, clear of the flicked records' vinyls and the crate wall (measured in Blender). */
+/** The front record rises straight up this far first, its bottom edge over the vinyl of the flicked record in front (measured in Blender). */
 export const CLEAR_LIFT_M = 0.38;
 /**
  * Where the front record is held while browsing, from its rest, in the crate's frame: forward (`slide`), up (`lift`),
  * its top tipped back (`tilt`, radians about its own x) so its cover faces the camera and the records behind stay in
  * sight to hover (measured in Blender). Like pulling a record forward in a shop.
  */
-export const DISPLAY = { lift: 0.14, slide: 0.2, tilt: -0.35 };
-export const LIFT_SECONDS = 0.6;
+export const DISPLAY = { lift: 0.14, slide: 0.22, tilt: -0.3927 };
+/** Records further back come further forward to clear the ones in front: a record's spacing for each past the third (Blender). */
+const SLIDE_PER_RECORD_M = 0.0325;
+export const LIFT_SECONDS = 0.75;
 
-/** The front record's offset from rest at lift progress `t`: straight up to CLEAR_LIFT_M by halfway, then forward and down into DISPLAY. */
-export function displayOffset(t: number): { lift: number; slide: number; tilt: number } {
-  if (t <= 0.5) return { lift: CLEAR_LIFT_M * easeInOutCubic(t / 0.5), slide: 0, tilt: 0 };
-  const e = easeInOutCubic((t - 0.5) / 0.5);
-  return { lift: DISPLAY.lift * e + CLEAR_LIFT_M * (1 - e), slide: DISPLAY.slide * e, tilt: DISPLAY.tilt * e };
+const third = (t: number, n: number) => easeInOutCubic(Math.min(1, Math.max(0, t * 3 - n)));
+
+/**
+ * Record `index`'s offset from rest at lift progress `t`, in three equal parts that never pass through the records in
+ * front: straight up to CLEAR_LIFT_M, out at that height (sliding forward and tipping back), then down into DISPLAY.
+ */
+export function displayOffset(t: number, index: number): { lift: number; slide: number; tilt: number } {
+  const slide = DISPLAY.slide + SLIDE_PER_RECORD_M * Math.max(0, index - 2);
+  if (t <= 1 / 3) return { lift: CLEAR_LIFT_M * third(t, 0), slide: 0, tilt: 0 };
+  if (t <= 2 / 3) {
+    const e = third(t, 1);
+    return { lift: CLEAR_LIFT_M, slide: slide * e, tilt: DISPLAY.tilt * e };
+  }
+  const e = third(t, 2);
+  return { lift: DISPLAY.lift * e + CLEAR_LIFT_M * (1 - e), slide, tilt: DISPLAY.tilt };
 }
 
 /**
@@ -191,7 +203,7 @@ export class CrateMotion {
       const playing = input.playing === i;
       this.flip[i] = approach(this.flip[i] ?? 0, i < input.dig ? 1 : 0, dt, input.reduced ? 0 : FLIP_SECONDS);
       this.lift[i] = approach(this.lift[i] ?? 0, input.lifted === i && input.playing === null ? 1 : 0, dt, input.reduced ? 0 : LIFT_SECONDS);
-      const out = displayOffset(this.lift[i]);
+      const out = displayOffset(this.lift[i], i);
       this.play[i] = approach(this.play[i] ?? 0, playing ? 1 : 0, dt, input.reduced ? 0 : playing ? PLAY_SECONDS : PLAY_BACK_SECONDS);
 
       // where it rests in the crate: tipped forward on its bottom edge if flicked, raised if it is the front one

@@ -109,12 +109,21 @@ describe("playPhases", () => {
   it("puts a record back by retracing it at the pace it came, never faster", () => expect(PLAY_BACK_SECONDS).toBe(PLAY_SECONDS));
 });
 
-describe("displayOffset", () => {
-  it("starts at rest", () => expect(displayOffset(0)).toEqual({ lift: 0, slide: 0, tilt: 0 }));
-  it("rises straight up first, clear of the records in front", () => expect(displayOffset(0.5)).toEqual({ lift: CLEAR_LIFT_M, slide: 0, tilt: 0 }));
-  it("then comes forward and down into the display pose", () => expect(displayOffset(1)).toEqual(DISPLAY));
-  it("never slides forward while still rising", () => {
-    for (let t = 0; t <= 0.5; t += 0.05) expect(displayOffset(t).slide).toBe(0);
+describe("displayOffset (up, out, down: never through the records in front)", () => {
+  it("starts at rest", () => expect(displayOffset(0, 0)).toEqual({ lift: 0, slide: 0, tilt: 0 }));
+  it("rises straight up first, clear of the records in front", () => {
+    expect(displayOffset(1 / 3, 0)).toEqual({ lift: CLEAR_LIFT_M, slide: 0, tilt: 0 });
+    for (let t = 0; t <= 1 / 3; t += 0.02) expect(displayOffset(t, 0).slide).toBe(0);
+  });
+  it("then comes out at that height, tipping back", () => {
+    expect(displayOffset(2 / 3, 0)).toEqual({ lift: CLEAR_LIFT_M, slide: DISPLAY.slide, tilt: DISPLAY.tilt });
+    for (let t = 1 / 3; t <= 2 / 3; t += 0.02) expect(displayOffset(t, 0).lift).toBeCloseTo(CLEAR_LIFT_M, 9);
+  });
+  it("then comes down into the display pose", () => expect(displayOffset(1, 0)).toEqual(DISPLAY));
+  it("comes further forward for records further back, a record's spacing each past the third", () => {
+    expect(displayOffset(1, 2).slide).toBe(DISPLAY.slide);
+    expect(displayOffset(1, 3).slide).toBeCloseTo(DISPLAY.slide + 0.0325, 9);
+    expect(displayOffset(1, 5).slide).toBeCloseTo(DISPLAY.slide + 3 * 0.0325, 9);
   });
 });
 
