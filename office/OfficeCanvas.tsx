@@ -193,7 +193,12 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
     slot.updateWorldMatrix(true, false);
     const stand = { position: new Vector3(), quaternion: new Quaternion() };
     slot.matrixWorld.decompose(stand.position, stand.quaternion, new Vector3());
-    return { platter, stand };
+    // the room's way, toward the standing spot: the flight comes in to the player from that side, under the shelf
+    const room = office.scene.getObjectByName("office_room");
+    const toward = new Vector3(0, 0, 1);
+    if (room) toward.applyQuaternion(room.getWorldQuaternion(new Quaternion()));
+    toward.setY(0).normalize();
+    return { platter, stand, toward };
   }, [office]);
   const sleeveWasOut = useRef(false);
   const v = useMemo(() => new Vector3(), []);

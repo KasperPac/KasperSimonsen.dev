@@ -5,28 +5,50 @@ import { approach } from "./motion";
 
 /** An LP sleeve's side, metres (office_props.SLEEVE). */
 export const SLEEVE_M = 0.315;
-/** How far a flicked record tips forward on its bottom edge, radians from rest: it leans on the crate's front wall (measured in Blender, plan Task 2). */
-export const FLIP_ANGLE = 0.17;
+/** How far a flicked record tips forward on its bottom edge, radians from rest: it leans over the crate's low front (measured in Blender). */
+export const FLIP_ANGLE = 0.61;
 export const FLIP_SECONDS = 0.35;
 /**
- * How a played record flies over to the player: it rises `rise` above where it leaves and comes down from `land` above
- * where it hovers over the platter (a cubic arc), clear of the desk and everything else (measured in Blender).
+ * How a played record flies over to the player, clear of everything (measured in Blender): straight up `climb` out of
+ * the crate first, then a curve whose handles sit at `cruise` (a world height: over the desk lamp) above where it left,
+ * and at `approach` (a world height: under the shelf) above the player, pulled `inset` toward the room so it comes in
+ * from the room's side.
  */
-export const FLIGHT = { rise: 0.9, land: 0.5 };
+export const FLIGHT = { climb: 0.38, cruise: 1.4, approach: 1.7, inset: 0.2 };
 
-/** The point `t` (0→1) along the flight's arc from `from` to `to`, rising `rise` above the one and `land` above the other. */
-export function flightPoint(from: Vector3, to: Vector3, rise: number, land: number, t: number, out: Vector3): Vector3 {
-  const u = 1 - t;
-  const a = u * u * u;
-  const b = 3 * u * u * t;
-  const c = 3 * u * t * t;
-  const d = t * t * t;
-  out.set(
-    a * from.x + b * from.x + c * to.x + d * to.x,
-    a * from.y + b * (from.y + rise) + c * (to.y + land) + d * to.y,
-    a * from.z + b * from.z + c * to.z + d * to.z,
+/** The share of the flight spent climbing out of the crate: the climb runs into the curve at the same speed. */
+export function climbShare(from: Vector3): number {
+  const rise = Math.max(0, FLIGHT.cruise - (from.y + FLIGHT.climb));
+  return FLIGHT.climb / (FLIGHT.climb + 3 * rise);
+}
+
+/** How far the record has turned from the crate's facing toward the stand's at flight progress `t`: not at all while climbing. */
+export function flightTurn(t: number, share: number): number {
+  return t <= share ? 0 : (t - share) / (1 - share);
+}
+
+const p0 = new Vector3();
+const p1 = new Vector3();
+const p2 = new Vector3();
+
+/** The point `t` (0→1) along the flight from `from` (in the crate) to `to` (over the platter), `toward` being the room's way (horizontal). */
+export function flightPoint(from: Vector3, to: Vector3, toward: Vector3, t: number, out: Vector3): Vector3 {
+  const share = climbShare(from);
+  if (t <= share) return out.copy(from).setY(from.y + FLIGHT.climb * (share > 0 ? t / share : 1));
+  const u = (t - share) / (1 - share);
+  p0.copy(from).setY(from.y + FLIGHT.climb);
+  p1.copy(p0).setY(Math.max(FLIGHT.cruise, p0.y));
+  p2.copy(to).addScaledVector(toward, FLIGHT.inset).setY(Math.max(FLIGHT.approach, to.y));
+  const v = 1 - u;
+  const a = v * v * v;
+  const b = 3 * v * v * u;
+  const c = 3 * v * u * u;
+  const d = u * u * u;
+  return out.set(
+    a * p0.x + b * p1.x + c * p2.x + d * to.x,
+    a * p0.y + b * p1.y + c * p2.y + d * to.y,
+    a * p0.z + b * p1.z + c * p2.z + d * to.z,
   );
-  return out;
 }
 
 /**
@@ -65,7 +87,8 @@ export function playPhases(t: number): Record<keyof typeof PLAY_STEPS, number> {
 type Phases = ReturnType<typeof playPhases>;
 type Placement = { position: Vector3; quaternion: Quaternion };
 
-export type PlayerPoses = { platter: Object3D; stand: Placement };
+/** Where a played record goes: the platter, the stand's resting pose, and the room's way from there (horizontal, toward the standing spot). */
+export type PlayerPoses = { platter: Object3D; stand: Placement; toward: Vector3 };
 
 export type CrateNodes = { records: Object3D[]; vinyls: (Object3D | null)[]; restPosition: Vector3[]; restQuaternion: Quaternion[]; vinylRest: Placement[] };
 
@@ -123,13 +146,14 @@ function setWorldPose(o: Object3D, parent: Object3D, position: Vector3, quaterni
  * the platter, facing as the stand does (S1, `travel`), then goes to the stand (S2, `toStand`) and turns round on the
  * spot to show its back (S3, `turn`). The sleeve's origin is its bottom edge, its front is local +z.
  */
-function placeSleeve(sleeve: Object3D, parent: Object3D, stand: Placement, p: Phases): void {
+function placeSleeve(sleeve: Object3D, parent: Object3D, stand: Placement, toward: Vector3, p: Phases): void {
   parent.updateWorldMatrix(true, false);
   world.compose(resting.position, resting.quaternion, sleeve.scale).premultiply(parent.matrixWorld);
   world.decompose(sleeveAt.position, sleeveAt.quaternion, sleeveAt.scale);
   hover.copy(deck.top).addScaledVector(deck.up, PRESENT_ABOVE_M);
-  flightPoint(leaving.copy(sleeveAt.position), hover, FLIGHT.rise, FLIGHT.land, p.travel, sleeveAt.position);
-  sleeveAt.quaternion.slerp(stand.quaternion, p.travel);
+  leaving.copy(sleeveAt.position);
+  flightPoint(leaving, hover, toward, p.travel, sleeveAt.position);
+  sleeveAt.quaternion.slerp(stand.quaternion, flightTurn(p.travel, climbShare(leaving)));
   sleeveAt.position.lerp(stand.position, p.toStand);
   sleeveAt.quaternion.slerp(stand.quaternion, p.toStand);
   sleeveAt.quaternion.multiply(turn.setFromAxisAngle(Y, Math.PI * p.turn));
@@ -212,7 +236,7 @@ export class CrateMotion {
         return;
       }
       const p = eased(playPhases(this.play[i]));
-      placeSleeve(r, r.parent, input.player.stand, p);
+      placeSleeve(r, r.parent, input.player.stand, input.player.toward, p);
       if (vinyl) this.twist[i] = placeVinyl(vinyl, r, nodes.vinylRest[i], p, this.twist[i] ?? Number.NaN);
     });
   }

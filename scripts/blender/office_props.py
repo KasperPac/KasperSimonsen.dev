@@ -687,24 +687,26 @@ def _sleeve_art(record, row, col):
 
 
 def build_crate(name, location, rotation_z, parent, col, records=9, sleeves=()):
-    """Open-top slatted record crate with hand holes, and LPs standing in it as children <name>__record_00.. with
-    their origins on their bottom edges, so each one flips forward by rotating about x. The front records are the
-    projects, one `sleeves` row each from record 00: each carries its cover and holds its vinyl (<record>__vinyl),
-    peeking out of the top. The blank records behind have neither, a sign they can't be picked."""
+    """Open-top slatted record crate with hand holes, its front cut down to the bottom slat like a shop bin, and LPs
+    standing in it as children <name>__record_00.. with their origins on their bottom edges, so each one flips forward
+    by rotating about x and leans out over the low front. The front records are the projects, one `sleeves` row each
+    from record 00: each carries its cover and holds its vinyl (<record>__vinyl), peeking out of the top. The blank
+    records behind have neither, a sign they can't be picked."""
     root = _root(name, location, rotation_z, parent, col)
     w, t, slats = 0.36, 0.015, ((0.0, 0.07), (0.095, 0.165), (0.19, 0.26))
+    front = slats[0][1]  # the front keeps its bottom slat only, and no corner posts: flicked records lean out over it
     bm = bmesh.new()
     for z0, z1 in slats:
         zc, h = (z0 + z1) / 2, z1 - z0
         for side in (-1, 1):
-            _box(bm, (w, t, h), (0, side * (w - t) / 2, zc))
+            if side > 0 or z1 <= front:
+                _box(bm, (w, t, h), (0, side * (w - t) / 2, zc))
             if z1 == slats[-1][1]:
                 _plate_with_hole(bm, w - 2 * t, h, 0.1, 0.03, t, Matrix.Translation((side * (w - t) / 2 - t / 2, 0, zc)) @ YZ)
             else:
                 _box(bm, (t, w - 2 * t, h), (side * (w - t) / 2, 0, zc))
-    for sx in (-1, 1):
-        for sy in (-1, 1):
-            _box(bm, (0.022, 0.022, 0.26), (sx * (w / 2 - t - 0.011), sy * (w / 2 - t - 0.011), 0.13))
+    for sx in (-1, 1):  # corner posts at the back only
+        _box(bm, (0.022, 0.022, 0.26), (sx * (w / 2 - t - 0.011), w / 2 - t - 0.011, 0.13))
     _box(bm, (w - 2 * t, w - 2 * t, 0.012), (0, 0, 0.006))
     _part(f"{name}__body", bm, root, col)
 

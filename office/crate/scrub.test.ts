@@ -48,10 +48,12 @@ describe("addDigPlane", () => {
     expect(hit.point.y).toBeCloseTo(0.327, 3);
     expect(root.worldToLocal(hit.point.clone()).z).toBeCloseTo(0.1, 6);
   });
-  it("covers the inside of the crate only", () => {
+  it("covers the crate's opening and the flicked records leaning out over its front, nothing further", () => {
     const { root, record } = crate();
     const plane = addDigPlane(root, [record], () => true)!;
+    expect(down(2, 0.25).intersectObject(root, true).some((h) => h.object === plane)).toBe(true); // over the low front
     expect(down(2, 0.4).intersectObject(root, true).some((h) => h.object === plane)).toBe(false);
+    expect(down(2, -0.2).intersectObject(root, true).some((h) => h.object === plane)).toBe(false);
   });
   it("takes no pointer while disabled", () => {
     const { root, record } = crate();

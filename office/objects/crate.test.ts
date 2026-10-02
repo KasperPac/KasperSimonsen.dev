@@ -7,7 +7,9 @@ import {
   FLIP_ANGLE,
   FLIP_SECONDS,
   FLIGHT,
+  climbShare,
   flightPoint,
+  flightTurn,
   PLAY_BACK_SECONDS,
   PLAY_SECONDS,
   playPhases,
@@ -44,7 +46,7 @@ function rigWithPlayer() {
   const scene = new Group();
   scene.add(root, platter);
   scene.updateMatrixWorld(true);
-  const player: PlayerPoses = { platter, stand: { position: new Vector3(-2.6, 0.9, 0), quaternion: new Quaternion() } };
+  const player: PlayerPoses = { platter, stand: { position: new Vector3(-2.6, 0.9, 0), quaternion: new Quaternion() }, toward: new Vector3(0, 0, 1) };
   return { nodes, player, platter };
 }
 
@@ -107,18 +109,33 @@ describe("playPhases", () => {
   it("puts a record back by retracing it at the pace it came, never faster", () => expect(PLAY_BACK_SECONDS).toBe(PLAY_SECONDS));
 });
 
-describe("flightPoint (the record arcs over the desk, never through it)", () => {
-  const from = new Vector3(0, 0.1, 0);
-  const to = new Vector3(-2, 0.8, 0);
-  const at = (t: number) => flightPoint(from, to, 0.9, 0.5, t, new Vector3());
+describe("flightPoint (out of the crate, over the desk, under the shelf, never through anything)", () => {
+  const from = new Vector3(0, 0.012, 0);
+  const to = new Vector3(-2, 0.8, 0.3);
+  const toward = new Vector3(0, 0, 1); // into the room, toward the standing spot
+  const at = (t: number) => flightPoint(from, to, toward, t, new Vector3());
   it("starts and ends exactly where it should", () => {
     expect(at(0).toArray()).toEqual(from.toArray());
-    expect(at(1).toArray()).toEqual(to.toArray());
+    expect(at(1).toArray().map((v) => +v.toFixed(9))).toEqual(to.toArray());
   });
-  it("rises above the straight line between them, most in the middle", () => {
-    const mid = at(0.5);
-    expect(mid.y).toBeCloseTo((from.y + to.y) / 2 + (3 / 8) * (0.9 + 0.5), 9);
-    expect(mid.x).toBeCloseTo((from.x + to.x) / 2, 9);
+  it("first rises straight up out of the crate, not turning or moving sideways", () => {
+    const early = at(0.05);
+    expect(early.x).toBe(from.x);
+    expect(early.z).toBe(from.z);
+    expect(early.y).toBeGreaterThan(from.y);
+    expect(flightTurn(0.05, climbShare(from))).toBe(0);
+  });
+  it("is over the desk at cruising height in the middle", () => expect(at(0.5).y).toBeGreaterThan(FLIGHT.cruise * 0.8));
+  it("comes in to the player from the room's side, under the shelf", () => {
+    const late = at(0.9);
+    expect(late.z - to.z).toBeGreaterThan(0); // on the room's side of the platter
+    expect(late.y).toBeLessThan(FLIGHT.approach);
+  });
+  it("leaves the crate without a jolt: the climb runs into the arc at the same speed", () => {
+    const s = climbShare(from);
+    const before = at(s - 1e-4).distanceTo(at(s - 2e-4));
+    const after = at(s + 2e-4).distanceTo(at(s + 1e-4));
+    expect(after / before).toBeCloseTo(1, 1);
   });
 });
 
@@ -130,7 +147,7 @@ describe("CrateMotion play", () => {
     m.update(nodes, { dig: 0, playing: 0, player, reduced: false }, (PLAYER_MOVE.seconds / 2));
     const mid = nodes.records[0].getWorldPosition(new Vector3());
     const end = player.platter.getWorldPosition(new Vector3());
-    expect(mid.y).toBeGreaterThan(Math.max(start.y, end.y) + FLIGHT.rise / 4);
+    expect(mid.y).toBeGreaterThan(Math.max(start.y, end.y) + 0.3);
   });
   it("plays a record: its vinyl ends flat on the platter and its sleeve turned round on the stand", () => {
     const { nodes, player, platter } = rigWithPlayer();

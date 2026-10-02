@@ -6,6 +6,8 @@ export const DIG_PLANE = "hs_crate__dig";
 export const DIG_MARGIN = 0.25;
 /** The crate's walls, inset from its outside to the opening the records stand in. */
 const WALL_M = 0.015;
+/** Flicked records lean out over the crate's low front, their tops reaching this far past it (Blender): the plane reaches over them, so the pointer can go back to them. */
+const FLICK_REACH_M = 0.135;
 
 const material = new MeshBasicMaterial({ visible: false });
 
@@ -40,15 +42,16 @@ export function addDigPlane(crate: Object3D, records: Object3D[], enabled: () =>
       return r.position.y + geometry.boundingBox!.max.y;
     }),
   );
+  const front = box.max.z - WALL_M + FLICK_REACH_M;
+  const back = box.min.z + WALL_M;
   const width = box.max.x - box.min.x - 2 * WALL_M;
-  const depth = box.max.z - box.min.z - 2 * WALL_M;
-  const plane = new Mesh(new PlaneGeometry(width, depth).rotateX(-Math.PI / 2), material);
+  const plane = new Mesh(new PlaneGeometry(width, front - back).rotateX(-Math.PI / 2), material);
   plane.name = DIG_PLANE;
-  plane.position.set((box.min.x + box.max.x) / 2, top, (box.min.z + box.max.z) / 2);
+  plane.position.set((box.min.x + box.max.x) / 2, top, (front + back) / 2);
   plane.userData.cleanEdges = true; // never filled or outlined
   plane.userData.hitProxy = true; // not part of the crate's own hover box
-  plane.userData.front = box.max.z - WALL_M;
-  plane.userData.back = box.min.z + WALL_M;
+  plane.userData.front = front;
+  plane.userData.back = back;
   plane.raycast = function (this: Mesh, raycaster: Raycaster, intersects: Intersection[]) {
     if (enabled()) Mesh.prototype.raycast.call(this, raycaster, intersects);
   };
