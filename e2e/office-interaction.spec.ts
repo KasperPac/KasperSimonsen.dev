@@ -33,6 +33,7 @@ test("the drawer opens with the business card, Write to me opens the form, Esc p
   await expect(office(page)).toHaveAttribute("data-drawer", "open", { timeout: 10_000 });
   const card = page.getByRole("region", { name: "Kasper Simonsen" });
   await expect(card).toBeVisible();
+  await expect(card.getByRole("heading", { name: "Kasper Simonsen" })).toBeFocused();
   await expect(card.getByRole("link", { name: "hello@kaspersimonsen.dev" })).toHaveAttribute("href", "mailto:hello@kaspersimonsen.dev");
 
   const write = card.getByRole("button", { name: "Write to me" });
@@ -50,7 +51,7 @@ test("the drawer opens with the business card, Write to me opens the form, Esc p
   await expect(page).toHaveURL(/\/$/);
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: 10_000 });
   await expect(office(page)).toHaveAttribute("data-drawer", "shut", { timeout: 10_000 });
-  await expect(link).toBeAttached();
+  await expect(link).toBeFocused();
   expect(await progress(page)).toBeGreaterThan(0.99);
 });
 
@@ -85,6 +86,7 @@ test("the crate, shelf and monitor focus locally with no URL change", async ({ p
     await page.keyboard.press("Enter");
     await expect(office(page)).toHaveAttribute("data-director", `focused:${hotspot}`, { timeout: 10_000 });
     expect(new URL(page.url()).pathname).toBe("/");
+    await expect(page.getByRole("button", { name: "Back" })).toBeFocused();
     await page.getByRole("button", { name: "Back" }).click();
     await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: 10_000 });
   }

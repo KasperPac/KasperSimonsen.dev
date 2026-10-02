@@ -16,8 +16,9 @@ import { basePose, focusPose } from "./camera/basePose";
 import { CameraRig, FOCUS_SECONDS } from "./camera/rig";
 import { FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, hitFor, type Hit, type HotspotName } from "./hotspots/registry";
 import { focusedHotspot, IDLE_AT, type DirectorState } from "./director/director";
-import { CARD_NODE, findMotionNodes, ObjectMotion } from "./objects/motion";
+import { DRAWER_NODE, findMotionNodes, ObjectMotion } from "./objects/motion";
 import { placeCard } from "./overlay/place";
+import { screenRect } from "./overlay/screenRect";
 
 /** DOM the canvas positions each frame: the hover label, the touch markers and the open content card. */
 export type OverlayElements = { label: HTMLElement | null; markers: Partial<Record<HotspotName, HTMLElement | null>>; card: HTMLElement | null };
@@ -150,7 +151,8 @@ function Office({ host, director, hover, overlay, cardShown, onHover, onActivate
   useTurntable(office.scene);
   const motion = useMemo(() => new ObjectMotion(), []);
   const nodes = useMemo(() => findMotionNodes(office.scene), [office]);
-  const cardNode = useMemo(() => office.scene.getObjectByName(CARD_NODE) ?? null, [office]);
+  // The card sits beside the drawer (open, with its business card), not on top of it.
+  const drawerNode = useMemo(() => office.scene.getObjectByName(DRAWER_NODE) ?? null, [office]);
   const reduced = useMemo(reducedMotion, []);
   const shown = useRef<string | null>("");
   const drawerWasOpen = useRef(false);
@@ -217,9 +219,10 @@ function Office({ host, director, hover, overlay, cardShown, onHover, onActivate
         el.style.transform = `translate(${s.x}px, ${s.y}px)`;
       }
     }
-    if (card && cardShown.current === "hs_drawer" && cardNode) {
-      const s = project(cardNode.getWorldPosition(new Vector3()));
-      const { left, top } = placeCard(s, { width: card.offsetWidth, height: card.offsetHeight }, size);
+    if (card && cardShown.current === "hs_drawer" && drawerNode) {
+      const r = screenRect(drawerNode, camera, size);
+      const anchor = r ? { x: r.right, y: (r.top + r.bottom) / 2 } : { x: Number.NaN, y: Number.NaN };
+      const { left, top } = placeCard(anchor, { width: card.offsetWidth, height: card.offsetHeight }, size);
       card.style.left = `${left}px`;
       card.style.top = `${top}px`;
     }

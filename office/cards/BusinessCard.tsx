@@ -8,7 +8,7 @@ export default function BusinessCard({ titleId, onWrite }: { titleId: string; on
   return (
     <>
       <p className="office-card-eyebrow">{COPY.card.eyebrow}</p>
-      <h2 id={titleId} className="office-card-title">
+      <h2 id={titleId} className="office-card-title" tabIndex={-1}>
         {CONTACT_NAME}
       </h2>
       <p className="office-card-text">{COPY.card.role}</p>

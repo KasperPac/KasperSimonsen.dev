@@ -37,6 +37,9 @@ export default function OfficeExperience() {
   const [hovered, setHovered] = useState<Hit | null>(null);
   const overlay = useRef<OverlayElements>({ label: null, markers: {}, card: null });
   const cardRef = useRef<HTMLElement | null>(null);
+  const navRef = useRef<HTMLElement | null>(null);
+  const backRef = useRef<HTMLButtonElement | null>(null);
+  const trigger = useRef<HTMLElement | null>(null);
   const cardShown = useRef<HotspotName | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
@@ -68,6 +71,9 @@ export default function OfficeExperience() {
   const activate = useCallback((hit: Hit) => {
     const now = live().scene.target;
     if (now && sameHit(now, hit)) return;
+    // Keyboard users opened it from the nav: focus moves into what opened, and comes back here when it closes.
+    const active = document.activeElement as HTMLElement | null;
+    if (active && navRef.current?.contains(active)) trigger.current = active;
     pushLayer({ focus: hit.hotspot, reading: false }, pathForTarget(hit) ?? "/");
   }, []);
   const read = useCallback(() => {
@@ -100,6 +106,21 @@ export default function OfficeExperience() {
     overlay.current.card = cardRef.current;
   });
 
+  // Focus follows what's open (spec 7.3): the card's title when a card shows, else the back control; home again at idle.
+  const hasCard = focusedOn === "hs_drawer";
+  useEffect(() => {
+    if (showCard) document.getElementById("card-title")?.focus({ preventScroll: true });
+  }, [showCard]);
+  useEffect(() => {
+    if (focusedOn && !hasCard && trigger.current) backRef.current?.focus({ preventScroll: true });
+  }, [focusedOn, hasCard]);
+  useEffect(() => {
+    if (state.kind === "idle" && trigger.current) {
+      trigger.current.focus({ preventScroll: true });
+      trigger.current = null;
+    }
+  }, [state.kind]);
+
   const navProps = (hit: Hit) => ({ onFocus: () => onHover(hit), onBlur: () => onHover(null) });
 
   return (
@@ -122,7 +143,7 @@ export default function OfficeExperience() {
         </OfficeErrorBoundary>
       </div>
 
-      <nav className="office-nav" aria-label={COPY.nav}>
+      <nav ref={navRef} className="office-nav" aria-label={COPY.nav}>
         <ul>
           <li>
             <button type="button" onClick={() => activate({ hotspot: "hs_crate", item: null })} {...navProps({ hotspot: "hs_crate", item: null })}>
@@ -177,7 +198,7 @@ export default function OfficeExperience() {
       ))}
 
       {focusedOn && !scene.reading && (
-        <button type="button" className="office-back" onClick={back}>
+        <button ref={backRef} type="button" className="office-back" onClick={back}>
           {COPY.back}
         </button>
       )}
