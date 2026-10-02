@@ -150,14 +150,15 @@ test.describe("reduced motion", () => {
 
 test.describe("phone", () => {
   test.use({ viewport: { width: 390, height: 844 } });
-  test("pulls the sleeve close enough to fill most of the width", async ({ page }) => {
+  test("plays the record in view of the platter, then comes in until the sleeve fills most of the width", async ({ page }) => {
     await standInOffice(page);
     await openCrate(page);
     await expect(crate(page)).toBeFocused();
     await page.keyboard.press("Enter");
     const back = page.getByRole("region", { name: work[0].name });
     await expect(back).toBeVisible({ timeout: MOVE_WAIT });
-    expect((await back.boundingBox())!.width).toBeGreaterThan(390 * 0.7);
+    // the record goes on in a wider view with the platter in shot, then the camera comes in to read the sleeve
+    await expect.poll(async () => (await back.boundingBox())?.width ?? 0, { timeout: MOVE_WAIT }).toBeGreaterThan(390 * 0.7);
     expect(await printedPx(back, ".office-card-text")).toBeGreaterThanOrEqual(13); // readable on the phone itself
   });
 });

@@ -29,3 +29,12 @@ export function focusPose(land: Pose, portrait: Pose | null, aspect: number, out
   out.fov = widenForAspect(out.fov, aspect);
   return out;
 }
+
+/**
+ * The record player's camera. On a phone the close-up (the sleeve's back filling the width) leaves the platter out of
+ * shot, so while the record goes on it uses the landscape framing, widened, with the platter and the stand both in
+ * view, and comes in close once the sleeve has turned round to be read (Kasper: on mobile you couldn't see either).
+ */
+export function playerPose(land: Pose, portrait: Pose | null, aspect: number, sleeveOut: boolean, out: Pose): Pose {
+  return focusPose(land, sleeveOut ? portrait : null, aspect, out);
+}

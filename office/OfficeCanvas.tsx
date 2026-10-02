@@ -13,7 +13,7 @@ import { applySkippingGirl, findSkippingGirl } from "./walkin/skippingGirl";
 import { findCamera, WALKIN_CAMERA } from "./walkin/cameraPose";
 import { onStreet } from "./walkin/autoWalk";
 import { applyPose, makePose, readPose, type Pose } from "./camera/pose";
-import { basePose, focusPose } from "./camera/basePose";
+import { basePose, focusPose, playerPose } from "./camera/basePose";
 import { CameraRig, FOCUS_MOVES, PLAYER_MOVE } from "./camera/rig";
 import { cameraKey } from "./camera/key";
 import { FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, hitFor, pickHit, type Hit, type HotspotName } from "./hotspots/registry";
@@ -62,6 +62,8 @@ type OfficeInfo = {
   player: { land: Pose; portrait: Pose | null } | null;
   standPortrait: Pose | null;
   anchors: Partial<Record<HotspotName, Vector3>>;
+  /** A played record's sleeve has turned round on the stand (the office writes it each frame for the street's camera). */
+  sleeveOut: boolean;
 };
 
 const reducedMotion = () => typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -119,10 +121,13 @@ function Street({ progress, host, director, onProgressCross, onSettled, info }: 
     // A record from the crate is played on the record player: the crate's other view.
     const playing = (d.kind === "focusing" || d.kind === "focused") && d.target.hotspot === "hs_crate" && d.target.item !== null;
     const cams = playing ? (office?.player ?? office?.focus.hs_crate) : hotspot ? office?.focus[hotspot] : undefined;
-    if (cams) focusPose(cams.land, cams.portrait, camera.aspect, poses.focus);
+    const sleeveOut = playing && !!office?.sleeveOut;
+    if (cams && playing) playerPose(cams.land, cams.portrait, camera.aspect, sleeveOut, poses.focus);
+    else if (cams) focusPose(cams.land, cams.portrait, camera.aspect, poses.focus);
 
-    // A new state or a new object starts a camera move from wherever the camera is.
-    const key = cameraKey(d.kind, hotspot, playing, !!cams);
+    // A new state or a new object starts a camera move from wherever the camera is; on a phone, so does the played
+    // sleeve turning round (it comes in close to read it).
+    const key = cameraKey(d.kind, hotspot, playing, !!cams, sleeveOut && camera.aspect < 1);
     if (key !== seen.current) {
       const was = seen.current;
       seen.current = key;
@@ -246,7 +251,7 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
     }
     const playerLand = pose("cam_focus_player");
     const player = playerLand ? { land: playerLand, portrait: pose("cam_focus_player_portrait") } : null;
-    info.current = { edges: handle, focus, player, standPortrait: pose("cam_stand_portrait"), anchors };
+    info.current = { edges: handle, focus, player, standPortrait: pose("cam_stand_portrait"), anchors, sleeveOut: false };
     return () => {
       info.current = null;
     };
@@ -264,6 +269,7 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
     const c = crate.current;
     crateMotion.update(crateNodes, { dig: c.dig, playing: c.playing, player, reduced }, dt);
     onStand.current = crateMotion.onStand;
+    if (info.current) info.current.sleeveOut = crateMotion.playDone;
     if (crateMotion.playDone !== sleeveWasOut.current) {
       sleeveWasOut.current = crateMotion.playDone;
       onSleeveOut(crateMotion.playDone);

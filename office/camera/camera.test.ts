@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { Object3D, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { applyPose, blendPose, copyPose, DESIGN_ASPECT, easeInOutCubic, makePose, MAX_FOV, readPose, smoothstep, widenForAspect, type Pose } from "./pose";
-import { basePose, focusPose, PORTRAIT_ASPECT, PORTRAIT_FROM, PORTRAIT_MAX_FOV } from "./basePose";
+import { basePose, focusPose, playerPose, PORTRAIT_ASPECT, PORTRAIT_FROM, PORTRAIT_MAX_FOV } from "./basePose";
 import { CameraRig, FOCUS_MOVES, FOCUS_SECONDS, PLAYER_MOVE } from "./rig";
 
 const pose = (x: number, fov = 50, yaw = 0): Pose => ({
@@ -116,6 +116,22 @@ describe("focusPose", () => {
   it("uses the portrait camera on portrait screens", () => expect(focusPose(pose(1, 40), pose(2, 70), 0.5, makePose()).position.x).toBe(2));
   it("widens the landscape camera when there is no portrait one", () =>
     expect(focusPose(pose(1, 40), null, 0.5, makePose()).fov).toBeCloseTo(widenForAspect(40, 0.5)));
+});
+
+describe("playerPose", () => {
+  const land = pose(1, 40);
+  const close = pose(2, 60);
+  it("keeps the platter and the stand in shot on a phone while the record goes on", () => {
+    const out = playerPose(land, close, 0.5, false, makePose());
+    expect(out.position.x).toBe(1);
+    expect(out.fov).toBeCloseTo(widenForAspect(40, 0.5));
+  });
+  it("comes in close on a phone once the sleeve has turned round to be read", () =>
+    expect(playerPose(land, close, 0.5, true, makePose()).position.x).toBe(2));
+  it("is the one landscape view throughout on a landscape screen", () => {
+    expect(playerPose(land, close, 1.6, false, makePose()).position.x).toBe(1);
+    expect(playerPose(land, close, 1.6, true, makePose()).position.x).toBe(1);
+  });
 });
 
 describe("CameraRig", () => {
