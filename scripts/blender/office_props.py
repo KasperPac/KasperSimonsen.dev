@@ -688,9 +688,9 @@ def _sleeve_art(record, row, col):
 
 def build_crate(name, location, rotation_z, parent, col, records=9, sleeves=()):
     """Open-top slatted record crate with hand holes, and LPs standing in it as children <name>__record_00.. with
-    their origins on their bottom edges, so each one flips forward by rotating about x. Each holds its vinyl
-    (<record>__vinyl), peeking out of the top; the front records carry the `sleeves` rows' covers, one row each from
-    record 00."""
+    their origins on their bottom edges, so each one flips forward by rotating about x. The front records are the
+    projects, one `sleeves` row each from record 00: each carries its cover and holds its vinyl (<record>__vinyl),
+    peeking out of the top. The blank records behind have neither, a sign they can't be picked."""
     root = _root(name, location, rotation_z, parent, col)
     w, t, slats = 0.36, 0.015, ((0.0, 0.07), (0.095, 0.165), (0.19, 0.26))
     bm = bmesh.new()
@@ -713,8 +713,8 @@ def build_crate(name, location, rotation_z, parent, col, records=9, sleeves=()):
         y = -span / 2 + span * i / max(records - 1, 1)
         jitter = (i * 7) % 3 - 1, (i * 5) % 3 - 1  # -1, 0 or 1, so the LPs don't stand in perfect order
         record = _sleeve(f"{name}__record_{i:02d}", root, col, (0.004 * jitter[0], y, 0.012), (-0.14 + 0.012 * (i % 3), 0, 0.01 * jitter[1]))
-        _vinyl(record, col)
         if i < len(sleeves):
+            _vinyl(record, col)
             _sleeve_art(record, sleeves[i], col)
     return root
 
