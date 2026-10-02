@@ -1,4 +1,4 @@
-import { test, expect, type Page } from "@playwright/test";
+import { test, expect, type Locator, type Page } from "@playwright/test";
 
 const office = (page: Page) => page.locator(".office");
 const progress = async (page: Page) => Number(await office(page).getAttribute("data-walkin-progress"));
@@ -8,6 +8,17 @@ async function standInOffice(page: Page) {
   await expect(office(page)).toHaveAttribute("data-scene-ready", "true", { timeout: 60_000 });
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: 15_000 });
+}
+
+/** The details are printed on the card in the drawer, and the camera has zoomed in until it fills `share` of the width. */
+async function expectCardInFrame(page: Page, card: Locator, share: number) {
+  const { width, height } = page.viewportSize()!;
+  await expect(office(page)).toHaveAttribute("data-camera", "focus", { timeout: 10_000 });
+  await expect(card).toBeVisible();
+  const box = (await card.boundingBox())!;
+  expect(box.width).toBeGreaterThan(width * share);
+  expect(Math.abs(box.x + box.width / 2 - width / 2)).toBeLessThan(width * 0.15);
+  expect(Math.abs(box.y + box.height / 2 - height / 2)).toBeLessThan(height * 0.2);
 }
 
 async function openDrawer(page: Page) {
@@ -33,6 +44,7 @@ test("the drawer opens with the business card, Write to me opens the form, Esc p
   await expect(office(page)).toHaveAttribute("data-drawer", "open", { timeout: 10_000 });
   const card = page.getByRole("region", { name: "Kasper Simonsen" });
   await expect(card).toBeVisible();
+  await expectCardInFrame(page, card, 0.4);
   await expect(card.getByRole("heading", { name: "Kasper Simonsen" })).toBeFocused();
   await expect(card.getByRole("link", { name: "hello@kaspersimonsen.dev" })).toHaveAttribute("href", "mailto:hello@kaspersimonsen.dev");
 
@@ -142,24 +154,23 @@ test("refreshing /contact gives the standalone page", async ({ page }) => {
 
 test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
-  test("opens the drawer without moving the camera", async ({ page }) => {
+  test("cuts to the open drawer instead of gliding", async ({ page }) => {
     await standInOffice(page);
     await openDrawer(page);
     await expect(office(page)).toHaveAttribute("data-director", "focused:hs_drawer", { timeout: 10_000 });
-    await expect(office(page)).toHaveAttribute("data-camera", "base");
+    await expect(office(page)).toHaveAttribute("data-camera", "focus");
     await expect(office(page)).toHaveAttribute("data-drawer", "open");
+    await expectCardInFrame(page, page.getByRole("region", { name: "Kasper Simonsen" }), 0.4);
   });
 });
 
 test.describe("phone", () => {
   test.use({ viewport: { width: 390, height: 844 } });
-  test("docks the card at the bottom of the screen", async ({ page }) => {
+  test("zooms in until the card nearly fills the width", async ({ page }) => {
     await standInOffice(page);
     await openDrawer(page);
     const card = page.getByRole("region", { name: "Kasper Simonsen" });
     await expect(card).toBeVisible({ timeout: 10_000 });
-    const box = await card.boundingBox();
-    expect(box && box.y + box.height).toBeGreaterThan(844 - 40);
-    expect(box && box.x).toBeGreaterThanOrEqual(15);
+    await expectCardInFrame(page, card, 0.7);
   });
 });

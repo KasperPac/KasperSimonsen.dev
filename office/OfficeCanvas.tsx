@@ -1,9 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, type RefObject } from "react";
+import { Suspense, useEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
-import { Box3, Vector3, type Object3D, type PerspectiveCamera } from "three";
+import { Box3, Vector3, type Mesh, type Object3D, type PerspectiveCamera } from "three";
 import manifest from "./manifest.json";
 import { theme } from "./theme";
 import { applyCleanEdges, setHighlight, setLineResolution, updateEdgeFades, type CleanEdgesHandle } from "./style/cleanEdges";
@@ -17,12 +17,11 @@ import { CameraRig, FOCUS_SECONDS } from "./camera/rig";
 import { FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, pickHit, type Hit, type HotspotName } from "./hotspots/registry";
 import { addHitProxies } from "./hotspots/proxies";
 import { focusedHotspot, IDLE_AT, type DirectorState } from "./director/director";
-import { DRAWER_NODE, findMotionNodes, ObjectMotion } from "./objects/motion";
-import { placeCard } from "./overlay/place";
-import { screenRect } from "./overlay/screenRect";
+import { CARD_NODE, findMotionNodes, ObjectMotion } from "./objects/motion";
+import CardFace from "./cards/CardFace";
 
-/** DOM the canvas positions each frame: the hover label, the touch markers and the open content card. */
-export type OverlayElements = { label: HTMLElement | null; markers: Partial<Record<HotspotName, HTMLElement | null>>; card: HTMLElement | null };
+/** DOM the canvas positions each frame: the hover label and the touch markers. */
+export type OverlayElements = { label: HTMLElement | null; markers: Partial<Record<HotspotName, HTMLElement | null>> };
 
 export type OfficeCanvasProps = {
   /** Walk-in progress 0 → 1. Read every frame; never causes a render. */
@@ -33,8 +32,8 @@ export type OfficeCanvasProps = {
   /** What is hovered (pointer) or keyboard-focused (DOM); highlighted, labelled and teased. */
   hover: RefObject<Hit | null>;
   overlay: RefObject<OverlayElements>;
-  /** The object whose content card is showing (its node anchors the card), or null. */
-  cardShown: RefObject<HotspotName | null>;
+  /** What's printed on the business card in the drawer while it shows, or null. */
+  drawerCard: { titleId: string; content: ReactNode } | null;
   onProgressCross: (progress: number) => void;
   onSettled: () => void;
   onHover: (hit: Hit | null) => void;
@@ -110,8 +109,9 @@ function Street({ progress, host, director, onProgressCross, onSettled, info }: 
       seen.current = key;
       readPose(camera, poses.now);
       if (d.kind === "focusing") {
-        // Reduced motion: no camera move (spec 3.7). From the walk-in: cut, never fly through walls.
-        if (cams && !reduced) rig.moveTo(poses.now, { kind: "pose", pose: poses.focus }, d.from === "walkIn" ? 0 : FOCUS_SECONDS);
+        // Cut instead of gliding under reduced motion (the content is read up close, on the object) and from the
+        // walk-in (never fly through walls).
+        if (cams) rig.moveTo(poses.now, { kind: "pose", pose: poses.focus }, reduced || d.from === "walkIn" ? 0 : FOCUS_SECONDS);
         else rig.moveTo(poses.now, { kind: "base" }, 0);
       } else if (d.kind === "returning") {
         rig.moveTo(poses.now, { kind: "base" }, reduced ? 0 : FOCUS_SECONDS);
@@ -142,18 +142,17 @@ function Street({ progress, host, director, onProgressCross, onSettled, info }: 
   return <primitive object={street.scene} />;
 }
 
-type OfficeProps = Pick<OfficeCanvasProps, "host" | "director" | "hover" | "overlay" | "cardShown" | "onHover" | "onActivate" | "onDrawerOpen"> & {
+type OfficeProps = Pick<OfficeCanvasProps, "host" | "director" | "hover" | "overlay" | "drawerCard" | "onHover" | "onActivate" | "onDrawerOpen"> & {
   info: RefObject<OfficeInfo | null>;
 };
 
-/** The office model: hover, click, highlight, object motion, and where the label, markers and card go. */
-function Office({ host, director, hover, overlay, cardShown, onHover, onActivate, onDrawerOpen, info }: OfficeProps) {
+/** The office model: hover, click, highlight, object motion, where the label and markers go, and the business card's print. */
+function Office({ host, director, hover, overlay, drawerCard, onHover, onActivate, onDrawerOpen, info }: OfficeProps) {
   const { gltf: office, handle } = useCleanEdges(manifest.office.url, highlightKey);
   useTurntable(office.scene);
   const motion = useMemo(() => new ObjectMotion(), []);
   const nodes = useMemo(() => findMotionNodes(office.scene), [office]);
-  // The card sits beside the drawer (open, with its business card), not on top of it.
-  const drawerNode = useMemo(() => office.scene.getObjectByName(DRAWER_NODE) ?? null, [office]);
+  const card = useMemo(() => (office.scene.getObjectByName(CARD_NODE) as Mesh | undefined) ?? null, [office]);
   const reduced = useMemo(reducedMotion, []);
   const shown = useRef<string | null>("");
   const drawerWasOpen = useRef(false);
@@ -209,7 +208,7 @@ function Office({ host, director, hover, overlay, cardShown, onHover, onActivate
       return v.z > 1 ? { x: Number.NaN, y: Number.NaN } : { x: ((v.x + 1) / 2) * size.width, y: ((1 - v.y) / 2) * size.height };
     };
     const anchors = info.current?.anchors;
-    const { label, markers, card } = overlay.current;
+    const { label, markers } = overlay.current;
     const hovered = hover.current;
     if (label && anchors && hovered) {
       const a = anchors[hovered.hotspot];
@@ -225,13 +224,6 @@ function Office({ host, director, hover, overlay, cardShown, onHover, onActivate
         const s = project(a);
         el.style.transform = `translate(${s.x}px, ${s.y}px)`;
       }
-    }
-    if (card && cardShown.current === "hs_drawer" && drawerNode) {
-      const r = screenRect(drawerNode, camera, size);
-      const anchor = r ? { x: r.right, y: (r.top + r.bottom) / 2 } : { x: Number.NaN, y: Number.NaN };
-      const { left, top } = placeCard(anchor, { width: card.offsetWidth, height: card.offsetHeight }, size);
-      card.style.left = `${left}px`;
-      card.style.top = `${top}px`;
     }
   });
 
@@ -258,7 +250,16 @@ function Office({ host, director, hover, overlay, cardShown, onHover, onActivate
     onActivate(hit);
   };
 
-  return <primitive object={office.scene} onPointerMove={onPointerMove} onPointerOut={onPointerOut} onClick={onClick} />;
+  return (
+    <>
+      <primitive object={office.scene} onPointerMove={onPointerMove} onPointerOut={onPointerOut} onClick={onClick} />
+      {drawerCard && card && (
+        <CardFace card={card} hotspot="hs_drawer" titleId={drawerCard.titleId}>
+          {drawerCard.content}
+        </CardFace>
+      )}
+    </>
+  );
 }
 
 export default function OfficeCanvas(props: OfficeCanvasProps) {

@@ -10,9 +10,8 @@ import { describeDirector, initialDirector, isLocked, reduceDirector, type Direc
 import { pathForTarget } from "./scene/targets";
 import { layerOf, sceneFor } from "./scene/location";
 import { clearLayer, pushLayer, useOfficeLocation } from "./history";
-import { HOTSPOTS, labelFor, sameHit, type Hit, type HotspotName } from "./hotspots/registry";
+import { HOTSPOTS, labelFor, sameHit, type Hit } from "./hotspots/registry";
 import type { OverlayElements } from "./OfficeCanvas";
-import Card from "./cards/Card";
 import BusinessCard from "./cards/BusinessCard";
 import Panel from "@/panels/Panel";
 import ContactForm from "@/panels/ContactForm";
@@ -35,12 +34,10 @@ export default function OfficeExperience() {
   director.current = state;
   const hover = useRef<Hit | null>(null);
   const [hovered, setHovered] = useState<Hit | null>(null);
-  const overlay = useRef<OverlayElements>({ label: null, markers: {}, card: null });
-  const cardRef = useRef<HTMLElement | null>(null);
+  const overlay = useRef<OverlayElements>({ label: null, markers: {} });
   const navRef = useRef<HTMLElement | null>(null);
   const backRef = useRef<HTMLButtonElement | null>(null);
   const trigger = useRef<HTMLElement | null>(null);
-  const cardShown = useRef<HotspotName | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   // A reload keeps history.state; a fresh office starts with no layer.
@@ -100,17 +97,10 @@ export default function OfficeExperience() {
 
   const focusedOn = state.kind === "focused" ? state.target.hotspot : null;
   const showCard = focusedOn === "hs_drawer" && drawerOpen;
-  cardShown.current = showCard ? "hs_drawer" : null;
-  // The canvas positions the card; hand it the element once React has attached it.
-  useEffect(() => {
-    overlay.current.card = cardRef.current;
-  });
 
-  // Focus follows what's open (spec 7.3): the card's title when a card shows, else the back control; home again at idle.
+  // Focus follows what's open (spec 7.3): the card's title when a card shows (CardFace moves it there), else the back
+  // control; home again at idle.
   const hasCard = focusedOn === "hs_drawer";
-  useEffect(() => {
-    if (showCard) document.getElementById("card-title")?.focus({ preventScroll: true });
-  }, [showCard]);
   useEffect(() => {
     if (focusedOn && !hasCard && trigger.current) backRef.current?.focus({ preventScroll: true });
   }, [focusedOn, hasCard]);
@@ -133,7 +123,7 @@ export default function OfficeExperience() {
             director={director}
             hover={hover}
             overlay={overlay}
-            cardShown={cardShown}
+            drawerCard={showCard ? { titleId: "card-title", content: <BusinessCard titleId="card-title" onWrite={read} /> } : null}
             onProgressCross={(value) => dispatch({ type: "progress", value })}
             onSettled={() => dispatch({ type: "settled" })}
             onHover={onHover}
@@ -201,12 +191,6 @@ export default function OfficeExperience() {
         <button ref={backRef} type="button" className="office-back" onClick={back}>
           {COPY.back}
         </button>
-      )}
-
-      {showCard && (
-        <Card hotspot="hs_drawer" titleId="card-title" cardRef={cardRef}>
-          <BusinessCard titleId="card-title" onWrite={read} />
-        </Card>
       )}
 
       {scene.reading && scene.target?.hotspot === "hs_drawer" && (

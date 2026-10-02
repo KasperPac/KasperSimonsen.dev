@@ -29,8 +29,8 @@ memorable without ever standing between a visitor and the work or the contact de
 | Crate | Dig: records flip forward one at a time; the front one pulls out |
 | Drawer | Business card with email and links, plus "Write to me", which opens the contact form panel |
 | Shelf | Four services, one ornament each; the two engagement models close every service's Read more |
-| Content in 3D | Real HTML pinned beside the object (a DOM overlay positioned by projecting the object each frame; cards face the camera, so no CSS 3D transform is needed); static labels stay line geometry |
-| Phones | The same cards, docked at the bottom of the screen instead of floating in the scene |
+| Content in 3D | Real HTML. The business card's details are printed on the card in the drawer (drei `Html` in transform mode, on its top face; amended after Kasper's M1 review). Other cards are pinned beside their object (a DOM overlay positioned by projecting the object each frame; they face the camera, so no CSS 3D transform is needed). Static labels stay line geometry |
+| Phones | Cards beside an object dock at the bottom of the screen instead of floating in the scene; the business card stays printed on the card, which the camera frames across most of the width |
 | Routing | `window.history.pushState`, synced with the Next router; no intercepting or parallel routes |
 
 ## 3. The flow
@@ -64,8 +64,9 @@ Touch devices get white pulsing markers instead (no hover); a tap opens directly
 
 ### 3.3 Drawer (contact)
 
-1. Click: the URL becomes `/contact`. The drawer slides open ~30 cm, the camera dips towards it, and the business card
-   inside shows Kasper's name, email (a `mailto:` link) and his links.
+1. Click: the URL becomes `/contact`. The drawer slides open ~30 cm and the camera zooms into it until the business
+   card fills about half the screen (most of a phone's width). Kasper's name, email (a `mailto:` link) and his links
+   are printed on the card itself.
 2. **Write to me** opens the contact form in the panel. It's the existing `/api/contact` form, in the office style, and
    it pre-fills the subject from a topic when one is passed (section 3.4).
 3. Back: close the panel, then close the drawer and return to the standing spot.
@@ -104,10 +105,10 @@ until the standalone restyle (old phase 5). `/services/<slug>` is new, in the of
 - **Cards** (sleeve summary, business card, plaque):
   - **Look:** black, with a 1 px white hairline. The section colour goes on the eyebrow and the button only. Inter
     Tight for text, IBM Plex Mono for labels.
-  - **Placement:** beside the object, facing the camera.
+  - **Placement:** beside the object, facing the camera. The business card is the exception: printed on the card.
   - **Timing:** they fade in once the object's move has finished.
-  - **Desktop framing:** the object sits left of centre and the card to its right. The monitor is the exception: its
-    content sits on the screen itself.
+  - **Desktop framing:** the object sits left of centre and the card to its right. The monitor and the drawer are the
+    exceptions: their content sits on the screen and on the business card, centred in frame.
 - **Panel:** slides in from the right on desktop (~40% wide) and is full-screen on phones. Closing it returns to the
   card.
 - **Motion** is short, eased and reversible, so Back plays it backwards:
@@ -118,7 +119,8 @@ until the standalone restyle (old phase 5). `/services/<slug>` is new, in the of
   - teases ≤ 0.3 s;
   - camera moves as now (`FOCUS_SECONDS`).
 - **Movers:** picking a record or an ornament moves the object to the camera, not the camera again.
-- **Reduced motion:** no teases, flips, glides or slides. Objects switch state, and cards and the panel fade.
+- **Reduced motion:** no teases, flips, glides or slides. Objects switch state, the camera cuts to the object, and
+  cards and the panel fade.
 
 ## 5. Accessibility
 
@@ -182,7 +184,7 @@ Case-study text and the engagement-model copy are reused as they are.
   - Back peeling layers;
   - the Read more focus trap and return;
   - refresh on a content URL gives the standalone page;
-  - reduced motion: no camera move;
+  - reduced motion: the camera cuts, never glides;
   - phone viewport: docked card;
   - the fallback still lists links.
 - **Visual review** with Kasper at each milestone.

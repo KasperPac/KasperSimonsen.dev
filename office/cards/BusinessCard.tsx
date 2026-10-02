@@ -3,7 +3,7 @@
 import { CONTACT_EMAIL, CONTACT_LINKS, CONTACT_NAME } from "@/content/contact";
 import { COPY } from "@/office/copy";
 
-/** The business card in the drawer (interactions spec section 3.3). */
+/** What's printed on the business card in the drawer (interactions spec section 3.3). */
 export default function BusinessCard({ titleId, onWrite }: { titleId: string; onWrite: () => void }) {
   return (
     <>
