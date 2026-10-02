@@ -473,17 +473,8 @@ def build_laptop(name, location, rotation_z, parent, col, width=0.31, depth=0.21
     base_h = 0.015
     bm = bmesh.new()
     _slab(bm, width, depth, 0, base_h, r=0.01, segs=2, bottom=0.003)
-    pitch, rows = 0.0195, 5
-    for row in range(rows):
-        y = 0.075 - row * pitch
-        n = 13 if row < rows - 1 else 0
-        for i in range(n):
-            _box(bm, (0.016, 0.015, 0.0012), (-0.117 + i * pitch, y, base_h + 0.0006))
-    y = 0.075 - (rows - 1) * pitch
-    _box(bm, (0.11, 0.015, 0.0012), (0, y, base_h + 0.0006))
-    for x in (-0.1, -0.075, 0.075, 0.1):
-        _box(bm, (0.022, 0.015, 0.0012), (x, y, base_h + 0.0006))
-    _box(bm, (0.1, 0.06, 0.0006), (0, -0.065, base_h + 0.0003))
+    _box(bm, (0.26, 0.095, 0.001), (0, 0.035, base_h + 0.0005))  # key field, one plate: single keys read as a hatch
+    _box(bm, (0.1, 0.06, 0.0006), (0, -0.065, base_h + 0.0003))  # trackpad
     _part(f"{name}__base", bm, root, col)
 
     lid_t, bez = 0.006, 0.009
@@ -501,22 +492,17 @@ def build_laptop(name, location, rotation_z, parent, col, width=0.31, depth=0.21
 
 
 def build_keyboard(name, location, rotation_z, parent, col):
-    """Tenkeyless keyboard: a low wedge case with a raised key grid."""
+    """Tenkeyless keyboard: a low wedge case with one recessed key field. No single keys: from across the room they
+    read as a hatch."""
     root = _root(name, location, rotation_z, parent, col)
-    bm = bmesh.new()
     w, d = 0.36, 0.13
-    _loft(bm, [[(-w / 2, -d / 2, 0), (w / 2, -d / 2, 0), (w / 2, d / 2, 0), (-w / 2, d / 2, 0)],
-               [(-w / 2, -d / 2, 0.012), (w / 2, -d / 2, 0.012), (w / 2, d / 2, 0.022), (-w / 2, d / 2, 0.022)]])
-    pitch = 0.019
-    for row in range(6):
-        y = d / 2 - 0.016 - row * pitch
-        z = 0.022 - (0.01 * (0.016 + row * pitch) / d) + 0.0035
-        if row == 5:
-            keys = [(-0.14, 0.025), (-0.112, 0.025), (-0.084, 0.025), (0.0, 0.12), (0.084, 0.025), (0.112, 0.025), (0.14, 0.025)]
-        else:
-            keys = [(-0.16 + i * pitch + (0.008 if row else 0), 0.016) for i in range(17 if row else 16)]
-        for x, kw in keys:
-            _box(bm, (kw, 0.016, 0.007), (x, y, z))
+
+    def top(hw, hd, drop=0.0):  # a rectangle on the sloping top, 12 mm high at the front and 22 at the back
+        return [(x, y, 0.017 + 0.01 * y / d - drop) for x, y in ((-hw, -hd), (hw, -hd), (hw, hd), (-hw, hd))]
+
+    bm = bmesh.new()
+    _loft(bm, [[(-w / 2, -d / 2, 0), (w / 2, -d / 2, 0), (w / 2, d / 2, 0), (-w / 2, d / 2, 0)], top(w / 2, d / 2),
+               top(w / 2 - 0.012, d / 2 - 0.012), top(w / 2 - 0.012, d / 2 - 0.012, 0.003)])
     _part(f"{name}__case", bm, root, col)
     return root
 
@@ -751,20 +737,20 @@ def _motif(bm, motif, m):
     """A nod to a record, never its cover art: simple shapes in a -1..1 box, drawn through m (which sets the size and
     raises them off the sleeve)."""
     if motif == "prism":  # a triangle, one line in, a fan of lines out
-        _stroke(bm, [(0.0, 0.75), (-0.62, -0.45), (0.62, -0.45)], 0.06, 1, m, closed=True)
-        _stroke(bm, [(-1.05, -0.12), (-0.33, 0.11)], 0.035, 1, m)
-        for k in range(5):
-            _stroke(bm, [(0.34, 0.09), (1.05, 0.34 - 0.16 * k)], 0.035, 1, m)
+        _stroke(bm, [(0.0, 0.75), (-0.62, -0.45), (0.62, -0.45)], 0.11, 1, m, closed=True)
+        _stroke(bm, [(-1.05, -0.12), (-0.33, 0.11)], 0.07, 1, m)
+        for k in range(4):
+            _stroke(bm, [(0.34, 0.09), (1.05, 0.36 - 0.22 * k)], 0.07, 1, m)
     elif motif == "star":  # four points
-        _prism(bm, [((1.0 if k % 2 == 0 else 0.24) * math.cos(math.pi / 2 - k * math.pi / 4),
-                     (1.0 if k % 2 == 0 else 0.24) * math.sin(math.pi / 2 - k * math.pi / 4)) for k in range(8)], 1, m)
+        _prism(bm, [((1.0 if k % 2 == 0 else 0.28) * math.cos(math.pi / 2 - k * math.pi / 4),
+                     (1.0 if k % 2 == 0 else 0.28) * math.sin(math.pi / 2 - k * math.pi / 4)) for k in range(8)], 1, m)
     elif motif == "waves":  # three wavy lines
         for k in range(3):
-            _stroke(bm, [(x, 0.5 - 0.5 * k + 0.16 * math.sin(math.pi * 1.5 * x + 0.7 * k)) for x in (-1 + j / 6 for j in range(13))],
-                    0.06, 1, m)
+            _stroke(bm, [(x, 0.55 - 0.55 * k + 0.18 * math.sin(math.pi * 1.5 * x + 0.7 * k)) for x in (-1 + j / 6 for j in range(13))],
+                    0.11, 1, m)
 
 
-def _sleeve_text(name, text, size, parent, col, top, max_w=0.27):
+def _sleeve_text(name, text, size, parent, col, top, max_w=0.28):
     """Centred text on a sleeve's face, its first line's top at z = top. A line too wide breaks at its middle space;
     anything still too wide shrinks to fit."""
     obj = _text_at(name, text, size, 0.0008, 0, -0.0025, top, parent, col, align="CENTER")
@@ -781,19 +767,23 @@ def _sleeve_text(name, text, size, parent, col, top, max_w=0.27):
 
 
 def _album(name, parent, col, location, rotation, artist, title, motif):
-    """A sleeve with its artist and title as text (<name>__artist, __title) and its motif (<name>__motif) on the front."""
+    """A sleeve with its artist written large (<name>__artist: 4-5 cm capitals over one or two lines, the most that
+    reads from across the room) and its motif (<name>__motif) bold underneath. The title isn't shown: at that size it
+    can't be read. With motif "none" the name sits in the middle on its own."""
     sleeve = _sleeve(name, parent, col, location, rotation)
 
-    def bottom(obj):
-        return obj.location.z + min(v.co.z for v in obj.data.vertices)
+    def extent(obj):
+        zs = [obj.location.z + v.co.z for v in obj.data.vertices]
+        return min(zs), max(zs)
 
-    below = bottom(_sleeve_text(f"{name}__artist", artist, 0.03, sleeve, col, 0.29))
-    if motif == "none":  # no picture: the title goes big instead
-        _sleeve_text(f"{name}__title", title, 0.12, sleeve, col, below - 0.045)
+    if motif == "none":
+        label = _sleeve_text(f"{name}__artist", artist, 0.075, sleeve, col, SLEEVE)
+        low, high = extent(label)
+        label.location.z += SLEEVE / 2 - (low + high) / 2
         return sleeve
-    roof = bottom(_sleeve_text(f"{name}__title", title, 0.022, sleeve, col, below - 0.012)) - 0.015
-    floor = 0.025
-    s = min(0.13, (roof - floor) / 2 * 0.95)
+    roof = extent(_sleeve_text(f"{name}__artist", artist, 0.064, sleeve, col, 0.295))[0] - 0.02
+    floor = 0.02
+    s = min(0.12, (roof - floor) / 2)
     bm = bmesh.new()
     _motif(bm, motif, Matrix.Translation((0, -0.0025, (roof + floor) / 2)) @ WALL @ Matrix.Diagonal((s, s, 0.0015, 1.0)))
     _part(f"{name}__motif", bm, sleeve, col)
@@ -804,9 +794,9 @@ def build_now_playing(name, location, rotation_z, parent, col, albums=NOW_PLAYIN
     """A 'now playing' ledge for next to the turntable: a small base with a front lip and a back rest holding a sleeve
     up, leaning back 12 degrees. Every album in `albums` [(artist, title, motif)] gets a sleeve, all stacked in the
     same spot as <name>__sleeve_00, _01... (origin at the sleeve's bottom centre) for the site to show one at a time.
-    Each face carries its artist and title as text and a motif as geometry: "prism", "star", "waves", or "none" for
-    the title written big. The base is 0.16 m wide but a sleeve is 0.315: turn it about 57 degrees to fit between
-    build_turntable's deck and right speaker."""
+    Each face carries its artist, large, and a bold motif as geometry: "prism", "star", "waves", or "none" for the
+    name on its own. Titles stay in `albums` but aren't drawn. The base is 0.16 m wide but a sleeve is 0.315: turn it
+    about 57 degrees to fit between build_turntable's deck and right speaker."""
     root = _root(name, location, rotation_z, parent, col)
     seat, lean = (0, -0.022, 0.012), math.radians(-12)
     bm = bmesh.new()
@@ -860,11 +850,12 @@ def build_monstera(name, location, rotation_z, parent, col):
     bm = bmesh.new()
     soil = 0.315
     # (azimuth deg, reach m, height m, leaf length m, leaf pitch deg, leaf roll deg). Blades tip down and outwards,
-    # so their faces turn out to the room rather than up at the ceiling.
-    leaves = ((-80, 0.2, 1.08, 0.48, -30, -10), (-30, 0.3, 0.92, 0.46, -38, 12), (20, 0.26, 1.2, 0.5, -22, -8),
-              (70, 0.3, 1.0, 0.48, -34, 15), (125, 0.34, 0.86, 0.44, -42, -12), (170, 0.26, 1.14, 0.5, -26, 6),
-              (215, 0.36, 0.8, 0.42, -45, 10), (260, 0.24, 0.96, 0.46, -32, -14), (-125, 0.14, 1.28, 0.44, -14, 5))
-    slits = ((0.3, 0.55), (0.46, 0.62), (0.62, 0.55), (0.78, 0.4))
+    # so their faces turn out to the room rather than up at the ceiling. Seven big leaves with two splits a side:
+    # more of either reads as hatching from across the room.
+    leaves = ((-80, 0.2, 1.08, 0.53, -30, -10), (-25, 0.3, 0.92, 0.51, -38, 12), (30, 0.26, 1.2, 0.55, -22, -8),
+              (90, 0.32, 0.98, 0.53, -36, 15), (150, 0.3, 1.12, 0.55, -28, 6), (210, 0.36, 0.82, 0.48, -44, 10),
+              (-130, 0.16, 1.28, 0.5, -16, 5))
+    slits = ((0.38, 0.6), (0.64, 0.55))
     for az, reach, height, length, pitch, roll in leaves:
         a = math.radians(az)
         out = Vector((math.cos(a), math.sin(a), 0))
@@ -951,14 +942,23 @@ def build_book_stack(name, location, rotation_z, parent, col, count=5):
 # --- on the desk ------------------------------------------------------------------------------------------------
 
 
-MUG_R, MUG_SEGS = 0.041, 10
+MUG_R, MUG_SEGS = 0.041, 14
+ROUND_DEG = 60.0  # edge_threshold_deg for small round things: rims and handles draw, the facets between them don't
+DUCK_DEG = 45.0  # and for the duck: its outlines draw, the facets of its lenses don't
+
+
+def _soft(obj, deg):
+    """Only creases sharper than `deg` draw on this mesh: the renderer's per-object edge_threshold_deg."""
+    obj["edge_threshold_deg"] = float(deg)
+    return obj
 
 
 def _mug(bm, m=I4):
-    """A mug standing at the origin, handle to +x, coffee inside; one of its facets faces -y."""
-    _lathe(bm, [(0.0, 0.0), (0.036, 0.0), (0.04, 0.006), (MUG_R, 0.095), (0.036, 0.095), (0.035, 0.08), (0.0, 0.08)], MUG_SEGS, m)
+    """A mug standing at the origin, a flat strap of a handle to +x, coffee inside; one of its facets faces -y. Made
+    for ROUND_DEG: the base, the rim, the coffee and the handle draw, the side facets don't."""
+    _lathe(bm, [(0.0, 0.0), (MUG_R, 0.0), (MUG_R, 0.095), (0.036, 0.095), (0.035, 0.08), (0.0, 0.08)], MUG_SEGS, m)
     handle = [(0.04 + 0.028 * math.cos(a), 0, 0.05 + 0.03 * math.sin(a)) for a in (math.radians(d) for d in range(75, -76, -25))]
-    _tube(bm, handle, 0.006, 6, m, hint=(0, 1, 0))
+    _sweep(bm, handle, _rrect(0.014, 0.008, 0.0), m, hint=(0, 1, 0))
 
 
 def _chip_packet(bm):
@@ -1037,24 +1037,36 @@ def _cable(bm, path, radius=0.003):
     _tube(bm, path, radius, 5)
 
 
-def build_desk_mess(name, location, rotation_z, parent, col, depth=0.7):
+def build_desk_mess(name, location, rotation_z, parent, col, depth=0.7, parts=None):
     """Lived-in clutter for the desk top, laid out for build_desk's default 1.4 x 0.7 top with a monitor at the back
     left of centre and a laptop to the right. Origin on the desk surface at its centre. Parts: <name>__mug (origin at
     the mug's base, for steam), __chips, __papers, __notes, __pen, __headphones, __can, __paper_balls, __cables (one
-    runs off the back edge and down)."""
+    runs off the back edge and down). `parts` names the ones to build, e.g. ("mug", "chips", "papers"); None builds
+    them all."""
     root = _root(name, location, rotation_z, parent, col)
+
+    def wanted(part):
+        return parts is None or part in parts
+
     # front left keeps just the papers and the mug; the chips have been shoved back under the monitor's left edge
     for part, build, loc, rot in (("mug", _mug, (-0.38, -0.28, 0), 0.4), ("chips", _chip_packet, (-0.39, 0.16, 0), 0.25),
                                   ("papers", _papers, (-0.53, -0.1, 0), -0.3), ("notes", _sticky_notes, (0.2, -0.27, 0), 0.0),
                                   ("pen", _pen, (0.24, -0.1, 0.0), 0.7), ("headphones", _headphones, (0.52, -0.22, 0), -0.3),
                                   ("can", _can, (0.21, 0.2, 0), 0.3)):
+        if not wanted(part):
+            continue
         bm = bmesh.new()
         build(bm)
-        _part(f"{name}__{part}", bm, root, col, loc, (0, 0, rot))
-    bm = bmesh.new()
-    _crumple(bm, 0.028, (0.15, 0.03, 0.026), seed=5)
-    _crumple(bm, 0.03, (0.63, 0.07, 0.028), seed=6)
-    _part(f"{name}__paper_balls", bm, root, col)
+        obj = _part(f"{name}__{part}", bm, root, col, loc, (0, 0, rot))
+        if part in ("mug", "can"):
+            _soft(obj, ROUND_DEG)
+    if wanted("paper_balls"):
+        bm = bmesh.new()
+        _crumple(bm, 0.028, (0.15, 0.03, 0.026), seed=5)
+        _crumple(bm, 0.03, (0.63, 0.07, 0.028), seed=6)
+        _part(f"{name}__paper_balls", bm, root, col)
+    if not wanted("cables"):
+        return root
     bm = bmesh.new()
     back = depth / 2
     _cable(bm, [(0.24, 0.03, 0.003), (0.17, 0.1, 0.003), (0.2, 0.22, 0.003), (0.3, 0.3, 0.003), (0.33, back - 0.01, 0.003),
@@ -1176,9 +1188,15 @@ def build_old_tv(name, location, rotation_z, parent, col, console=True):
     def ring(rw, rh, y, cx=0.0, cz=zc, r=0.03):
         return [(cx + x, y, cz + z) for x, z in _rrect(rw, rh, r, 2)]
 
+    # the cabinet: a rear shell tapering in at the top and sides (the bottom stays flat on the stand) to a flat back
+    # panel with two vent slots, then the front frame, bezel and screen recess
+    back_y, bw, bh = fy + depth - 0.025, 0.42, 0.36
     bm = bmesh.new()
-    _loft(bm, [ring(0.34, 0.3, fy + depth, cz=sh + 0.04 + 0.15), ring(w, h, fy + 0.11), ring(w, h, fy),
+    _loft(bm, [ring(bw, bh, back_y, cz=sh + bh / 2), ring(w, h, fy + 0.11), ring(w, h, fy),
                ring(scw, sch, fy, scx, scz, 0.04), ring(scw, sch, fy + 0.022, scx, scz, 0.04)])
+    _slab(bm, bw + 0.02, bh, back_y, back_y + 0.025, r=0.03, segs=2, top=0.006, m=Matrix.Translation((0, 0, sh + bh / 2)) @ XZ)
+    for z in (sh + bh - 0.07, sh + bh - 0.1):
+        _box(bm, (0.2, 0.006, 0.012), (0, fy + depth + 0.002, z))
     knobs = Matrix.Rotation(math.pi / 2, 4, "X")  # lathe axis z -> out of the front, -y
     for z, turn in ((zc + 0.15, 0.6), (zc + 0.07, -1.1)):
         _lathe(bm, [(0.024, 0.0), (0.024, 0.016), (0.02, 0.022), (0.0, 0.022)], 10, Matrix.Translation((0.22, fy, z)) @ knobs)
@@ -1244,10 +1262,12 @@ BOLT = [(0.004, 0.115), (-0.008, 0.072), (0.0, 0.072), (-0.007, 0.032), (0.009, 
 
 
 def _can(bm, m=I4):
-    """An energy drink can standing at the origin, a lightning bolt raised on its front (-y) facet."""
-    _lathe(bm, [(0.0, 0.0), (0.026, 0.0), (CAN_R, 0.012), (CAN_R, 0.136), (0.026, CAN_H), (0.023, CAN_H), (0.022, CAN_H - 0.004),
-                (0.0, CAN_H - 0.004)], 8, m, phase=math.pi / 8)
-    _prism(bm, BOLT, 0.0012, m @ Matrix.Translation((0, -CAN_R * math.cos(math.pi / 8), 0)) @ WALL)
+    """An energy drink can standing at the origin, a lightning bolt raised on its front (-y). Made for ROUND_DEG: the
+    base, a sharp shoulder, the rim, the lid and the bolt draw, the side facets don't, so it reads as a cylinder from
+    its ellipses."""
+    _lathe(bm, [(0.0, 0.0), (0.029, 0.0), (CAN_R, 0.008), (CAN_R, 0.141), (0.026, 0.144), (0.026, CAN_H), (0.023, CAN_H),
+                (0.022, CAN_H - 0.004), (0.0, CAN_H - 0.004)], 14, m)
+    _prism(bm, BOLT, 0.0012, m @ Matrix.Translation((0, -CAN_R - 0.0002, 0)) @ WALL)
     _box(bm, (0.012, 0.02, 0.002), (0, -0.006, CAN_H - 0.002), m)
 
 
@@ -1271,7 +1291,7 @@ def build_energy_can(name, location, rotation_z, parent, col, crushed=False):
     root = _root(name, location, rotation_z, parent, col)
     bm = bmesh.new()
     (_crushed_can if crushed else _can)(bm)
-    _part(f"{name}__can", bm, root, col)
+    _soft(_part(f"{name}__can", bm, root, col), ROUND_DEG)
     return root
 
 
@@ -1285,7 +1305,7 @@ def build_can_pyramid(name, location, rotation_z, parent, col, rows=4):
         for i in range(n):
             spin = 0.12 * math.sin(row * 3.1 + i * 1.7)
             _can(bm, _m(((i - (n - 1) / 2) * pitch, 0.002 * math.sin(i + row), row * (CAN_H + 0.001)), (0, 0, spin)))
-    _part(f"{name}__cans", bm, root, col)
+    _soft(_part(f"{name}__cans", bm, root, col), ROUND_DEG)
     return root
 
 
@@ -1306,26 +1326,28 @@ def build_mug(name, location, rotation_z, parent, col, text=None):
     root = _root(name, location, rotation_z, parent, col)
     bm = bmesh.new()
     _mug(bm)
-    _part(f"{name}__mug", bm, root, col)
+    _soft(_part(f"{name}__mug", bm, root, col), ROUND_DEG)
     if text:
         _wrap_on_mug(common.text_mesh(f"{name}__text", text, 0.012, 0.0008, (0, 0, 0), root, col), 0.05)
     return root
 
 
-def build_mug_cluster(name, location, rotation_z, parent, col):
-    """Four abandoned mugs: three standing about at odd angles, one tipped over in a dried puddle, and coffee rings
-    where others used to be."""
+def build_mug_cluster(name, location, rotation_z, parent, col, count=4):
+    """Abandoned mugs, `count` of them (1 to 4): up to three standing about at odd angles, the fourth tipped over in a
+    dried puddle, and coffee rings where others used to be."""
     root = _root(name, location, rotation_z, parent, col)
     bm = bmesh.new()
-    for x, y, a in ((0.0, 0.0, 0.3), (0.1, 0.06, 2.2), (-0.09, 0.08, -1.0)):
+    for x, y, a in ((0.0, 0.0, 0.3), (0.1, 0.06, 2.2), (-0.09, 0.08, -1.0))[:max(1, min(count, 3))]:
         _mug(bm, _m((x, y, 0), (0, 0, a)))
     tipped = _m((0.08, -0.1, 0), (0, 0, -0.6))
-    _mug(bm, tipped @ _m((0, 0, MUG_R * math.cos(math.pi / MUG_SEGS)), (math.pi / 2, 0, 0)))  # resting on a facet
-    _part(f"{name}__mugs", bm, root, col)
+    if count >= 4:
+        _mug(bm, tipped @ _m((0, 0, MUG_R * math.cos(math.pi / MUG_SEGS)), (math.pi / 2, 0, 0)))  # resting on a facet
+    _soft(_part(f"{name}__mugs", bm, root, col), ROUND_DEG)
     bm = bmesh.new()
-    puddle = [(0.05 * math.cos(a) * (1 + 0.25 * math.sin(3 * a)), -0.15 + 0.035 * math.sin(a) * (1 + 0.2 * math.cos(2 * a)))
-              for a in (2 * math.pi * k / 12 for k in range(12))]
-    _prism(bm, puddle, 0.0006, tipped)
+    if count >= 4:
+        puddle = [(0.05 * math.cos(a) * (1 + 0.25 * math.sin(3 * a)), -0.15 + 0.035 * math.sin(a) * (1 + 0.2 * math.cos(2 * a)))
+                  for a in (2 * math.pi * k / 12 for k in range(12))]
+        _prism(bm, puddle, 0.0006, tipped)
     for x, y in ((-0.18, -0.06), (0.21, -0.03)):
         _strip(bm, _circle(0.04, 12, (x, y)), _circle(0.035, 12, (x, y)), 0.0004, closed=True)
     _part(f"{name}__stains", bm, root, col)
@@ -1337,8 +1359,8 @@ def build_noodle_cup(name, location, rotation_z, parent, col):
     noodles twirled round the tines, and a strand hanging over the rim."""
     root = _root(name, location, rotation_z, parent, col)
     bm = bmesh.new()
-    _lathe(bm, [(0.0, 0.0), (0.038, 0.0), (0.05, 0.1), (0.054, 0.104), (0.054, 0.11), (0.049, 0.11), (0.047, 0.095), (0.0, 0.095)], 10)
-    _prism(bm, _circle(0.054, 10), 0.001, _m((0, 0.04, 0.11), (math.radians(-110), 0, 0)) @ Matrix.Translation((0, -0.04, 0)))
+    _lathe(bm, [(0.0, 0.0), (0.038, 0.0), (0.05, 0.1), (0.054, 0.104), (0.054, 0.11), (0.049, 0.11), (0.047, 0.095), (0.0, 0.095)], 14)
+    _prism(bm, _circle(0.054, 14), 0.001, _m((0, 0.04, 0.11), (math.radians(-110), 0, 0)) @ Matrix.Translation((0, -0.04, 0)))
     fork = _m((0.008, -0.005, 0.03), (math.radians(14), math.radians(-10), 0))
     _box(bm, (0.008, 0.003, 0.11), (0, 0, 0.055), fork)
     _prism(bm, [(-0.004, 0.11), (0.004, 0.11), (0.01, 0.125), (-0.01, 0.125)], 0.003, fork @ Matrix.Translation((0, -0.0015, 0)) @ XZ)
@@ -1349,7 +1371,7 @@ def build_noodle_cup(name, location, rotation_z, parent, col):
     strand = [(0.03, -0.02, 0.095), (0.048, -0.03, 0.116), (0.06, -0.034, 0.1), (0.066, -0.036, 0.075), (0.062, -0.034, 0.05)]
     _tube(bm, strand, 0.002, 4)
     _tube(bm, [(-0.035, 0.0, 0.097), (-0.02, 0.02, 0.098), (0.0, 0.01, 0.097), (0.015, 0.03, 0.098)], 0.002, 4)
-    _part(f"{name}__cup", bm, root, col)
+    _soft(_part(f"{name}__cup", bm, root, col), ROUND_DEG)
     return root
 
 
@@ -1427,29 +1449,20 @@ def build_blanket(name, location, rotation_z, parent, col, width=0.9, depth=0.6,
 
 
 def build_rubber_duck(name, location, rotation_z, parent, col, size=1.5):
-    """A rubber duck facing -y, about 0.1 * size m long: a hexagonal boat of a body with a pointed tail kicked up,
-    a big round head, a long flat beak and eyes. The silhouette carries it, so it reads best side-on, and
-    best of all against a plain background, e.g. sat on top of the monitor. Oversized by default."""
+    """A rubber duck facing -y, about 0.1 * size m long, drawn for being seen side-on (turn it so the camera looks
+    along x, e.g. sat on top of the monitor): body, head and beak only. The body and head are lenses, a side profile
+    pinched to a point at either side, so at DUCK_DEG the one crease that draws is each outline. Oversized by default."""
     root = _root(name, location, rotation_z, parent, col)
     sc = Matrix.Scale(size, 4)
     bm = bmesh.new()
-    rings = [[(0, 0.06, 0.074)]]  # tail tip
-    hexagon = [math.radians(d) for d in (-120, -60, 0, 60, 120, 180)]
-    for y, hw, zc, hh in ((0.038, 0.024, 0.044, 0.027), (0.012, 0.037, 0.034, 0.031), (-0.02, 0.036, 0.03, 0.029),
-                          (-0.042, 0.022, 0.032, 0.021)):
-        rings.append([(hw * math.cos(a), y, max(zc + hh * math.sin(a), 0.0)) for a in hexagon])
-    rings.append([(0, -0.055, 0.035)])  # chest
-    _loft(bm, rings, sc)
-    head = Vector((0, -0.028, 0.078))
-    _lathe(bm, [(0.0, -0.027), (0.019, -0.019), (0.027, 0.0), (0.019, 0.019), (0.0, 0.027)], 6, sc @ Matrix.Translation(head),
-           phase=math.pi / 6)
-    beak = [(-0.014, -0.04), (0.014, -0.04), (0.012, -0.068), (0.006, -0.078), (-0.006, -0.078), (-0.012, -0.068)]
-    _prism(bm, beak, 0.01, sc @ Matrix.Translation((0, 0, 0.066)))
-    for side in (-1, 1):
-        look = Vector((side * 0.6, -0.5, 0.45)).normalized()
-        eye = Matrix.Translation(head + look * 0.025) @ look.to_track_quat("Z", "Y").to_matrix().to_4x4()
-        _lathe(bm, [(0.006, 0.0), (0.006, 0.003), (0.0, 0.003)], 6, sc @ eye)
-    _part(f"{name}__duck", bm, root, col)
+    body = [(-0.03, 0.004), (-0.046, 0.016), (-0.05, 0.034), (-0.042, 0.052), (-0.012, 0.058), (0.02, 0.054), (0.042, 0.062),
+            (0.06, 0.084), (0.062, 0.06), (0.055, 0.032), (0.04, 0.01), (0.012, 0.0)]  # side profile (y, z), chest to tail
+    _loft(bm, [[(-0.032, 0.004, 0.034)], [(0, y, z) for y, z in body], [(0.032, 0.004, 0.034)]], sc)
+    head = [(0, -0.03 + 0.03 * math.cos(a), 0.084 + 0.03 * math.sin(a)) for a in (2 * math.pi * k / 12 for k in range(12))]
+    _loft(bm, [[(-0.022, -0.03, 0.084)], head, [(0.022, -0.03, 0.084)]], sc)
+    beak = [(-0.054, 0.086), (-0.074, 0.084), (-0.086, 0.078), (-0.084, 0.072), (-0.07, 0.07), (-0.054, 0.072)]
+    _prism(bm, beak, 0.024, sc @ Matrix.Translation((-0.012, 0, 0)) @ YZ)
+    _soft(_part(f"{name}__duck", bm, root, col), DUCK_DEG)
     return root
 
 
@@ -1507,17 +1520,19 @@ def build_plant_wilted(name, location, rotation_z, parent, col):
     return root
 
 
-def build_bin(name, location, rotation_z, parent, col):
-    """A waste bin overflowing with crumpled paper, with the balls that missed lying round it."""
+def build_bin(name, location, rotation_z, parent, col, missed=True):
+    """A waste bin overflowing with crumpled paper. With missed, three balls that didn't make it lie on the floor
+    round it (in <name>__paper with the rest)."""
     root = _root(name, location, rotation_z, parent, col)
     bm = bmesh.new()
     _lathe(bm, [(0.0, 0.0), (0.12, 0.0), (0.15, 0.31), (0.157, 0.31), (0.157, 0.325), (0.148, 0.325), (0.14, 0.31), (0.112, 0.012),
                 (0.0, 0.012)], 10)
     _part(f"{name}__bin", bm, root, col)
     bm = bmesh.new()
-    balls = ((0.0, 0.0, 0.3, 0.045), (0.07, 0.03, 0.31, 0.04), (-0.07, 0.04, 0.3, 0.042), (0.03, -0.07, 0.3, 0.04),
-             (-0.04, -0.05, 0.33, 0.038), (0.02, 0.02, 0.37, 0.042), (-0.03, 0.06, 0.38, 0.036), (0.06, -0.03, 0.375, 0.035),
-             (0.0, -0.01, 0.43, 0.04), (0.26, -0.08, 0.035, 0.035), (-0.2, -0.22, 0.04, 0.04), (0.1, -0.3, 0.033, 0.033))
+    balls = ((0.0, 0.0, 0.3, 0.045), (0.07, 0.03, 0.31, 0.04), (-0.07, 0.04, 0.3, 0.042), (-0.04, -0.05, 0.33, 0.038),
+             (0.02, 0.02, 0.37, 0.042), (0.0, -0.01, 0.43, 0.04))
+    if missed:
+        balls += ((0.26, -0.08, 0.035, 0.035), (-0.2, -0.22, 0.04, 0.04), (0.1, -0.3, 0.033, 0.033))
     for k, (x, y, z, r) in enumerate(balls):
         _crumple(bm, r, (x, y, z), seed=k)
     _part(f"{name}__paper", bm, root, col)
@@ -1614,18 +1629,21 @@ def build_sticky_note(name, location, rotation_z, parent, col, text=None, flat=F
     return root
 
 
-def build_monitor_notes(name, location, rotation_z, parent, col, texts=(), width=0.62, height=0.36):
-    """A rash of sticky notes round a monitor's bezel, some hanging over the screen. Give it the same location,
-    rotation and size as the build_monitor it decorates. Mostly blank; `texts` go on the first notes, top row first
-    (<name>__text_00...)."""
+def build_monitor_notes(name, location, rotation_z, parent, col, texts=(), width=0.62, height=0.36, count=12):
+    """Sticky notes round a monitor's bezel, some hanging over the screen. Give it the same location, rotation and
+    size as the build_monitor it decorates. `count` (up to 12) takes spots in a fixed order: two along the top and
+    one down each side first. Six or fewer come out 1.3 times bigger, so they still read from across the room. Mostly
+    blank; `texts` go on the first notes placed (<name>__text_00...)."""
     root = _root(name, location, rotation_z, parent, col)
     pose, hw, hh = _monitor_pose(height), width / 2, height / 2
     spots = ((-0.25, hh - 0.004, -6), (-0.13, hh - 0.002, 4), (0.05, hh - 0.004, -3), (0.17, hh - 0.003, 7), (0.27, hh - 0.005, -2),
              (-hw + 0.035, 0.09, 5), (-hw + 0.03, -0.01, -8), (-hw + 0.035, -0.1, 3), (hw - 0.035, 0.05, -5), (hw - 0.03, -0.06, 6),
              (-0.18, -hh + 0.012, 3), (0.12, -hh + 0.012, -4))
+    order = (0, 3, 6, 9, 1, 4, 8, 7, 2, 5, 10, 11)
+    grow = Matrix.Scale(1.3 if count <= 6 else 1.0, 4)
     bm = bmesh.new()
-    for i, (x, z, deg) in enumerate(spots):
-        m = pose @ Matrix.Translation((x, 0, z)) @ Matrix.Rotation(math.radians(deg), 4, "Y")
+    for i, (x, z, deg) in enumerate(spots[k] for k in order[:count]):
+        m = pose @ Matrix.Translation((x, 0, z)) @ Matrix.Rotation(math.radians(deg), 4, "Y") @ grow
         _note(bm, m, curl=18 + 9 * (i % 3))
         if i < len(texts) and texts[i]:
             _note_text(f"{name}__text_{i:02d}", texts[i], root, col, m)

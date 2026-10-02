@@ -38,12 +38,12 @@ PORTRAIT_FOV_DEG = 85.0  # wide enough for crate-to-shelf across the office on a
 # Every line of visible text, in one place for Kasper to approve or swap.
 COPY = {
     "nameplate": "KASPER SIMONSEN.DEV",
-    "note_bezel": "it works.\ndon't touch it.",
-    "note_wall": "fix the fix",
-    "mug": "works on my\nmachine",
     "whiteboard": "TODO: sleep",
     "whiteboard_note": "(next sprint)",
 }
+# The parts of build_desk_mess kept: the pen, can, paper balls and cables read only as stray lines from the standing
+# spot, so they're left out.
+DESK_MESS = ("mug", "chips", "papers", "notes", "headphones")
 
 # The office frame: metres, origin at meta.door on The Commons' frontage, +x north along Gwynne St (right when facing
 # in), +y west into the building, +z up. The lobby (commons.lobby) runs along the frontage from the south blade to
@@ -217,22 +217,19 @@ def furnish(room, col, w, back):
     monitor = on_desk(-0.15, 0.2)
     screen = props.build_monitor("hs_monitor", monitor, 0, room, col)
     # the notes stuck round its bezel are part of the monitor hotspot, so they light up with it
-    props.build_monitor_notes("hs_monitor__notes", (0, 0, 0), 0, screen, col, texts=(COPY["note_bezel"],))
+    props.build_monitor_notes("hs_monitor__notes", (0, 0, 0), 0, screen, col, count=4)
     # the duck sits side-on along the top of the bezel
     props.build_rubber_duck("prop_rubber_duck", monitor + Vector((0.1, 0.051, 0.441)), -math.pi / 2, room, col)
     props.build_laptop("prop_laptop", on_desk(0.32, 0.1), -0.25, room, col)
     props.build_keyboard("prop_keyboard", on_desk(-0.05, -0.15), 0, room, col)
     props.build_mouse("prop_mouse", on_desk(0.08, -0.29), 0.1, room, col)
-    props.build_desk_mess("prop_desk_mess", on_desk(0, 0), 0, room, col)
+    props.build_desk_mess("prop_desk_mess", on_desk(0, 0), 0, room, col, parts=DESK_MESS)
     props.build_desk_lamp("prop_desk_lamp", on_desk(0.6, 0.2), 0.3, room, col)
-    props.build_can_pyramid("prop_can_pyramid", on_desk(-0.565, 0.315), 0, room, col)  # the left end, clear of the monitor
-    props.build_noodle_cup("prop_noodle_cup", on_desk(-0.32, 0.07), 0.4, room, col)
-    props.build_mug("prop_mug", on_desk(0.03, 0.03), 0, room, col, text=COPY["mug"])
-    # under the desk, turned so its climbing cables go up the left leg rather than through the pedestal
-    props.build_cable_tangle("prop_cable_tangle", (desk.x - 0.3, back - 0.34, 0), math.pi / 2, room, col)
+    props.build_can_pyramid("prop_can_pyramid", on_desk(-0.565, 0.315), 0, room, col, rows=3)  # the left end, clear of the monitor
+    props.build_mug("prop_mug", on_desk(0.03, 0.03), 0, room, col)
     chair_x, chair_y, chair_turn = CHAIR
     props.build_chair("prop_chair", (desk.x + chair_x, desk.y + chair_y, 0), chair_turn, room, col)
-    props.build_bin("prop_bin", (0.85, 3.95, 0), 0.3, room, col)
+    props.build_bin("prop_bin", (0.85, 3.95, 0), 0.3, room, col, missed=False)
 
     # record crate on the floor left of the desk; sideboard with the turntable right of it, the shelf above
     props.build_crate("hs_crate", (desk.x - 1.0, back - 0.3, 0), 0.1, room, col)
@@ -250,7 +247,7 @@ def furnish(room, col, w, back):
     # on the back wall: the clock over the desk, the whiteboard and a note left of it, the Victory poster over the couch
     props.build_wall_clock("prop_wall_clock", (desk.x, back, 2.25), 0, room, col)
     props.build_whiteboard("prop_whiteboard", (-1.0, back, 1.8), 0, room, col, text=COPY["whiteboard"], note=COPY["whiteboard_note"])
-    props.build_sticky_note("prop_sticky_note", (-0.6, back, 1.72), 0.05, room, col, text=COPY["note_wall"])
+    props.build_sticky_note("prop_sticky_note", (-0.6, back, 1.72), 0.05, room, col)
     props.build_poster_victory("prop_poster_victory", (-w + 0.5, back, 1.65), 0, room, col)
 
     # the couch on the street side with its pillow and blanket, the pizza box in front, abandoned mugs and books by it
@@ -261,7 +258,8 @@ def furnish(room, col, w, back):
     props.build_pillow("prop_pillow", at_couch @ Vector((-0.5, -0.1, seat)), couch[2], room, col, tilt=70)
     props.build_blanket("prop_blanket", at_couch @ Vector((0.34, -0.225, seat)), couch[2], room, col)  # fold on the seat edge
     props.build_pizza_box("prop_pizza_box", at_couch @ Vector((-0.35, -0.85, 0)), couch[2] + 0.3, room, col)
-    props.build_mug_cluster("prop_mug_cluster", (-0.75, 3.35, 0), 0.2, room, col)
+    props.build_mug_cluster("prop_mug_cluster", (-0.75, 3.35, 0), 0.2, room, col, count=2)
+    remove_tree("prop_mug_cluster__stains")  # coffee rings: more stray lines
     props.build_book_stack("prop_book_stack", (couch[0] + 0.6, couch[1] - couch[3] / 2 - 0.25, 0), 0.3, room, col)
 
     # the old telly facing the couch, a poster over it, and on top the healthy snake plant beside the wilted one
