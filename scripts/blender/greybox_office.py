@@ -75,6 +75,27 @@ CHAIR = (-0.35, -0.75, math.pi - 0.35)  # x and y from the desk's centre, turn: 
 # Both face into the room, in view from cam_stand.
 RESERVED = {"couch": (-1.825, 4.2, math.pi / 2, 1.7, 0.85), "tv": (2.0, 4.0, -math.pi / 2, 0.7, 0.5)}
 PILLOW_TURN = -math.pi / 2  # the pillow stood side-on to the couch, its top leaning into the far arm
+# Focus cameras (spec 3.5), room frame: (eye, look-at, vertical fov). Landscape frames (16:10) leave the right ~40% for
+# the panel, so the object's centre sits about a third in from the left; the monitor has no panel and is centred.
+# Portrait frames (390 x 844) centre the object, as the panel is a full-screen sheet there. Every eye is at least
+# 0.3 m from any mesh: the crate and monitor eyes pass closest, over the chair.
+FOCUS = {
+    # low, looking down into the crate over its front edge, so the front records read
+    "crate": {"land": ((-1.1, 4.0, 1.0), (-0.87, 4.75, 0.2), 45.0),
+              "portrait": ((-1.1, 3.95, 1.05), (-1.1, 4.8, 0.16), 70.0)},
+    # framed for the top drawer open 0.30 m (the runtime slides it), looking down into it at about 40 degrees: the
+    # business card a third in from the left on landscape, and centred in the top half on portrait, with the bottom
+    # clear for the docked HTML card
+    "drawer": {"land": ((0.3, 3.645, 1.043), (0.515, 4.334, 0.4645), 45.0),
+               "portrait": ((0.3, 3.75, 1.0), (0.3, 4.2, 0.25), 70.0)},
+    # square on to the screen, just far enough back for the duck on top to fit (the screen is 56% of the width); the
+    # portrait eye rises over the chair's headrest to fit the monitor's width
+    "monitor": {"land": ((-0.25, 4.02, 1.04), (-0.25, 4.957, 1.04), 40.0),
+                "portrait": ((-0.25, 3.75, 1.75), (-0.25, 4.95, 1.0), 65.0)},
+    # level with the shelf, all five ornaments in frame
+    "shelf": {"land": ((1.4, 3.6, 1.6), (1.57, 5.0, 1.58), 45.0),
+              "portrait": ((1.3, 3.0, 1.6), (1.3, 5.0, 1.55), 70.0)},
+}
 
 
 def in_office(pose):
@@ -213,7 +234,8 @@ def furnish(room, col, w, back):
         return Vector((desk.x + x, desk.y + y, props.DESK_HEIGHT))
 
     props.build_desk("prop_desk", desk, 0, room, col)
-    props.build_pedestal("hs_drawer", (desk.x + 0.4, desk.y - 0.04, 0), 0, room, col)  # under the right side
+    # under the right side, with the business card in its top drawer
+    props.build_pedestal("hs_drawer", (desk.x + 0.4, desk.y - 0.04, 0), 0, room, col, card=True)
     # on the desk, where build_desk_mess expects them: monitor back left of centre, laptop to its right
     monitor = on_desk(-0.15, 0.2)
     screen = props.build_monitor("hs_monitor", monitor, 0, room, col)
@@ -332,6 +354,14 @@ def build_lobby(frame, root, col, fp):
 def place(cam, eye, target):
     cam.location = eye
     cam.rotation_quaternion = look(eye, target)
+
+
+def build_focus_cameras(room, col):
+    """cam_focus_<hotspot> and cam_focus_<hotspot>_portrait for each FOCUS entry, parented to the room."""
+    for name, poses in FOCUS.items():
+        for variant, (eye, target, fov) in poses.items():
+            suffix = "_portrait" if variant == "portrait" else ""
+            place(camera(f"cam_focus_{name}{suffix}", fov, col, room), eye, target)
 
 
 def monotone(xs, ys):
@@ -643,6 +673,7 @@ def main():
     build_corridor(root, office, build_lobby(frame, root, office, fp))
     place(camera("cam_stand", CAMERA_FOV_DEG, office, room), *STAND)
     place(camera("cam_stand_portrait", PORTRAIT_FOV_DEG, office, room), *PORTRAIT)
+    build_focus_cameras(room, office)
     build_commons(frame, street, fp)
     build_walkin(frame, street)
     heritage_signs(frame, street)

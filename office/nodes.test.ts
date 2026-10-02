@@ -3,6 +3,7 @@ import manifest from "./manifest.json";
 import { WALKIN_CAMERA } from "./walkin/cameraPose";
 import { PLATTER_NODE, SLEEVE_NODE } from "./idle/turntable";
 import { POSE_NODE } from "./walkin/skippingGirl";
+import { CARD_NODE, DRAWER_NODE, SCREEN_NODE } from "./objects/motion";
 
 // The runtime finds these nodes by name. check:models enforces the manifest, so the manifest must name
 // them too, or a rename in Blender leaves the build green while the animation silently stops.
@@ -27,5 +28,9 @@ describe("runtime node names are required by the manifest", () => {
     const poses = numbered(manifest.street.nodes, POSE_NODE);
     expect(poses.length).toBeGreaterThanOrEqual(2);
     expect(poses).toEqual(poses.map((_, i) => i));
+  });
+
+  it("the drawer, its business card and the monitor screen exist", () => {
+    for (const n of [DRAWER_NODE, CARD_NODE, SCREEN_NODE]) expect(manifest.office.nodes).toContain(n);
   });
 });
