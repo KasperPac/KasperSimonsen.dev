@@ -156,3 +156,21 @@ test.describe("reduced motion", () => {
     await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
   });
 });
+
+test("the dots breathe where they are, over their objects", async ({ page }) => {
+  await openOffice(page);
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect(office(page)).toHaveAttribute("data-hints", "dots", { timeout: MOVE_WAIT });
+  const dot = page.locator(".office-marker").last(); // the farthest from the corner, so any drift is largest
+  const sample = () =>
+    dot.evaluate((m) => {
+      const r = m.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2, scale: Number(getComputedStyle(m).scale) || 1 };
+    });
+  await expect.poll(async () => (await sample()).scale, { timeout: MOVE_WAIT }).toBeLessThan(1.02);
+  const rest = await sample();
+  await expect.poll(async () => (await sample()).scale, { timeout: MOVE_WAIT }).toBeGreaterThan(1.1);
+  const full = await sample();
+  expect(Math.abs(full.x - rest.x)).toBeLessThanOrEqual(1);
+  expect(Math.abs(full.y - rest.y)).toBeLessThanOrEqual(1);
+});

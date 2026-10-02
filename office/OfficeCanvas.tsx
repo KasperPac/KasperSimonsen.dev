@@ -295,7 +295,9 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
       const a = anchors[h];
       if (el && a) {
         const s = project(a);
-        el.style.transform = `translate(${s.x}px, ${s.y}px)`;
+        // `translate`, not `transform`: the pulse's `scale` then breathes the dot about itself. Under `transform` it
+        // scaled the whole offset from the screen's corner, swinging every dot to and fro (Kasper).
+        el.style.translate = `${s.x}px ${s.y}px`;
       }
     }
   });

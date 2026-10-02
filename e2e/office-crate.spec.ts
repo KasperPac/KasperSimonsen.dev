@@ -85,7 +85,7 @@ test("sweeping the pointer back across the crate flicks through the records in o
   await expect(office(page)).toHaveAttribute("data-camera", "focus", { timeout: MOVE_WAIT });
   // the crate's marker sits over the middle of its opening (markers follow HOTSPOTS order: the crate first)
   const at = await page.evaluate(() => {
-    const m = /translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec((document.querySelector(".office-marker") as HTMLElement).style.transform)!;
+    const m = /([-\d.]+)px ([-\d.]+)px/.exec((document.querySelector(".office-marker") as HTMLElement).style.translate)!;
     return { x: Number(m[1]), y: Number(m[2]) };
   });
   const dig = async () => Number(await office(page).getAttribute("data-dig"));
@@ -169,7 +169,7 @@ test.describe("touch", () => {
     await openCrate(page);
     await expect(office(page)).toHaveAttribute("data-camera", "focus", { timeout: MOVE_WAIT });
     const at = await page.evaluate(() => {
-      const m = /translate\(([-\d.]+)px, ([-\d.]+)px\)/.exec((document.querySelector(".office-marker") as HTMLElement).style.transform)!;
+      const m = /([-\d.]+)px ([-\d.]+)px/.exec((document.querySelector(".office-marker") as HTMLElement).style.translate)!;
       return { x: Number(m[1]), y: Number(m[2]) };
     });
     // one finger dragged up the crate: down, a run of moves, up (the canvas's event source is its parent)
