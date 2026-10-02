@@ -1,4 +1,4 @@
-import { Matrix4, Quaternion, Vector3, type Mesh, type Object3D } from "three";
+import { Matrix4, Quaternion, Vector3, type Object3D } from "three";
 import { easeInOutCubic } from "@/office/camera/pose";
 import { approach } from "./motion";
 
@@ -8,13 +8,14 @@ export const SLEEVE_M = 0.315;
 export const FLIP_ANGLE = 0.17;
 export const FLIP_SECONDS = 0.35;
 /** How far the front record rises while browsing, so its whole cover shows over the flicked records (measured in Blender, Task 8). */
-export const LIFT_M = 0.2;
+export const LIFT_M = 0.235;
 export const PLAY_SECONDS = 2.4;
 export const PLAY_BACK_SECONDS = 1.2;
 /** The sleeve hovers this far above the platter while its vinyl comes out. */
 const PRESENT_ABOVE_M = 0.12;
 /** A laid vinyl rests this far above the platter's top. */
-const ON_PLATTER_M = 0.002;
+/** A laid disc's centre above the platter's origin: the mat's top plus half the disc (measured in Blender; the spindle stands higher). */
+const ON_PLATTER_M = 0.021;
 
 /** The record at the front of the dig, kept to the records that have projects. */
 export function clampDig(dig: number, count: number): number {
@@ -50,8 +51,8 @@ export function findCrateNodes(records: Object3D[]): CrateNodes {
 const TAU = Math.PI * 2;
 const X = new Vector3(1, 0, 0);
 const Y = new Vector3(0, 1, 0);
-const Z = new Vector3(0, 0, 1);
-const FLAT = new Quaternion().setFromAxisAngle(X, -Math.PI / 2);
+/** A vinyl's face: its own local +y (office_props._vinyl, stood up +90° about x in its sleeve), so lying flat it takes the platter's orientation. */
+const FACE = Y;
 const tip = new Quaternion();
 const turn = new Quaternion();
 const flat = new Quaternion();
@@ -64,25 +65,16 @@ const hover = new Vector3();
 const world = new Matrix4();
 const parentInverse = new Matrix4();
 const unusedScale = new Vector3();
-/** The platter as of this frame: its top centre, its up, and the pose a disc lying on it takes. */
+/** The platter as of this frame: its origin (`top`), its up, and the pose a disc lying on it takes. */
 const deck = { top: new Vector3(), up: new Vector3(), quaternion: new Quaternion(), disc: { position: new Vector3(), quaternion: new Quaternion() } };
-
-/** Height of the platter's top above its origin: its geometry's top if it is a mesh, else its origin. */
-function platterHeight(platter: Object3D): number {
-  const mesh = platter as Mesh;
-  if (!mesh.isMesh) return 0;
-  if (!mesh.geometry.boundingBox) mesh.geometry.computeBoundingBox();
-  return mesh.geometry.boundingBox!.max.y;
-}
 
 /** Reads the platter afresh, so a laid vinyl turns with it. */
 function readDeck(platter: Object3D): void {
   platter.updateWorldMatrix(true, false);
   platter.matrixWorld.decompose(deck.top, deck.quaternion, unusedScale);
   deck.up.copy(Y).applyQuaternion(deck.quaternion);
-  platter.localToWorld(deck.top.set(0, platterHeight(platter), 0));
   deck.disc.position.copy(deck.top).addScaledVector(deck.up, ON_PLATTER_M);
-  deck.disc.quaternion.copy(deck.quaternion).multiply(FLAT); // the disc's face (local z) turned to the platter's up
+  deck.disc.quaternion.copy(deck.quaternion); // its face (local y) on the platter's up
 }
 
 /** Writes a world pose into `o`'s local position and quaternion, through its parent; its own scale is left alone. */
@@ -125,14 +117,14 @@ function placeVinyl(vinyl: Object3D, sleeve: Object3D, rest: Placement, p: Phase
   if (p.lay === 0) return Number.NaN;
   world.compose(vinyl.position, vinyl.quaternion, vinyl.scale).premultiply(sleeve.matrixWorld);
   world.decompose(discAt.position, discAt.quaternion, discAt.scale);
-  face.copy(Z).applyQuaternion(discAt.quaternion);
+  face.copy(FACE).applyQuaternion(discAt.quaternion);
   flat.setFromUnitVectors(face, deck.up).multiply(discAt.quaternion); // V1 tipped flat the short way
-  spin.copy(flat).invert().multiply(deck.disc.quaternion); // flat → V2: a turn about the face (local z)
-  const half = 2 * Math.atan2(spin.z, spin.w);
+  spin.copy(flat).invert().multiply(deck.disc.quaternion); // flat → V2: a turn about the face (local y)
+  const half = 2 * Math.atan2(spin.y, spin.w);
   const wrapped = Math.atan2(Math.sin(half), Math.cos(half));
   const turned = p.lay === 1 || Number.isNaN(twist) ? wrapped : wrapped + TAU * Math.round((twist - wrapped) / TAU);
   discAt.position.lerp(deck.disc.position, p.lay);
-  discAt.quaternion.slerp(flat, p.lay).multiply(spin.setFromAxisAngle(Z, turned * p.lay));
+  discAt.quaternion.slerp(flat, p.lay).multiply(spin.setFromAxisAngle(FACE, turned * p.lay));
   setWorldPose(vinyl, sleeve, discAt.position, discAt.quaternion, discAt.scale);
   return turned;
 }

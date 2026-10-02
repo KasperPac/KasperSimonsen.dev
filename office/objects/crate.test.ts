@@ -22,9 +22,11 @@ function crate() {
     r.name = `hs_crate__record_0${i}`;
     r.position.set(0, 0.012, -0.03 * i);
     r.rotation.x = -0.14;
-    const v = new Mesh(new BoxGeometry(0.3, 0.3, 0.002));
+    // as office.glb has it: the disc's face is its own local +y, stood up +90° about x in its sleeve
+    const v = new Mesh(new BoxGeometry(0.3, 0.002, 0.3));
     v.name = `${r.name}__vinyl`;
-    v.position.y = 0.2;
+    v.position.y = 0.205;
+    v.rotation.x = Math.PI / 2;
     r.add(v);
     root.add(r);
     return r;
@@ -107,7 +109,7 @@ describe("CrateMotion lift and play", () => {
     const front = new Vector3(0, 0, 1).applyQuaternion(sleeve.getWorldQuaternion(new Quaternion()));
     expect(front.z).toBeCloseTo(-1); // turned round: the front faces away from where the stand's front faced (+z)
     const vinyl = nodes.vinyls[0]!;
-    const normal = new Vector3(0, 0, 1).applyQuaternion(vinyl.getWorldQuaternion(new Quaternion()));
+    const normal = new Vector3(0, 1, 0).applyQuaternion(vinyl.getWorldQuaternion(new Quaternion())); // its face
     expect(Math.abs(normal.y)).toBeCloseTo(1); // lying flat
     const centre = vinyl.getWorldPosition(new Vector3());
     expect(Math.hypot(centre.x - platter.position.x, centre.z - platter.position.z)).toBeLessThan(1e-6);
