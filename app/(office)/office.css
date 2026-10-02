@@ -48,3 +48,209 @@ body {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* Scrolling would replay the walk-in under an open object. */
+html.office-locked {
+  overflow: hidden;
+}
+
+/* With no 3D, the fallback's own links are the navigation. */
+.office[data-office-fallback="true"] :is(.office-nav, .office-label, .office-marker, .office-back, .office-card) {
+  display: none;
+}
+
+/* Real controls for every object (spec 7.3), hidden until a keyboard user tabs into them. */
+.office-nav:not(:focus-within) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.office-nav:focus-within {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 3;
+  padding: 12px 14px;
+  background: var(--office-bg);
+  border: 1px solid rgba(232, 232, 232, 0.25);
+}
+.office-nav ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.office-nav a,
+.office-nav button {
+  color: var(--office-fg);
+  background: none;
+  border: 0;
+  padding: 0;
+  font: 14px/1.4 var(--font-ui), system-ui, sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+}
+.office-nav :focus-visible { outline: 1px solid var(--office-fg); outline-offset: 3px; }
+
+/* Hover/focus label, positioned by the canvas. */
+.office-label {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  pointer-events: none;
+  margin-top: -34px;
+  translate: -50% 0;
+  font: 11px/1 var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* Touch markers: white, only where hover isn't possible, only while standing. */
+.office-marker {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  width: 14px;
+  height: 14px;
+  margin: -24px 0 0 -7px;
+  border: 1px solid var(--office-fg);
+  border-radius: 50%;
+  pointer-events: none;
+}
+@media (hover: none) {
+  .office[data-director="idle"] .office-marker { display: block; animation: office-pulse 1.8s ease-in-out infinite; }
+}
+@keyframes office-pulse {
+  0%, 100% { scale: 1; opacity: 0.9; }
+  50% { scale: 1.6; opacity: 0.2; }
+}
+
+.office-back {
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  z-index: 4;
+  padding: 8px 12px;
+  background: var(--office-bg);
+  color: var(--office-fg);
+  border: 1px solid rgba(232, 232, 232, 0.35);
+  font: 11px/1 var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* Content cards beside their object (desktop: positioned by the canvas; narrow: docked). */
+.office-card {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  width: min(340px, calc(100vw - 32px));
+  padding: 20px 22px;
+  background: var(--office-bg);
+  border: 1px solid rgba(232, 232, 232, 0.9);
+  font: 15px/1.5 var(--font-ui), system-ui, sans-serif;
+  animation: office-card-in 0.3s ease-out both;
+}
+@keyframes office-card-in {
+  from { opacity: 0; }
+}
+@media (max-width: 700px), (orientation: portrait) {
+  .office-card { top: auto !important; left: 16px !important; right: 16px; bottom: 16px; width: auto; }
+}
+.office-card-eyebrow {
+  margin: 0 0 6px;
+  font: 11px/1.2 var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.office-card-title { margin: 0 0 6px; font-size: 22px; font-weight: 600; line-height: 1.15; }
+.office-card-text { margin: 0 0 8px; color: rgba(232, 232, 232, 0.8); }
+.office-card a { color: var(--office-fg); }
+.office-card-links { margin: 0 0 14px; padding: 0; list-style: none; display: flex; gap: 14px; }
+.office-card-cta {
+  padding: 10px 16px;
+  background: var(--accent);
+  color: var(--office-bg);
+  border: 0;
+  font: 600 14px/1 var(--font-ui), system-ui, sans-serif;
+  cursor: pointer;
+}
+
+/* The Read more panel. */
+.panel-scrim { position: fixed; inset: 0; z-index: 10; }
+.panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(560px, 42vw);
+  overflow-y: auto;
+  padding: 64px 40px 48px;
+  background: var(--office-bg);
+  border-left: 1px solid rgba(232, 232, 232, 0.2);
+  outline: none;
+  animation: panel-in 0.35s ease-out both;
+}
+@keyframes panel-in { from { translate: 40px 0; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .panel { animation: panel-fade 0.2s ease-out both; }
+  .office-marker { animation: none !important; }
+}
+@keyframes panel-fade { from { opacity: 0; } }
+@media (max-width: 900px) {
+  .panel { width: 100%; border-left: 0; padding: 64px 20px 40px; }
+}
+.panel-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 8px 12px;
+  background: none;
+  color: var(--office-fg);
+  border: 1px solid rgba(232, 232, 232, 0.35);
+  font: 11px/1 var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* Articles and forms inside panels. */
+.article { max-width: 62ch; font: 16px/1.6 var(--font-ui), system-ui, sans-serif; }
+.article-title { margin: 8px 0 12px; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
+.article-lede { font-size: 19px; color: var(--office-fg); }
+.article p { color: rgba(232, 232, 232, 0.8); }
+.article a { color: var(--office-fg); }
+.article-cta {
+  display: inline-block;
+  padding: 10px 16px;
+  background: var(--accent);
+  color: var(--office-bg);
+  border: 0;
+  font: 600 14px/1 var(--font-ui), system-ui, sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+}
+.form { display: grid; gap: 14px; margin-top: 20px; }
+.form label {
+  display: grid;
+  gap: 6px;
+  font: 11px/1 var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(232, 232, 232, 0.7);
+}
+.form input,
+.form textarea {
+  padding: 10px 12px;
+  background: transparent;
+  color: var(--office-fg);
+  border: 1px solid rgba(232, 232, 232, 0.3);
+  font: 16px/1.4 var(--font-ui), system-ui, sans-serif;
+}
+.form :focus-visible { outline: 1px solid var(--accent); border-color: var(--accent); }
