@@ -6,7 +6,7 @@ import { useGLTF } from "@react-three/drei";
 import type { PerspectiveCamera } from "three";
 import manifest from "./manifest.json";
 import { theme } from "./theme";
-import { applyCleanEdges, setLineResolution } from "./style/cleanEdges";
+import { applyCleanEdges, setLineResolution, updateEdgeFades } from "./style/cleanEdges";
 import { findClipFor, makeClipSampler, progressToTime } from "./walkin/clipSampler";
 import { useTurntable } from "./idle/useTurntable";
 import { applySkippingGirl, findSkippingGirl } from "./walkin/skippingGirl";
@@ -21,7 +21,7 @@ export type OfficeCanvasProps = {
   host: RefObject<HTMLElement | null>;
 };
 
-/** Loads a model and restyles it as clean edges, keeping line widths right on resize. */
+/** Loads a model and restyles it as clean edges, keeping line widths right on resize and distance fades current. */
 function useCleanEdges(url: string) {
   const gltf = useGLTF(url);
   const width = useThree((s) => s.size.width);
@@ -37,6 +37,7 @@ function useCleanEdges(url: string) {
     [gltf.scene],
   );
   useEffect(() => setLineResolution(handle, width, height), [handle, width, height]);
+  useFrame(({ camera }) => updateEdgeFades(handle, camera.position)); // dense detail fades with distance
   return gltf;
 }
 

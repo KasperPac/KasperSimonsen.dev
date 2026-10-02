@@ -1,4 +1,14 @@
-import { DoubleSide, EdgesGeometry, MeshBasicMaterial, type BufferGeometry, type Mesh, type Object3D } from "three";
+import {
+  Box3,
+  DoubleSide,
+  EdgesGeometry,
+  MeshBasicMaterial,
+  Sphere,
+  Vector3,
+  type BufferGeometry,
+  type Mesh,
+  type Object3D,
+} from "three";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import { LineSegments2 } from "three/addons/lines/LineSegments2.js";
 import { LineSegmentsGeometry } from "three/addons/lines/LineSegmentsGeometry.js";
@@ -12,13 +22,33 @@ export type CleanEdgesOptions = {
   thresholdDeg: number;
 };
 
-export type CleanEdgesHandle = { fill: MeshBasicMaterial; line: LineMaterial };
+/** Meshes sharing one distance-fade setting. `centre` is their world-space bounding-sphere centre at apply time. */
+export type EdgeFadeGroup = {
+  material: LineMaterial;
+  near: number;
+  far: number;
+  min: number;
+  objects: Object3D[];
+  centre: Vector3;
+};
+
+export type CleanEdgesHandle = { fill: MeshBasicMaterial; line: LineMaterial; fades: EdgeFadeGroup[] };
+
+const DEFAULT_FADE_MIN = 0.15;
+
+/** Line opacity at `distance`: 1 up to `near`, easing (smoothstep) down to `min` at `far`. Invalid params mean no fade. */
+export function fadeOpacity(distance: number, near: number, far: number, min: number): number {
+  if (![distance, near, far, min].every(Number.isFinite) || near >= far) return 1;
+  const t = Math.min(1, Math.max(0, (distance - near) / (far - near)));
+  return 1 - (1 - min) * t * t * (3 - 2 * t);
+}
 
 /**
  * Restyles every mesh under `root` in place: a fill that hides what's behind it, plus the mesh's
  * real edges as screen-space lines. Names, hierarchy and transforms are untouched, so hotspots and
  * Blender animations keep working. Calling it again on the same tree is a no-op for styled meshes.
  * A mesh (or its nearest ancestor) with `userData.edge_threshold_deg` in (0, 180) overrides `opts.thresholdDeg`.
+ * `edge_fade_near`/`edge_fade_far`/`edge_fade_min` give it a distance fade, driven by `updateEdgeFades`.
  */
 export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanEdgesHandle {
   const fill = new MeshBasicMaterial({
@@ -29,8 +59,10 @@ export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanE
     polygonOffsetUnits: 1,
   });
   const line = new LineMaterial({ color: opts.line, linewidth: opts.lineWidth, fog: true });
+  const fades = new Map<string, EdgeFadeGroup>();
   const edgeCache = new Map<BufferGeometry, Map<number, LineSegmentsGeometry>>();
 
+  root.updateWorldMatrix(true, true);
   const meshes: Mesh[] = [];
   root.traverse((obj) => {
     if ((obj as Mesh).isMesh && !obj.userData.cleanEdges && !obj.userData.cleanEdgesApplied) meshes.push(obj as Mesh);
@@ -46,14 +78,38 @@ export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanE
       edges = new LineSegmentsGeometry().fromEdgesGeometry(new EdgesGeometry(mesh.geometry, threshold));
       byThreshold.set(threshold, edges);
     }
-    const lines = new LineSegments2(edges, line);
+    const fade = fadeFor(mesh);
+    let material = line;
+    if (fade) {
+      const key = `${fade.near}|${fade.far}|${fade.min}`;
+      let group = fades.get(key);
+      if (!group) {
+        const faded = new LineMaterial({
+          color: opts.line,
+          linewidth: opts.lineWidth,
+          fog: true,
+          transparent: true,
+          depthWrite: line.depthWrite,
+        });
+        group = { ...fade, material: faded, objects: [], centre: new Vector3() };
+        fades.set(key, group);
+      }
+      group.objects.push(mesh);
+      material = group.material;
+    }
+    const lines = new LineSegments2(edges, material);
     lines.name = `${mesh.name}__edges`;
     lines.userData.cleanEdges = true;
     lines.raycast = () => {}; // hotspots raycast the fill; LineSegments2 would also need raycaster.camera
     mesh.add(lines);
     mesh.userData.cleanEdgesApplied = true;
   }
-  return { fill, line };
+  for (const group of fades.values()) {
+    const box = new Box3();
+    for (const o of group.objects) box.union(new Box3().setFromObject(o));
+    box.getBoundingSphere(new Sphere()).center.clone().toArray().forEach((v, i) => group.centre.setComponent(i, v));
+  }
+  return { fill, line, fades: [...fades.values()] };
 }
 
 /** Nearest valid `edge_threshold_deg` (a Blender custom property, exported as glTF extras) up the tree. */
@@ -65,7 +121,25 @@ function thresholdFor(mesh: Object3D, fallback: number): number {
   return fallback;
 }
 
+/** Nearest ancestor-or-self with a valid `edge_fade_near` < `edge_fade_far`; its `edge_fade_min` (0-1) or the default. */
+function fadeFor(mesh: Object3D): { near: number; far: number; min: number } | null {
+  for (let o: Object3D | null = mesh; o; o = o.parent) {
+    const { edge_fade_near: near, edge_fade_far: far, edge_fade_min: min } = o.userData;
+    if (typeof near === "number" && typeof far === "number" && Number.isFinite(near) && Number.isFinite(far) && near < far) {
+      const ok = typeof min === "number" && Number.isFinite(min) && min >= 0 && min <= 1;
+      return { near, far, min: ok ? min : DEFAULT_FADE_MIN };
+    }
+  }
+  return null;
+}
+
+/** Sets each fade group's opacity from the camera's distance to its centre. Call every frame. */
+export function updateEdgeFades(handle: CleanEdgesHandle, cameraPosition: Vector3): void {
+  for (const g of handle.fades) g.material.opacity = fadeOpacity(cameraPosition.distanceTo(g.centre), g.near, g.far, g.min);
+}
+
 /** Line widths are in CSS pixels relative to this; call on every canvas resize. */
 export function setLineResolution(handle: CleanEdgesHandle, width: number, height: number): void {
   handle.line.resolution.set(width, height);
+  for (const g of handle.fades) g.material.resolution.set(width, height);
 }

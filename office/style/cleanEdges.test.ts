@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { BoxGeometry, DoubleSide, Group, IcosahedronGeometry, Mesh, Raycaster, Vector3 } from "three";
 import type { LineSegments2 } from "three/addons/lines/LineSegments2.js";
-import { applyCleanEdges, setLineResolution } from "./cleanEdges";
+import { applyCleanEdges, fadeOpacity, setLineResolution, updateEdgeFades } from "./cleanEdges";
 
 const opts = { background: "#000000", line: "#ffffff", lineWidth: 1.5, thresholdDeg: 20 };
 
@@ -123,5 +123,112 @@ describe("per-object edge threshold", () => {
     mesh.userData.edge_threshold_deg = bad;
     applyCleanEdges(new Group().add(mesh), opts);
     expect(segments(mesh)).toBe(baseline());
+  });
+});
+
+describe("fadeOpacity", () => {
+  it("is 1 at and inside near, min at and beyond far", () => {
+    expect(fadeOpacity(10, 50, 250, 0.15)).toBe(1);
+    expect(fadeOpacity(50, 50, 250, 0.15)).toBe(1);
+    expect(fadeOpacity(250, 50, 250, 0.15)).toBeCloseTo(0.15);
+    expect(fadeOpacity(9999, 50, 250, 0.15)).toBeCloseTo(0.15);
+  });
+
+  it("falls monotonically in between", () => {
+    const v = [60, 100, 150, 200, 240].map((d) => fadeOpacity(d, 50, 250, 0.15));
+    for (let i = 1; i < v.length; i++) expect(v[i]).toBeLessThan(v[i - 1]);
+    expect(fadeOpacity(150, 50, 250, 0.15)).toBeCloseTo(0.575); // smoothstep midpoint
+  });
+
+  it.each([
+    [Number.NaN, 50, 250, 0.15],
+    [100, Number.NaN, 250, 0.15],
+    [100, 50, Number.POSITIVE_INFINITY, 0.15],
+    [100, 250, 50, 0.15],
+    [100, 50, 50, 0.15],
+    [100, 50, 250, Number.NaN],
+  ])("does not fade for invalid input %s %s %s %s", (d, n, f, m) => expect(fadeOpacity(d, n, f, m)).toBe(1));
+});
+
+describe("distance fade groups", () => {
+  const withFade = (mesh: Mesh, fade: Record<string, unknown>) => Object.assign(mesh.userData, fade);
+
+  it("gives fade meshes their own material and leaves the shared one alone", () => {
+    const { root, crate, twin } = scene();
+    withFade(crate, { edge_fade_near: 50, edge_fade_far: 250 });
+    const handle = applyCleanEdges(root, opts);
+    const faded = edgesOf(crate).material;
+    expect(faded).not.toBe(handle.line);
+    expect(faded.transparent).toBe(true);
+    expect(faded.linewidth).toBe(1.5);
+    expect(faded.depthWrite).toBe(handle.line.depthWrite);
+    expect(handle.line.transparent).toBe(false);
+    expect(edgesOf(twin).material).toBe(handle.line);
+    expect(handle.fades).toHaveLength(1);
+    expect(handle.fades[0]).toMatchObject({ material: faded, near: 50, far: 250, min: 0.15 });
+    expect(handle.fades[0].objects).toEqual([crate]);
+  });
+
+  it("shares one material per distinct fade setting", () => {
+    const { root, crate, twin } = scene();
+    withFade(crate, { edge_fade_near: 50, edge_fade_far: 250 });
+    withFade(twin, { edge_fade_near: 50, edge_fade_far: 250 });
+    const handle = applyCleanEdges(root, opts);
+    expect(handle.fades).toHaveLength(1);
+    expect(handle.fades[0].objects).toHaveLength(2);
+  });
+
+  it("nearest ancestor's fade wins, and invalid fade is ignored", () => {
+    const { root, crate } = scene();
+    root.userData.edge_fade_near = 10;
+    root.userData.edge_fade_far = 20;
+    const inner = new Group();
+    inner.userData = { edge_fade_near: 50, edge_fade_far: 250, edge_fade_min: 0.4 };
+    root.add(inner);
+    inner.add(crate);
+    const bad = new Mesh(new BoxGeometry());
+    bad.name = "bad";
+    bad.userData = { edge_fade_near: 300, edge_fade_far: 100 };
+    const plain = new Group();
+    plain.add(bad);
+    const handle = applyCleanEdges(new Group().add(root, plain), opts);
+    expect(handle.fades.find((g) => g.objects.includes(crate))).toMatchObject({ near: 50, far: 250, min: 0.4 });
+    expect(handle.fades.find((g) => g.near === 10)?.objects).toHaveLength(1); // twin keeps the root's
+    expect(edgesOf(bad).material).toBe(handle.line);
+  });
+
+  it("falls back to the default minimum when edge_fade_min is out of range", () => {
+    const { root, crate } = scene();
+    withFade(crate, { edge_fade_near: 50, edge_fade_far: 250, edge_fade_min: 3 });
+    expect(applyCleanEdges(root, opts).fades[0].min).toBe(0.15);
+  });
+
+  it("sets opacity from the camera's distance to the group's centre", () => {
+    const { root, crate } = scene(); // crate sits at x = 2
+    withFade(crate, { edge_fade_near: 50, edge_fade_far: 250 });
+    const handle = applyCleanEdges(root, opts);
+    const m = handle.fades[0].material;
+    updateEdgeFades(handle, new Vector3(2, 0, 10));
+    expect(m.opacity).toBe(1);
+    updateEdgeFades(handle, new Vector3(2, 0, 150));
+    expect(m.opacity).toBeCloseTo(0.575, 3);
+    updateEdgeFades(handle, new Vector3(2, 0, 1000));
+    expect(m.opacity).toBeCloseTo(0.15);
+  });
+
+  it("setLineResolution reaches the fade materials", () => {
+    const { root, crate } = scene();
+    withFade(crate, { edge_fade_near: 50, edge_fade_far: 250 });
+    const handle = applyCleanEdges(root, opts);
+    setLineResolution(handle, 390, 844);
+    expect(handle.fades[0].material.resolution.toArray()).toEqual([390, 844]);
+  });
+
+  it("stays idempotent", () => {
+    const { root, crate } = scene();
+    withFade(crate, { edge_fade_near: 50, edge_fade_far: 250 });
+    applyCleanEdges(root, opts);
+    applyCleanEdges(root, opts);
+    expect(crate.children.filter((c) => c.userData.cleanEdges)).toHaveLength(1);
   });
 });
