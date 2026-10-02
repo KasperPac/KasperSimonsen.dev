@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { describeDirector, focusedHotspot, IDLE_AT, initialDirector, isLocked, reduceDirector, type DirectorEvent, type DirectorState } from "./director";
+import { describeDirector, focusedHotspot, IDLE_AT, initialDirector, LEAVE_AT, isLocked, reduceDirector, type DirectorEvent, type DirectorState } from "./director";
 
 const crate = { hotspot: "hs_crate", item: null } as const;
 const manuva = { hotspot: "hs_crate", item: "manuva" } as const;
@@ -13,6 +13,14 @@ describe("walk-in and idle", () => {
     expect(idle).toEqual({ kind: "idle" });
     expect(run(idle, { type: "progress", value: 0.5 })).toEqual({ kind: "walkIn" });
   });
+  it("stays in the office through a small scroll back (a wheel notch, a nudge on a phone)", () => {
+    expect(run({ kind: "idle" }, { type: "progress", value: IDLE_AT - 0.01 })).toEqual({ kind: "idle" });
+    expect(run({ kind: "idle" }, { type: "progress", value: LEAVE_AT })).toEqual({ kind: "idle" });
+  });
+  it("walks out again once scrolled back past the office's doorstep", () =>
+    expect(run({ kind: "idle" }, { type: "progress", value: LEAVE_AT - 0.001 })).toEqual({ kind: "walkIn" }));
+  it("only arrives at the very end of the walk-in, wherever it leaves", () =>
+    expect(run(initialDirector(), { type: "progress", value: LEAVE_AT + 0.01 })).toEqual({ kind: "walkIn" }));
   it("ignores progress that changes nothing", () => {
     const s = initialDirector();
     expect(run(s, { type: "progress", value: 0.4 })).toBe(s);

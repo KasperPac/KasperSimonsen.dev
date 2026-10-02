@@ -2,6 +2,11 @@ import { sameHit, type Hit, type HotspotName } from "../hotspots/registry";
 
 /** Walk-in progress at or above this counts as standing in the office. */
 export const IDLE_AT = 0.995;
+/**
+ * Once standing, the office holds until progress drops below this: a wheel notch or a nudge on a phone (~200 px) mustn't
+ * walk the visitor out, taking the dots, hover and clicks with it (Kasper: the dots "disappear").
+ */
+export const LEAVE_AT = 0.97;
 
 export type DirectorState =
   | { kind: "walkIn" }
@@ -25,7 +30,7 @@ export function reduceDirector(state: DirectorState, event: DirectorEvent): Dire
   switch (event.type) {
     case "progress":
       if (state.kind === "walkIn" && event.value >= IDLE_AT) return { kind: "idle" };
-      if (state.kind === "idle" && event.value < IDLE_AT) return { kind: "walkIn" };
+      if (state.kind === "idle" && event.value < LEAVE_AT) return { kind: "walkIn" };
       return state;
     case "focus": {
       const target = event.target;

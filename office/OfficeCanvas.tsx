@@ -18,7 +18,7 @@ import { CameraRig, FOCUS_MOVES, PLAYER_MOVE } from "./camera/rig";
 import { cameraKey } from "./camera/key";
 import { FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, hitFor, pickHit, type Hit, type HotspotName } from "./hotspots/registry";
 import { addHitProxies } from "./hotspots/proxies";
-import { focusedHotspot, IDLE_AT, type DirectorState } from "./director/director";
+import { focusedHotspot, IDLE_AT, LEAVE_AT, type DirectorState } from "./director/director";
 import { CARD_NODE, findMotionNodes, ObjectMotion } from "./objects/motion";
 import { CrateMotion, findCrateNodes, type PlayerPoses } from "./objects/crate";
 import { addDigPlane, DIG_PLANE, digFromDepth } from "./crate/scrub";
@@ -103,7 +103,7 @@ function Street({ progress, host, director, onProgressCross, onSettled, info }: 
   const poses = useMemo(() => ({ walk: makePose(), base: makePose(), focus: makePose(), now: makePose(), out: makePose() }), []);
   const seen = useRef("");
   const left = useRef<HotspotName | null>(null); // the object a return move leaves, so it retraces that object's arc
-  const atEnd = useRef<boolean | null>(null);
+  const band = useRef<number | null>(null);
   const written = useRef({ progress: -1, camera: "" });
 
   useFrame((_, dt) => {
@@ -148,9 +148,10 @@ function Street({ progress, host, director, onProgressCross, onSettled, info }: 
     if (!rig.moving && (d.kind === "focusing" || d.kind === "returning")) onSettled();
     applyPose(rig.pose(poses.base, poses.out), camera);
 
-    const end = p >= IDLE_AT;
-    if (end !== atEnd.current) {
-      atEnd.current = end;
+    // Report each crossing of either threshold: arriving at IDLE_AT, leaving below LEAVE_AT (the director holds between).
+    const now = p >= IDLE_AT ? 2 : p >= LEAVE_AT ? 1 : 0;
+    if (now !== band.current) {
+      band.current = now;
       onProgressCross(p);
     }
     const el = host.current;
