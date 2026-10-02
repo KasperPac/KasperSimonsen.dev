@@ -133,19 +133,27 @@ html.office-locked {
 .office[data-hints="dots"][data-director="idle"]:not([data-office-fallback="true"]) .office-hints-text { display: block; }
 
 /* On the street: a way in for anyone who doesn't think to scroll (Kasper). Gone once the camera is on its way down,
-   back if they scroll up to the top again. Fades rather than cuts; hidden, it can't be tabbed to. */
+   back if they scroll up to the top again. Fades rather than cuts; hidden, it can't be tabbed to. The street fades to
+   black behind it and the button is the one solid thing on screen, so it reads over all the line work (Kasper picked
+   this over an outlined button). The fade stays low in landscape, clear of The Commons just above. */
 .office-arrive {
   position: fixed;
-  left: 50%;
-  bottom: max(24px, env(safe-area-inset-bottom));
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 3;
-  translate: -50% 0;
   display: grid;
   justify-items: center;
-  gap: 14px;
+  gap: 16px;
+  padding: 14vh 16px max(28px, env(safe-area-inset-bottom));
+  background: linear-gradient(to bottom, rgba(11, 11, 11, 0), rgba(11, 11, 11, 0.88) 55%, var(--office-bg));
+  pointer-events: none;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+}
+@media (orientation: portrait) {
+  .office-arrive { padding-top: 22vh; }
 }
 .office[data-scene-ready="true"][data-street="true"]:not([data-walking="true"]):not([data-office-fallback="true"]) .office-arrive {
   opacity: 1;
@@ -153,31 +161,29 @@ html.office-locked {
   transition: opacity 0.6s ease;
 }
 .office-come-in {
-  min-height: 44px;
-  padding: 0 20px;
-  background: var(--office-bg);
-  color: var(--office-fg);
-  border: 1px solid rgba(232, 232, 232, 0.6);
-  font: 12px/1 var(--font-mono), ui-monospace, monospace;
-  letter-spacing: 0.14em;
+  min-height: 52px;
+  padding: 0 30px;
+  background: var(--office-fg);
+  color: var(--office-bg);
+  border: 1px solid var(--office-fg);
+  font: 600 14px/1 var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: border-color 0.2s ease;
+  pointer-events: auto;
+  transition: background-color 0.2s ease;
 }
-.office-come-in:hover { border-color: var(--office-fg); }
-.office-come-in:focus-visible { outline: 1px solid var(--office-fg); outline-offset: 3px; }
-/* Black behind it, as the buildings are filled, so it reads over the street's lines. */
+.office-come-in:hover { background: #fff; }
+.office-come-in:focus-visible { outline: 1px solid var(--office-fg); outline-offset: 4px; }
 .office-scroll {
   margin: 0;
-  padding: 7px 10px 9px;
   display: grid;
   justify-items: center;
   gap: 10px;
-  background: var(--office-bg);
-  font: 11px/1 var(--font-mono), ui-monospace, monospace;
+  font: 12px/1 var(--font-mono), ui-monospace, monospace;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(232, 232, 232, 0.8);
+  color: rgba(232, 232, 232, 0.9);
 }
 /* The chevron breathes downwards, in time with the office's dots. */
 .office-scroll::after {
