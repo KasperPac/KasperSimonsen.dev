@@ -49,6 +49,13 @@ AAMI Park and the MCG are pulled in to **half their real distance**, on their re
 opening shot (Kasper, grey-box review 2026-10-01). Buildings under their new footprints are dropped. The Nylex
 Clock, The Commons and the skyline stay where they really are.
 
+Round 4 (Kasper): Melbourne's heritage signs join the opening shot. The **Pelaco** sign and the **Skipping Girl
+Vinegar** sign really stand north-east of The Commons, behind the opening camera, so they are placed on rooftops in
+frame (artistic licence). The Skipping Girl skips as the visitor scrolls: her neon poses swap with walk-in
+progress (reduced motion: one pose). The Nylex sign is modelled in detail. On heritage signs the lettering is the
+landmark and stays; AAMI Park's name is sponsorship branding and stays off. The buildings directly across Gwynne St
+from The Commons are capped at one storey so the entrance stays in view on the way down.
+
 The opening camera sits high to the east of The Commons looking west, so the building is in the foreground with
 the Nylex sign, AAMI Park and the skyline behind it.
 
