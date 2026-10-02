@@ -1947,22 +1947,22 @@ def build_poster_hang_in_there(name, location, rotation_z, parent, col):
     return root
 
 
-VICTORY_CREST = "art/logos/melbourne-victory.svg"  # the club's crest, as Wikipedia carries it; the club OK'd its use
-
-
 def build_poster_victory(name, location, rotation_z, parent, col):
-    """Melbourne Victory's crest (Kasper got the club's OK, 2026-10-03), filling the print inside a margin, in line
-    geometry like the record sleeves' logos: every shape of the crest outlined, its own MELBOURNE Victory F.C. included.
-    Origin on the wall plane at the poster's centre; 0.5 x 0.7 m."""
+    """Melbourne Victory, crest-free: no badge or logo, just a big V chevron with a pinstripe chevron under it and
+    MELBOURNE VICTORY. Everything renders as white lines, so the shapes carry the club, not its colours. Origin on
+    the wall plane at the poster's centre; 0.5 x 0.7 m."""
     root = _root(name, location, rotation_z, parent, col)
     _poster_frame(name, root, col)
-    bm = _svg_mesh(VICTORY_CREST)
-    x0, x1, y0, y1 = _bounds(bm)
-    border, margin = 0.025, 0.045
-    k = min((POSTER[0] - 2 * (border + margin)) / (x1 - x0), (POSTER[1] - 2 * (border + margin)) / (y1 - y0))
-    place = Matrix.Translation((0, -PAPER - 0.001, 0)) @ WALL @ Matrix.Diagonal((k, k, 1, 1)) @ Matrix.Translation((-(x0 + x1) / 2, -(y0 + y1) / 2, 0))
-    bmesh.ops.transform(bm, matrix=place, verts=bm.verts)
+    top, apex, arm, inner = 0.285, -0.055, 0.17, 0.09
+    v = [(-arm, top), (0.0, apex), (arm, top), (inner, top), (0.0, top - inner * (top - apex) / arm), (-inner, top)]
+    _, outside = _offset([(-arm, top), (0.0, apex), (arm, top)], 0.08)  # a pinstripe chevron 4 cm outside the V
+    a, b, c = (Vector(p) for p in outside)
+    stripe = [tuple(a.lerp(b, 0.15)), tuple(b), tuple(c.lerp(b, 0.15))]
+    bm = bmesh.new()
+    _art(bm, strokes=[(stripe, 0.012)], fills=[v])
     _part(f"{name}__art", bm, root, col)
+    common.text_mesh(f"{name}__text_top", "MELBOURNE", 0.06, 0.003, (0, -PAPER, -0.205), root, col)
+    common.text_mesh(f"{name}__text", "VICTORY", 0.085, 0.003, (0, -PAPER, -0.275), root, col)
     return root
 
 

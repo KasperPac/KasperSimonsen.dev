@@ -116,8 +116,8 @@ One fixed view that takes in every interactive object. Composition (finalised on
 
 Review round 2 (Kasper, pulled forward into phase 1): a smaller, modern one-person office, lived-in and a bit messy
 rather than bare. A proper ergonomic chair; plants; records on show; a laptop beside the monitor; books; a corny
-"Hang in there" poster; a Melbourne Victory poster (the club's crest in line art: Kasper got the club's OK,
-2026-10-03); a couch and an old CRT TV. The tone is tongue-in-cheek: a sleep-deprived developer's office
+"Hang in there" poster; a Melbourne Victory poster (crest-free: a V and the name, a supporter's poster rather than
+an official one; Kasper tried the club's crest on 2026-10-03 and preferred this); a couch and an old CRT TV. The tone is tongue-in-cheek: a sleep-deprived developer's office
 (energy-can pyramid, abandoned mugs, pizza box, pillow and blanket on the couch, rubber duck, clock at 3:47, a
 wilted plant). Any words on props (sticky notes, mug, whiteboard) are visitor-facing copy in Kasper's voice and
 need his approval, like the monitor gag.
