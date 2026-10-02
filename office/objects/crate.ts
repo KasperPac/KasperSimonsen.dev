@@ -8,10 +8,23 @@ export const SLEEVE_M = 0.315;
 /** How far a flicked record tips forward on its bottom edge, radians from rest: it leans on the crate's front wall (measured in Blender, plan Task 2). */
 export const FLIP_ANGLE = 0.17;
 export const FLIP_SECONDS = 0.35;
-/** How far the front record rises while browsing, so its whole cover shows over the flicked records (measured in Blender, Task 8). */
-export const LIFT_M = 0.235;
-/** How far the lifted record tips toward the viewer on its bottom edge, radians, so the records behind still show over it (measured in Blender). */
-export const LIFT_TILT = 0.35;
+/** The front record rises straight up this far first, clear of the flicked records' vinyls and the crate wall (measured in Blender). */
+export const CLEAR_LIFT_M = 0.38;
+/**
+ * Where the front record is held while browsing, from its rest, in the crate's frame: forward (`slide`), up (`lift`),
+ * its top tipped back (`tilt`, radians about its own x) so its cover faces the camera and the records behind stay in
+ * sight to hover (measured in Blender). Like pulling a record forward in a shop.
+ */
+export const DISPLAY = { lift: 0.14, slide: 0.2, tilt: -0.35 };
+export const LIFT_SECONDS = 0.6;
+
+/** The front record's offset from rest at lift progress `t`: straight up to CLEAR_LIFT_M by halfway, then forward and down into DISPLAY. */
+export function displayOffset(t: number): { lift: number; slide: number; tilt: number } {
+  if (t <= 0.5) return { lift: CLEAR_LIFT_M * easeInOutCubic(t / 0.5), slide: 0, tilt: 0 };
+  const e = easeInOutCubic((t - 0.5) / 0.5);
+  return { lift: DISPLAY.lift * e + CLEAR_LIFT_M * (1 - e), slide: DISPLAY.slide * e, tilt: DISPLAY.tilt * e };
+}
+
 /**
  * How long each step of playing a record takes, in order. The flight over matches the camera's move to the player, so
  * the record and the camera arrive together; the vinyl and the sleeve then play out in front of the parked camera.
@@ -177,16 +190,19 @@ export class CrateMotion {
       const wasPlaying = (this.play[i] ?? 0) > 0;
       const playing = input.playing === i;
       this.flip[i] = approach(this.flip[i] ?? 0, i < input.dig ? 1 : 0, dt, input.reduced ? 0 : FLIP_SECONDS);
-      this.lift[i] = approach(this.lift[i] ?? 0, input.lifted === i && input.playing === null ? 1 : 0, dt, input.reduced ? 0 : FLIP_SECONDS);
+      this.lift[i] = approach(this.lift[i] ?? 0, input.lifted === i && input.playing === null ? 1 : 0, dt, input.reduced ? 0 : LIFT_SECONDS);
+      const out = displayOffset(this.lift[i]);
       this.play[i] = approach(this.play[i] ?? 0, playing ? 1 : 0, dt, input.reduced ? 0 : playing ? PLAY_SECONDS : PLAY_BACK_SECONDS);
 
       // where it rests in the crate: tipped forward on its bottom edge if flicked, raised if it is the front one
       resting.position.copy(nodes.restPosition[i]);
-      resting.position.y += LIFT_M * easeInOutCubic(this.lift[i]); // up the crate; x and z stay exactly at rest
+      // up the crate and toward its front; untouched at rest, so it lands back exactly (adding 0 would turn -0 into +0)
+      if (out.lift) resting.position.y += out.lift;
+      if (out.slide) resting.position.z += out.slide;
       resting.quaternion
         .copy(nodes.restQuaternion[i])
         .multiply(tip.setFromAxisAngle(X, FLIP_ANGLE * easeInOutCubic(this.flip[i])))
-        .multiply(tip.setFromAxisAngle(X, LIFT_TILT * easeInOutCubic(this.lift[i]))); // the front one leans toward you
+        .multiply(tip.setFromAxisAngle(X, out.tilt)); // the front one held up, its cover to you
       const vinyl = nodes.vinyls[i];
       if (this.play[i] === 0 || !input.player || !r.parent) {
         if (this.lift[i] > 0 || wasPlaying) r.position.copy(resting.position); // lifted, or just put back: all the way home

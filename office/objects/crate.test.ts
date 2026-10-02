@@ -6,8 +6,10 @@ import {
   findCrateNodes,
   FLIP_ANGLE,
   FLIP_SECONDS,
-  LIFT_M,
-  LIFT_TILT,
+  CLEAR_LIFT_M,
+  DISPLAY,
+  displayOffset,
+  LIFT_SECONDS,
   PLAY_BACK_SECONDS,
   PLAY_SECONDS,
   playPhases,
@@ -107,20 +109,24 @@ describe("playPhases", () => {
   it("puts a record back by retracing it at the pace it came, never faster", () => expect(PLAY_BACK_SECONDS).toBe(PLAY_SECONDS));
 });
 
-describe("CrateMotion lift and play", () => {
-  it("lifts the front record while browsing, by LIFT_M", () => {
-    const { nodes } = crate();
-    const m = new CrateMotion();
-    m.update(nodes, { dig: 1, lifted: 1, playing: null, player: null, reduced: false }, FLIP_SECONDS);
-    expect(nodes.records[1].position.y).toBeCloseTo(nodes.restPosition[1].y + LIFT_M);
-    expect(nodes.records[2].position.y).toBeCloseTo(nodes.restPosition[2].y);
+describe("displayOffset", () => {
+  it("starts at rest", () => expect(displayOffset(0)).toEqual({ lift: 0, slide: 0, tilt: 0 }));
+  it("rises straight up first, clear of the records in front", () => expect(displayOffset(0.5)).toEqual({ lift: CLEAR_LIFT_M, slide: 0, tilt: 0 }));
+  it("then comes forward and down into the display pose", () => expect(displayOffset(1)).toEqual(DISPLAY));
+  it("never slides forward while still rising", () => {
+    for (let t = 0; t <= 0.5; t += 0.05) expect(displayOffset(t).slide).toBe(0);
   });
-  it("tips the lifted record toward the viewer, so the records behind still show over it", () => {
+});
+
+describe("CrateMotion lift and play", () => {
+  it("brings the front record out to its display pose while browsing: up, forward, the top tipped back", () => {
     const { nodes } = crate();
     const m = new CrateMotion();
-    m.update(nodes, { dig: 1, lifted: 1, playing: null, player: null, reduced: false }, FLIP_SECONDS);
-    expect(nodes.records[1].rotation.x).toBeCloseTo(-0.14 + LIFT_TILT);
-    expect(nodes.records[2].rotation.x).toBeCloseTo(-0.14);
+    m.update(nodes, { dig: 1, lifted: 1, playing: null, player: null, reduced: false }, LIFT_SECONDS);
+    expect(nodes.records[1].position.y).toBeCloseTo(nodes.restPosition[1].y + DISPLAY.lift);
+    expect(nodes.records[1].position.z).toBeCloseTo(nodes.restPosition[1].z + DISPLAY.slide);
+    expect(nodes.records[1].rotation.x).toBeCloseTo(-0.14 + DISPLAY.tilt);
+    expect(nodes.records[2].position.toArray()).toEqual(nodes.restPosition[2].toArray());
   });
   it("plays a record: its vinyl ends flat on the platter and its sleeve turned round on the stand", () => {
     const { nodes, player, platter } = rigWithPlayer();
