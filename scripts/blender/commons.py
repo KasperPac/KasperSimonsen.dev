@@ -56,6 +56,10 @@ WINDOW = (0.9, 2.7)  # the window behind a pivoted panel: sill above its floor, 
 DECK = {"u": (0.3, 0.85), "depth": (0.8, 12.5), "rail": 1.1, "post": 1.5, "tables": 3}
 CORE = {"u": 0.55, "y": 17.0, "size": (6.0, 4.5, 3.6)}
 CONDENSERS = {"u": (0.22, 0.42), "y": 21.0, "size": (1.0, 0.8, 1.2), "count": 6}
+# The screen's panels and the deck's railing are child objects whose lines fade with distance (the renderer's
+# edge_fade_* props): from the opening shot their edges sit closer than a line is wide and would fill the facade solid.
+# The massing stays on the parent at full strength, so the building still reads as a clean volume from afar.
+FADE = {"edge_fade_near": 60.0, "edge_fade_far": 220.0, "edge_fade_min": 0.12}
 
 
 def _remove(name):
@@ -161,7 +165,8 @@ def lobby(footprint):
 
 def commons(footprint, col, openings=()):
     """prop_commons on the footprints of osm_commons, origin at their centre on the ground, with the lobby entrance cut
-    in. `openings` are further holes through the front wall, each a dict in world space: `centre` (bottom-centre of the
+    in, and children prop_commons__screen (the corten panels) and prop_commons__deck (the roof deck's railing and
+    tables), whose lines fade with distance. `openings` are further holes through the front wall, each a dict in world space: `centre` (bottom-centre of the
     opening on the front wall's plane), `normal` (outward), `width`, `height`."""
     _remove("prop_commons")
     lay = _layout(footprint)
@@ -177,17 +182,18 @@ def commons(footprint, col, openings=()):
         p = to_frame @ (Vector(o["centre"]) - origin)
         holes.append((p.x - o["width"] / 2, p.x + o["width"] / 2, p.z, p.z + o["height"]))
 
-    bm = bmesh.new()
+    bm, screen, railing = bmesh.new(), bmesh.new(), bmesh.new()  # the massing, and the two children
 
     def vert(u, y, z):
         return bm.verts.new(frame @ Vector((u, y, z)))
 
-    def block(lo, hi, turn=None):
+    def block(lo, hi, turn=None, into=None):
         """A box from lo to hi (u, y, z) in the facade frame, optionally through a matrix first."""
-        verts = bmesh.ops.create_cube(bm, size=1.0)["verts"]
+        into = into or bm
+        verts = bmesh.ops.create_cube(into, size=1.0)["verts"]
         size, mid = Vector(hi) - Vector(lo), (Vector(lo) + Vector(hi)) / 2
-        bmesh.ops.scale(bm, vec=size, verts=verts)
-        bmesh.ops.transform(bm, matrix=frame @ (turn or Matrix()) @ Matrix.Translation(mid), verts=verts)
+        bmesh.ops.scale(into, vec=size, verts=verts)
+        bmesh.ops.transform(into, matrix=frame @ (turn or Matrix()) @ Matrix.Translation(mid), verts=verts)
 
     def clear(u0, u1, z0, z1, pad=0.0):
         """Whether the box [u0, u1] x [z0, z1] keeps clear of every opening."""
@@ -255,11 +261,11 @@ def commons(footprint, col, openings=()):
         ua, ub = u0 + (u1 - u0) / 3, u1 - (u1 - u0) / 3
         outline = [(u0, y0), (u1, y0), (u1, yf), (ub, yf), (ub, yf - s["rib"]), (ua, yf - s["rib"]), (ua, yf), (u0, yf)]
         m = frame @ (turn or Matrix())
-        rings = [[bm.verts.new(m @ Vector((u, y, z))) for u, y in outline] for z in (z0, z1)]
-        bm.faces.new(rings[0][::-1])
-        bm.faces.new(rings[1])
+        rings = [[screen.verts.new(m @ Vector((u, y, z))) for u, y in outline] for z in (z0, z1)]
+        screen.faces.new(rings[0][::-1])
+        screen.faces.new(rings[1])
         for k in range(len(outline)):
-            bm.faces.new((rings[0][k], rings[0][(k + 1) % len(outline)], rings[1][(k + 1) % len(outline)], rings[1][k]))
+            screen.faces.new((rings[0][k], rings[0][(k + 1) % len(outline)], rings[1][(k + 1) % len(outline)], rings[1][k]))
 
     pivots = {(c, f): angle for c, f, angle in PIVOTS}
     window_lo, window_h = WINDOW
@@ -294,7 +300,7 @@ def commons(footprint, col, openings=()):
                 for lo, hi in (((w0, 0.0, wz0), (w1, 0.1, wz0 + 0.08)), ((w0, 0.0, wz1 - 0.08), (w1, 0.1, wz1)),
                                ((w0, 0.0, wz0), (w0 + 0.08, 0.1, wz1)), ((w1 - 0.08, 0.0, wz0), (w1, 0.1, wz1)),
                                (((w0 + w1) / 2 - 0.03, 0.0, wz0), ((w0 + w1) / 2 + 0.03, 0.08, wz1))):
-                    block(lo, hi)
+                    block(lo, hi, into=screen)
             else:
                 panel(u0, u1, z0 + s["gap"] / 2, z1 - s["gap"] / 2, y0)
 
@@ -309,16 +315,16 @@ def commons(footprint, col, openings=()):
         posts = max(1, round((b - a).length / deck["post"]))
         for k in range(posts + 1):
             p = a.lerp(b, k / posts)
-            block((p.x - 0.03, p.y - 0.03, ROOF + 0.15), (p.x + 0.03, p.y + 0.03, top))
+            block((p.x - 0.03, p.y - 0.03, ROOF + 0.15), (p.x + 0.03, p.y + 0.03, top), into=railing)
         lo, hi = Vector((min(a.x, b.x) - 0.03, min(a.y, b.y) - 0.03)), Vector((max(a.x, b.x) + 0.03, max(a.y, b.y) + 0.03))
-        block((lo.x, lo.y, top - 0.06), (hi.x, hi.y, top))
+        block((lo.x, lo.y, top - 0.06), (hi.x, hi.y, top), into=railing)
     for t in range(deck["tables"]):
         u = du0 + (t + 1) * (du1 - du0) / (deck["tables"] + 1)
         y = (dy0 + dy1) / 2
         z = ROOF + 0.15
-        block((u - 1.0, y - 0.4, z + 0.7), (u + 1.0, y + 0.4, z + 0.76))  # table top
+        block((u - 1.0, y - 0.4, z + 0.7), (u + 1.0, y + 0.4, z + 0.76), into=railing)  # table top
         for side in (-1, 1):
-            block((u - 1.0, y + side * 0.75 - 0.15, z + 0.42), (u + 1.0, y + side * 0.75 + 0.15, z + 0.47))  # bench
+            block((u - 1.0, y + side * 0.75 - 0.15, z + 0.42), (u + 1.0, y + side * 0.75 + 0.15, z + 0.47), into=railing)  # bench
     cu, cy, (cw, cd, ch) = CORE["u"] * length, -CORE["y"], CORE["size"]
     block((cu - cw / 2, cy - cd / 2, ROOF), (cu + cw / 2, cy + cd / 2, ROOF + ch))
     (c0, c1), (kw, kd, kh) = CONDENSERS["u"], CONDENSERS["size"]
@@ -338,4 +344,14 @@ def commons(footprint, col, openings=()):
     obj["entrance_size"] = (door["width"], door["height"])
     obj["entrance_hinge_side"] = door["hinge_side"]
     col.objects.link(obj)
+    for name, part in (("prop_commons__screen", screen), ("prop_commons__deck", railing)):
+        part.normal_update()
+        mesh = bpy.data.meshes.new(name)
+        part.to_mesh(mesh)
+        part.free()
+        child = bpy.data.objects.new(name, mesh)
+        child.parent = obj  # matrix_parent_inverse stays identity: it shares the parent's origin
+        for key, value in FADE.items():
+            child[key] = value
+        col.objects.link(child)
     return obj
