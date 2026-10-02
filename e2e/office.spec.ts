@@ -63,3 +63,11 @@ test("the old pages still work while the office takes over /", async ({ page }) 
   const response = await page.goto("/work");
   expect(response?.status()).toBe(200);
 });
+
+test("the director is idle at the standing spot and the camera follows the walk-in", async ({ page }) => {
+  await openOffice(page);
+  await expect(office(page)).toHaveAttribute("data-director", "walkIn");
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: 15_000 });
+  await expect(office(page)).toHaveAttribute("data-camera", "base");
+});
