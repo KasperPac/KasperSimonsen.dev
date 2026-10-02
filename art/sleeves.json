@@ -1,0 +1,5 @@
+[
+  { "slug": "pac-forge", "logos": ["art/logos/pac-tech-mark.svg"], "label": "Pac-Hub" },
+  { "slug": "manuva", "logos": ["art/logos/manuva-mark.svg", "art/logos/manuva-wordmark.svg"], "label": null },
+  { "slug": "silio", "logos": ["art/logos/silio-logo.svg"], "label": null }
+]
