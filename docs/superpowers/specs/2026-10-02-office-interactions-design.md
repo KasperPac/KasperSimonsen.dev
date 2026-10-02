@@ -30,7 +30,7 @@ memorable without ever standing between a visitor and the work or the contact de
 | Drawer | Business card with email and links, plus "Write to me", which opens the contact form panel |
 | Shelf | Four services, one ornament each; the two engagement models close every service's Read more |
 | Content in 3D | Real HTML. The business card's details are printed on the card in the drawer (drei `Html` in transform mode, on its top face; amended after Kasper's M1 review). Other cards are pinned beside their object (a DOM overlay positioned by projecting the object each frame; they face the camera, so no CSS 3D transform is needed). Static labels stay line geometry |
-| Phones | Cards beside an object dock at the bottom of the screen instead of floating in the scene; the business card stays printed on the card, which the camera frames across most of the width |
+| Phones | Cards beside an object dock at the bottom of the screen instead of floating in the scene; the business card and a pulled sleeve stay printed on the object, which is framed across most of the width |
 | Routing | `window.history.pushState`, synced with the Next router; no intercepting or parallel routes |
 
 ## 3. The flow
@@ -52,12 +52,13 @@ Touch devices get white pulsing markers instead (no hover); a tap opens directly
 ### 3.2 Crate (work)
 
 1. **Click the crate:** the camera drops to it. This is local browsing with no URL change.
-2. **Flip:** wheel, swipe or arrow keys flip the records forward one at a time. Each tips forward on its bottom edge,
-   showing the next sleeve's front: name and years, as line geometry. Kasper's three projects sit at the front, and
-   flipping stops at the last of them. The blank sleeves behind never come up.
-3. **Pull:** click, tap or Enter on the front record, or a second click on the crate, lifts it out towards the camera.
-   The URL becomes `/work/<slug>`. A card beside the sleeve shows name, years, headline, 2–3 intro sentences, stack and
-   **Read more**.
+2. **Flip:** wheel, swipe or arrow keys flick the records forward one at a time. Each tips forward on its bottom edge,
+   showing the next sleeve's front: the project's logo in white line geometry (amended after Kasper's M1 review; the
+   Pac Tech logomark stands in where a project has no logo of its own, with the project's name under it). Kasper's
+   projects sit at the front, and flipping stops at the last of them. The blank sleeves behind never come up.
+3. **Pull:** click, tap or Enter on the front record, or a second click on the crate, lifts it out towards the camera
+   and turns it round. The URL becomes `/work/<slug>`. The sleeve's back carries name, years, headline, 2–3 intro
+   sentences, stack and **Read more**, printed on it like liner notes (real HTML, like the business card).
 4. **Read more** opens the full case study in the panel. The URL is unchanged.
 5. **Back and Esc step out one layer at a time:** close the panel, then put the record back (URL `/`, browsing the
    crate again), then return to the standing spot.
@@ -105,7 +106,8 @@ until the standalone restyle (old phase 5). `/services/<slug>` is new, in the of
 - **Cards** (sleeve summary, business card, plaque):
   - **Look:** black, with a 1 px white hairline. The section colour goes on the eyebrow and the button only. Inter
     Tight for text, IBM Plex Mono for labels.
-  - **Placement:** beside the object, facing the camera. The business card is the exception: printed on the card.
+  - **Placement:** beside the object, facing the camera. The business card and the sleeves are the exceptions:
+    printed on the card, and on a pulled sleeve's back.
   - **Timing:** they fade in once the object's move has finished.
   - **Desktop framing:** the object sits left of centre and the card to its right. The monitor and the drawer are the
     exceptions: their content sits on the screen and on the business card, centred in frame.
@@ -148,7 +150,7 @@ until the standalone restyle (old phase 5). `/services/<slug>` is new, in the of
 
 **Blender:**
 - **Ornaments:** the shelf's four service ornaments are remodelled (gear, globe, phone, desktop computer).
-- **Sleeves:** the three project sleeves carry name and years in line geometry.
+- **Sleeves:** each project sleeve carries its logo (from the project's design-system SVG) in line geometry.
 - **Drawer:** gets a business card.
 - **Monitor:** gets a flat screen surface named for its HTML.
 - **Cameras:** focus cameras retuned so each object leaves room for its card on the right (desktop).
