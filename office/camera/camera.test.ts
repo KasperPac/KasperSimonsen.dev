@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Object3D, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { applyPose, blendPose, copyPose, DESIGN_ASPECT, easeInOutCubic, makePose, MAX_FOV, readPose, smoothstep, widenForAspect, type Pose } from "./pose";
 import { basePose, focusPose, PORTRAIT_FROM } from "./basePose";
-import { CameraRig, FOCUS_SECONDS } from "./rig";
+import { CameraRig, FOCUS_MOVES, FOCUS_SECONDS } from "./rig";
 
 const pose = (x: number, fov = 50, yaw = 0): Pose => ({
   position: new Vector3(x, 0, 0),
@@ -149,5 +149,39 @@ describe("CameraRig", () => {
     rig.moveTo(pose(10), { kind: "base" }, 1);
     rig.advance(1);
     expect(rig.pose(pose(3), makePose()).position.x).toBe(3);
+  });
+  it("keeps a plain move on the straight line", () => {
+    const rig = new CameraRig();
+    rig.moveTo(pose(0), { kind: "pose", pose: pose(10) }, 2);
+    rig.advance(1);
+    expect(rig.pose(base, makePose()).position.y).toBeCloseTo(0);
+  });
+  it("lifts an arcing move over the straight line mid-way and lands exactly on the goal", () => {
+    const rig = new CameraRig();
+    rig.moveTo(pose(0), { kind: "pose", pose: pose(10) }, 2, { lift: 0.5, swing: 0 });
+    rig.advance(1);
+    const mid = rig.pose(base, makePose());
+    expect(mid.position.x).toBeCloseTo(5);
+    expect(mid.position.y).toBeCloseTo(0.5);
+    rig.advance(1);
+    expect(rig.pose(base, makePose()).position.toArray()).toEqual([10, 0, 0]);
+  });
+  it("bows a swinging move sideways, level", () => {
+    const rig = new CameraRig();
+    rig.moveTo(pose(0), { kind: "pose", pose: pose(10) }, 2, { lift: 0, swing: 0.3 });
+    rig.advance(1);
+    const mid = rig.pose(base, makePose());
+    expect(Math.abs(mid.position.z)).toBeCloseTo(0.3);
+    expect(mid.position.y).toBeCloseTo(0);
+  });
+});
+
+describe("focus moves", () => {
+  it("takes the drawer slower than the default, on an arc", () => {
+    expect(FOCUS_MOVES.hs_drawer.seconds).toBeGreaterThan(FOCUS_SECONDS);
+    expect(FOCUS_MOVES.hs_drawer.arc?.lift).toBeGreaterThan(0);
+  });
+  it("leaves the other objects on the default move", () => {
+    for (const h of ["hs_crate", "hs_monitor", "hs_shelf"] as const) expect(FOCUS_MOVES[h]).toEqual({ seconds: FOCUS_SECONDS, arc: null });
   });
 });

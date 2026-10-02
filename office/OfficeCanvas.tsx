@@ -13,7 +13,7 @@ import { applySkippingGirl, findSkippingGirl } from "./walkin/skippingGirl";
 import { findCamera, WALKIN_CAMERA } from "./walkin/cameraPose";
 import { applyPose, makePose, readPose, type Pose } from "./camera/pose";
 import { basePose, focusPose } from "./camera/basePose";
-import { CameraRig, FOCUS_SECONDS } from "./camera/rig";
+import { CameraRig, FOCUS_MOVES } from "./camera/rig";
 import { FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, pickHit, type Hit, type HotspotName } from "./hotspots/registry";
 import { addHitProxies } from "./hotspots/proxies";
 import { focusedHotspot, IDLE_AT, type DirectorState } from "./director/director";
@@ -87,6 +87,7 @@ function Street({ progress, host, director, onProgressCross, onSettled, info }: 
   const rig = useMemo(() => new CameraRig(), []);
   const poses = useMemo(() => ({ walk: makePose(), base: makePose(), focus: makePose(), now: makePose(), out: makePose() }), []);
   const seen = useRef("");
+  const left = useRef<HotspotName | null>(null); // the object a return move leaves, so it retraces that object's arc
   const atEnd = useRef<boolean | null>(null);
   const written = useRef({ progress: -1, camera: "" });
 
@@ -111,10 +112,13 @@ function Street({ progress, host, director, onProgressCross, onSettled, info }: 
       if (d.kind === "focusing") {
         // Cut instead of gliding under reduced motion (the content is read up close, on the object) and from the
         // walk-in (never fly through walls).
-        if (cams) rig.moveTo(poses.now, { kind: "pose", pose: poses.focus }, reduced || d.from === "walkIn" ? 0 : FOCUS_SECONDS);
+        const move = FOCUS_MOVES[d.target.hotspot];
+        left.current = d.target.hotspot;
+        if (cams) rig.moveTo(poses.now, { kind: "pose", pose: poses.focus }, reduced || d.from === "walkIn" ? 0 : move.seconds, move.arc);
         else rig.moveTo(poses.now, { kind: "base" }, 0);
       } else if (d.kind === "returning") {
-        rig.moveTo(poses.now, { kind: "base" }, reduced ? 0 : FOCUS_SECONDS);
+        const move = left.current ? FOCUS_MOVES[left.current] : null;
+        rig.moveTo(poses.now, { kind: "base" }, reduced || !move ? 0 : move.seconds, move?.arc ?? null);
       }
     }
     if (rig.advance(dt) && (d.kind === "focusing" || d.kind === "returning")) onSettled();
