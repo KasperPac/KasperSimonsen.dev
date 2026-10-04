@@ -1,6 +1,7 @@
 "use client";
 
 import { Component, type ReactNode, type RefObject } from "react";
+import { services } from "@/content/services";
 
 type Props = { host: RefObject<HTMLElement | null>; children: ReactNode };
 
@@ -24,6 +25,14 @@ export default class OfficeErrorBoundary extends Component<Props, { failed: bool
         <p>The office didn&apos;t load. The work&apos;s still here though.</p>
         <p>
           <a href="/work">See the work</a> · <a href="/contact">Get in touch</a>
+        </p>
+        <p>
+          {services.map((s, i) => (
+            <span key={s.slug}>
+              {i > 0 && " · "}
+              <a href={`/services/${s.slug}`}>{s.name}</a>
+            </span>
+          ))}
         </p>
       </div>
     );
