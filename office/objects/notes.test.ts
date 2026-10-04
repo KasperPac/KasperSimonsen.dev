@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { Group, Object3D, Quaternion, Vector3 } from "three";
-import { fallPlacement, findNotesNodes, noteProgress, NotesMotion, notesSeconds, NOTE_FALL_SECONDS, NOTE_STAGGER_SECONDS } from "./notes";
+import { easeInOutCubic } from "@/office/camera/pose";
+import { fallPlacement, findNotesNodes, noteProgress, NotesMotion, notesSeconds, NOTE_FALL_SECONDS, NOTE_FLUTTER_M, NOTE_STAGGER_SECONDS } from "./notes";
 
 /** hs_monitor__notes with `count` notes up on the bezel and their rest_ empties lower down on the desk. */
 function rig(count = 4) {
@@ -45,8 +46,9 @@ describe("fallPlacement", () => {
   });
   it("flutters sideways on the way down", () => {
     const mid = fallPlacement(nodes.stuck[0], nodes.rest[0], 0.25, place()).position;
-    const straight = nodes.stuck[0].position.clone().lerp(nodes.rest[0].position, 0.25);
-    expect(Math.abs(mid.x - straight.x)).toBeGreaterThan(0.005);
+    const { stuck, rest } = { stuck: nodes.stuck[0].position, rest: nodes.rest[0].position };
+    const baseline = stuck.x + (rest.x - stuck.x) * easeInOutCubic(0.25);
+    expect(mid.x - baseline).toBeCloseTo(NOTE_FLUTTER_M * Math.sin(2 * Math.PI * 0.25) * 0.75, 9);
   });
 });
 
@@ -89,6 +91,7 @@ describe("NotesMotion", () => {
     m.update(nodes, { open: false, reduced: false }, 0.05);
     expect(nodes.notes[0].position.distanceTo(at)).toBeLessThan(0.1); // no snap home
     expect(nodes.notes[0].position.distanceTo(nodes.stuck[0].position)).toBeGreaterThan(1e-4);
+    expect(nodes.notes[0].position.distanceTo(nodes.stuck[0].position)).toBeLessThan(at.distanceTo(nodes.stuck[0].position)); // towards the bezel
   });
   it("switches at once under reduced motion", () => {
     const { nodes } = rig();
