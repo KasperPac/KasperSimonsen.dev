@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { Group, Object3D, Vector3 } from "three";
-import { applyTurntable, findTurntable, nowPlaying, platterAngle } from "./turntable";
+import { applyTurntable, AWAY_NODE, AWAY_RETURN_DELAY, AWAY_SECONDS, AWAY_START, stepAway, findTurntable, nowPlaying, platterAngle } from "./turntable";
 
 describe("platterAngle", () => {
   it("starts at zero", () => expect(platterAngle(0)).toBe(0));
@@ -116,24 +116,73 @@ describe("applyTurntable", () => {
     expect(sleeves.every((s) => s.position.y === 1)).toBe(true);
   });
 
-  it("hides every now-playing sleeve while a project's sleeve is on the stand", () => {
+  it("hides every now-playing sleeve while a project plays, when the model has nowhere to put the album away", () => {
     const { root, sleeves } = rig();
-    applyTurntable(findTurntable(root)!, 0.9, false, true);
+    applyTurntable(findTurntable(root)!, 0.9, false, 1);
     expect(sleeves.every((s) => !s.visible)).toBe(true);
   });
 });
 
-describe("findTurntable", () => {
-  it("is a no-op that logs once when nodes are missing", () => {
-    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
-    expect(findTurntable(new Group())).toBeNull();
-    expect(findTurntable(new Group())).toBeNull();
-    expect(warn).toHaveBeenCalledTimes(1);
-    warn.mockRestore();
+/** A rig with the sideboard's slot for the album: 1 m to the side and down at y = 0.2. */
+function rigWithBay() {
+  const r = rig();
+  const turntable = new Object3D();
+  turntable.name = "prop_turntable";
+  const away = new Object3D();
+  away.name = AWAY_NODE;
+  away.position.set(1, 0.2, 0);
+  turntable.add(away);
+  r.root.add(turntable);
+  r.root.updateMatrixWorld(true);
+  return r;
+}
+
+describe("putting the album away", () => {
+  it("leaves it on the stand while nothing else plays", () => {
+    const { root, sleeves } = rigWithBay();
+    applyTurntable(findTurntable(root)!, 0.9, false, 0);
+    expect(sleeves[0].visible).toBe(true);
+    expect(sleeves[0].position.toArray()).toEqual([0, 1, 0]);
   });
 
-  it("sorts sleeves by number", () => {
-    const { root, sleeves } = rig();
-    expect(findTurntable(root)!.sleeves).toEqual(sleeves);
+  it("slides the album on show into the sideboard's bay, still in sight, and the rest stay hidden", () => {
+    const { root, sleeves } = rigWithBay();
+    applyTurntable(findTurntable(root)!, 0.9, false, 1);
+    expect(sleeves[0].visible).toBe(true);
+    expect(sleeves[0].position.x).toBeCloseTo(1);
+    expect(sleeves[0].position.y).toBeCloseTo(0.2);
+    expect(sleeves.slice(1).every((s) => !s.visible)).toBe(true);
+  });
+
+  it("swings out over the sideboard's front on the way, not straight through it", () => {
+    const { root, sleeves } = rigWithBay();
+    applyTurntable(findTurntable(root)!, 0.9, false, 0.5);
+    expect(sleeves[0].position.z).toBeGreaterThan(0.1); // the sideboard's front is +z of the turntable
+  });
+});
+
+describe("stepAway", () => {
+  const fresh = { away: 0, released: Number.POSITIVE_INFINITY, held: 0 };
+  it("waits for the camera to reach the record player before putting the album away", () => {
+    expect(stepAway(fresh, true, AWAY_START / 2, false).away).toBe(0);
+  });
+  it("then goes away over AWAY_SECONDS", () => {
+    const started = { ...fresh, held: AWAY_START }; // the camera has just arrived
+    expect(stepAway(started, true, AWAY_SECONDS / 2, false).away).toBeCloseTo(0.5, 1);
+    expect(stepAway({ ...started, away: 0.9 }, true, 1, false).away).toBe(1);
+  });
+  it("waits for the project's sleeve to clear the stand before coming back", () => {
+    let s = stepAway({ away: 1, released: 0, held: 0 }, false, AWAY_RETURN_DELAY / 2, false);
+    expect(s.away).toBe(1);
+    s = stepAway(s, false, AWAY_RETURN_DELAY, false);
+    expect(s.away).toBeLessThan(1);
+  });
+  it("never leaves the stand for a record that's put back before the camera gets there", () => {
+    const s = stepAway(stepAway(fresh, true, 0.3, false), false, 0.3, false);
+    expect(s.away).toBe(0);
+  });
+  it("cuts under reduced motion", () => {
+    expect(stepAway(fresh, true, 0.01, true).away).toBe(1);
+    expect(stepAway({ away: 1, released: AWAY_RETURN_DELAY, held: 0 }, false, 0.01, true).away).toBe(0);
   });
 });

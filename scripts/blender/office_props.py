@@ -830,6 +830,10 @@ def build_turntable(name, location, rotation_z, parent, col):
         stand = _m((w / 2 - 0.36 + i * 0.014, -0.01, z0 + t), (0, math.radians(8 - 2 * i), 0))
         _box(bm, (0.005, SLEEVE * 0.98, lp), (0, 0, lp / 2), stand)
     _part(f"{name}__sideboard", bm, root, col)
+    # where the now-playing album goes while a project's record plays (the site moves it): edge on in the open bay,
+    # beside the LPs, its origin on the bay's floor like a sleeve's (bottom centre)
+    slot = common.empty(f"{name}__away", (w / 2 - 0.24, -0.01, z0 + t), root, col)
+    slot.rotation_euler = (0, 0, math.pi / 2)
 
     # turntable: the plinth and fixed fittings are __deck; the platter and the tonearm are parts of their own so
     # the site can spin one and swing the other
