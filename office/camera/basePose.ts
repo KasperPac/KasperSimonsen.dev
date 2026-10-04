@@ -28,9 +28,21 @@ export function basePose(walkIn: Pose, standPortrait: Pose | null, progress: num
   return out;
 }
 
-/** A hotspot's focus camera: its portrait variant on portrait screens when there is one, else the landscape one, widened. */
+/** The phone shape the portrait close-ups are authored for (Blender, 390 x 844). */
+export const FOCUS_PORTRAIT_ASPECT = 390 / 844;
+
+/**
+ * A hotspot's focus camera: its portrait variant on portrait screens when there is one, keeping its width across phones
+ * (a shorter one, a browser's toolbars showing, would otherwise see more around it and print the card or sleeve too
+ * small to read without pinching: Kasper's card "appears blank"), else the landscape one, widened.
+ */
 export function focusPose(land: Pose, portrait: Pose | null, aspect: number, out: Pose): Pose {
-  if (aspect < 1 && portrait) return copyPose(portrait, out);
+  if (aspect < 1 && portrait) {
+    copyPose(portrait, out);
+    const half = (portrait.fov * Math.PI) / 360;
+    out.fov = (Math.atan((Math.tan(half) * FOCUS_PORTRAIT_ASPECT) / aspect) * 360) / Math.PI;
+    return out;
+  }
   copyPose(land, out);
   out.fov = widenForAspect(out.fov, aspect);
   return out;

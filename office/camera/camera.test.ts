@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { Object3D, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { applyPose, blendPose, copyPose, DESIGN_ASPECT, easeInOutCubic, makePose, MAX_FOV, readPose, smoothstep, widenForAspect, type Pose } from "./pose";
-import { basePose, focusPose, playerPose, PORTRAIT_ASPECT, PORTRAIT_FROM, PORTRAIT_MAX_FOV } from "./basePose";
+import { basePose, FOCUS_PORTRAIT_ASPECT, focusPose, playerPose, PORTRAIT_ASPECT, PORTRAIT_FROM, PORTRAIT_MAX_FOV } from "./basePose";
 import { CameraRig, FOCUS_MOVES, FOCUS_SECONDS, PLAYER_MOVE } from "./rig";
 import { applyPan } from "./pan";
 
@@ -122,6 +122,14 @@ describe("basePose", () => {
 describe("focusPose", () => {
   it("uses the landscape camera on landscape screens", () => expect(focusPose(pose(1, 40), pose(2, 70), 1.6, makePose()).position.x).toBe(1));
   it("uses the portrait camera on portrait screens", () => expect(focusPose(pose(1, 40), pose(2, 70), 0.5, makePose()).position.x).toBe(2));
+  it("keeps a portrait close-up's width on shorter phones, so what's printed stays as big", () => {
+    const tall = focusPose(pose(1, 40), pose(2, 60), FOCUS_PORTRAIT_ASPECT, makePose()).fov;
+    const short = focusPose(pose(1, 40), pose(2, 60), 0.6, makePose()).fov;
+    expect(tall).toBeCloseTo(60);
+    expect(short).toBeLessThan(60);
+    const across = (fov: number, aspect: number) => Math.tan((fov * Math.PI) / 360) * aspect;
+    expect(across(short, 0.6)).toBeCloseTo(across(60, FOCUS_PORTRAIT_ASPECT));
+  });
   it("widens the landscape camera when there is no portrait one", () =>
     expect(focusPose(pose(1, 40), null, 0.5, makePose()).fov).toBeCloseTo(widenForAspect(40, 0.5)));
 });
