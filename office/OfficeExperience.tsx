@@ -186,7 +186,6 @@ export default function OfficeExperience() {
   shelf.current = { presented: shelfIndex < 0 ? null : shelfIndex };
   // Which ornament is out in front of the camera, so a swap drops the old plaque at once (focus stays on the link picked).
   const [outIndex, setOutIndex] = useState<number | null>(null);
-  const onPresented = useCallback((out: boolean) => setOutIndex(out ? shelf.current.presented : null), []);
   const plaqueRef = useRef<HTMLElement | null>(null);
   const shelfOpen = focusedOn === "hs_shelf" && !scene.reading;
   const shelfBrowsing = shelfOpen && !shelfSlug;
@@ -398,7 +397,7 @@ export default function OfficeExperience() {
             shelf={shelf}
             plaque={plaqueRef}
             monitorScreen={focusedOn === "hs_monitor" ? { titleId: "gate-title", content: <AgeGate titleId="gate-title" /> } : null}
-            onPresented={onPresented}
+            onPresented={setOutIndex}
             onProgressCross={(value) => dispatch({ type: "progress", value })}
             onSettled={() => dispatch({ type: "settled" })}
             onHover={onHover}
@@ -542,7 +541,7 @@ export default function OfficeExperience() {
       )}
 
       {scene.reading && shelfSlug && findService(shelfSlug) && (
-        <Panel hotspot="hs_shelf" titleId="service-title" onClose={back}>
+        <Panel hotspot="hs_shelf" titleId="service-title" onClose={back} inert={!!scene.topic}>
           <ServiceArticle service={findService(shelfSlug)!} titleId="service-title" level={2} onWrite={write} />
         </Panel>
       )}

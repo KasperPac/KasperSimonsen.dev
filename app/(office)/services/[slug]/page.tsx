@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { findService, services } from "@/content/services";
+import { CONTACT_NAME } from "@/content/contact";
 import ServiceArticle from "@/panels/ServiceArticle";
 import { COPY } from "@/office/copy";
 import { theme } from "@/office/theme";
@@ -18,7 +19,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const service = findService((await params).slug);
-  return service ? { title: `${service.name} — Kasper Simonsen`, description: service.summary } : {};
+  return service ? { title: `${service.name} — ${CONTACT_NAME}`, description: service.summary } : {};
 }
 
 /** A shared or refreshed service link (interactions spec 3.6): the whole service, and the way back into the office. */

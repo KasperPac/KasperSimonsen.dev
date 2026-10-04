@@ -59,8 +59,8 @@ export type OfficeCanvasProps = {
   plaque: RefObject<HTMLElement | null>;
   /** What's printed on the monitor's screen while it's open, or null. */
   monitorScreen: { titleId: string; content: ReactNode } | null;
-  /** The picked ornament finished floating out to the camera (true) or started back (false). */
-  onPresented: (out: boolean) => void;
+  /** Which ornament is out in front of the camera (its index), or null: each arrival, swap and start back. */
+  onPresented: (out: number | null) => void;
   onProgressCross: (progress: number) => void;
   onSettled: () => void;
   onHover: (hit: Hit | null) => void;
@@ -234,7 +234,9 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
   const shelfNodes = useMemo(() => findShelfNodes(nodes.ornaments), [nodes]);
   const shelfMotion = useMemo(() => new ShelfMotion(), []);
   const shelfCam = useMemo(makePose, []);
-  const shelfWasOut = useRef(false);
+  const shelfOut = useRef<number | null>(null);
+  // The CSS that docks the plaque on narrow screens (office.css), asked without a per-frame getComputedStyle.
+  const docked = useMemo(() => (typeof window === "undefined" ? null : window.matchMedia("(max-width: 700px), (orientation: portrait)")), []);
   const screen = useMemo(() => (office.scene.getObjectByName(SCREEN_NODE) as Mesh | undefined) ?? null, [office]);
   const v = useMemo(() => new Vector3(), []);
 
@@ -306,20 +308,22 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
       { presented: shelf.current.presented, camera: cams ? focusPose(cams.land, cams.portrait, aspect, shelfCam) : null, aspect, reduced },
       dt,
     );
-    if (shelfMotion.presented !== shelfWasOut.current) {
-      shelfWasOut.current = shelfMotion.presented;
-      onPresented(shelfMotion.presented);
-      if (host.current) host.current.dataset.shelf = shelfMotion.presented ? "out" : "in";
+    // The index, not just "one is out": a swap in a single frame (reduced motion, or a long stall) is still reported.
+    const outNow = shelfMotion.presented ? shelf.current.presented : null;
+    if (outNow !== shelfOut.current) {
+      shelfOut.current = outNow;
+      onPresented(outNow);
+      if (host.current) host.current.dataset.shelf = outNow === null ? "in" : "out";
     }
-    // Its plaque goes beside it (desktop); on narrow screens CSS docks it and ignores this.
-    const card = plaque.current;
+    // Its plaque goes beside it (desktop); on narrow screens CSS docks it, so this is skipped.
+    const plaqueEl = plaque.current;
     const picked = shelf.current.presented;
-    if (card && picked !== null && shelfNodes.ornaments[picked]) {
+    if (plaqueEl && picked !== null && shelfNodes.ornaments[picked] && !docked?.matches) {
       const r = screenRect(shelfNodes.ornaments[picked], camera, size);
       if (r) {
-        const at = placeCard({ x: r.right, y: (r.top + r.bottom) / 2 }, { width: card.offsetWidth, height: card.offsetHeight }, size);
-        card.style.left = `${at.left}px`;
-        card.style.top = `${at.top}px`;
+        const at = placeCard({ x: r.right, y: (r.top + r.bottom) / 2 }, { width: plaqueEl.offsetWidth, height: plaqueEl.offsetHeight }, size);
+        plaqueEl.style.left = `${at.left}px`;
+        plaqueEl.style.top = `${at.top}px`;
       }
     }
 

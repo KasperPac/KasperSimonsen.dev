@@ -8,6 +8,8 @@ import Card from "./Card";
 /** The plaque beside a picked ornament (interactions spec 3.4): name, two or three lines, Read more. Focus moves to its title as it shows. */
 export default function Plaque({ service, titleId, cardRef, onReadMore }: { service: Service; titleId: string; cardRef: RefObject<HTMLElement | null>; onReadMore: () => void }) {
   useEffect(() => {
+    // Forward onto a reading entry opens the panel first: the plaque arriving under it mustn't pull focus out of it.
+    if (document.activeElement?.closest('[role="dialog"]')) return;
     document.getElementById(titleId)?.focus({ preventScroll: true });
   }, [titleId, service.slug]);
   return (

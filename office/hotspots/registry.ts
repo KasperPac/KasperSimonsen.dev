@@ -16,7 +16,7 @@ export const FOCUS_CAMERA: Record<HotspotName, string> = {
   hs_shelf: "cam_focus_shelf",
 };
 
-/** Records in the crate and ornaments on the shelf, as modelled (office_props.py). */
+/** Records in the crate and ornaments on the shelf (four, one per service), as modelled (office_props.py). */
 export const RECORDS = 9;
 export const ORNAMENTS = 4;
 
@@ -26,7 +26,7 @@ function isHotspot(name: string): name is HotspotName {
   return (HOTSPOTS as readonly string[]).includes(name);
 }
 
-/** Content slug behind a record or ornament index; null for blank sleeves, decorative ornaments and other hotspots. */
+/** Content slug behind a record or ornament index; null for blank sleeves and other hotspots. */
 export function itemAt(hotspot: HotspotName, index: number): string | null {
   if (hotspot === "hs_crate") return work[index]?.slug ?? null;
   if (hotspot === "hs_shelf") return services[index]?.slug ?? null;

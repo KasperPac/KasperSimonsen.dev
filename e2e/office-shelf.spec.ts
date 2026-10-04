@@ -59,6 +59,7 @@ test("the keyboard picks a service, reads it, writes from it, and steps back out
   await cta.click();
   const form = page.getByRole("dialog", { name: COPY.contact.title });
   await expect(form.getByLabel(COPY.contact.subject)).toHaveValue(subjectForTopic(engagementModels[0].topic));
+  await expect(page.locator(".panel-scrim", { has: page.locator("#service-title") })).toHaveAttribute("inert", ""); // the service under it is out of reach
   await expect(page).toHaveURL(new RegExp(`/services/${s.slug}$`));
 
   await page.keyboard.press("Escape");
@@ -157,6 +158,16 @@ test.describe("reduced motion", () => {
     await page.keyboard.press("Enter");
     await expect(office(page)).toHaveAttribute("data-shelf", "out", { timeout: 5_000 });
     expect(await page.evaluate(() => (window as unknown as { __cams: string[] }).__cams)).not.toContain("moving");
+  });
+  test("swapping ornaments shows the new plaque", async ({ page }) => {
+    await standInOffice(page);
+    await openShelf(page);
+    await page.keyboard.press("Enter");
+    await expect(plaque(page, 0)).toBeVisible({ timeout: MOVE_WAIT });
+    await link(page, 2).focus();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(new RegExp(`/services/${services[2].slug}$`));
+    await expect(plaque(page, 2)).toBeVisible({ timeout: MOVE_WAIT });
   });
 });
 
