@@ -409,3 +409,32 @@ html.office-locked {
   font: 16px/1.4 var(--font-ui), system-ui, sans-serif;
 }
 .form :focus-visible { outline: 1px solid var(--accent); border-color: var(--accent); }
+
+/* The shelf's ornaments as real links (spec 5): focus lights the ornament in 3D, so the links themselves stay hidden. */
+.office-shelf { position: fixed; width: 1px; height: 1px; margin: 0; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* The plaque beside a picked ornament: a focus target for the reader, not a control. */
+.office-card .office-card-title:focus { outline: none; }
+
+/* What's printed on the monitor's screen: laid out at 640 px, mapped onto the screen. */
+.office-screen { padding: 40px 46px; font-size: 22px; }
+.office-screen .office-card-title { font-size: 46px; }
+.office-gate-buttons { display: flex; gap: 16px; margin-top: 18px; }
+.office-screen .office-gate-buttons .office-card-cta { position: static; }
+.office-screen .office-card-cta[aria-pressed="false"] { background: transparent; color: var(--office-fg); outline: 1px solid rgba(232, 232, 232, 0.6); }
+.office-gate-reply { margin: 18px 0 0; min-height: 2.7em; color: var(--accent); }
+@media (max-width: 700px), (orientation: portrait) {
+  .office-screen { font-size: 26px; }
+  .office-screen .office-card-title { font-size: 50px; }
+}
+
+/* A service's Read more ends with the two ways to work. */
+.article-model { margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(232, 232, 232, 0.2); }
+.article-model h3,
+.article-model h4 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
+.article-label { margin: 14px 0 2px; font: 11px/1.2 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.6); }
+.article-hint { font-size: 14px; }
+
+/* Standalone pages (a shared or refreshed link), in the office's style. */
+.standalone { max-width: 62ch; margin: 0 auto; padding: 48px 16px 80px; }
+.standalone-enter { display: inline-block; margin-bottom: 32px; color: var(--office-fg); font: 11px/1.2 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; }

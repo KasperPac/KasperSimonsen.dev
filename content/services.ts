@@ -1,5 +1,75 @@
-/** What Kasper offers. The shelf's ornaments, service panels and /services/<slug> pages all read this. */
+import type { Topic } from "./contact";
+
+/** A service on the shelf: one ornament each. Plaques, service panels and /services/<slug> pages read this. DRAFT copy, Kasper approves. */
 export type Service = {
+  slug: string;
+  number: string;
+  name: string;
+  /** The ornament it stands as on the shelf (office_props.py builds them in this order). */
+  ornament: "gear" | "globe" | "phone" | "computer";
+  /** Two or three lines on the plaque. */
+  summary: string;
+  /** The Read more, a paragraph each. */
+  body: string[];
+};
+
+export const services: Service[] = [
+  {
+    slug: "industrial-automation",
+    number: "01",
+    name: "Industrial automation",
+    ornament: "gear",
+    summary: "PLC and HMI work, mostly Siemens and Omron, and the software that joins the machines up to the rest of the business.",
+    body: [
+      "Machines don't care how nice your dashboard looks. They care whether the code is right, and whether someone can fault-find it at 2 am without ringing me.",
+      "I write and change PLC and HMI code, do safety upgrades on lines that are already running, and build the software around them: production tracking, reporting, and getting machine data into the systems the office already uses.",
+      "Brownfield's fine. Most of the job is changing something that works, carefully, and writing down what changed.",
+    ],
+  },
+  {
+    slug: "websites",
+    number: "02",
+    name: "Websites",
+    ornament: "globe",
+    summary: "Sites that load fast, say plainly what you do, and that you can update yourself without ringing me. Next.js mostly.",
+    body: [
+      "Most business sites need less than they're sold: a clear page about what you do, and an easy way to get hold of you.",
+      "I build them in Next.js on Vercel, with the words and pictures somewhere you can edit them yourself. Shopify when you're selling things.",
+      "If the site has to do something odd behind the scenes, that's where I'm most useful.",
+    ],
+  },
+  {
+    slug: "apps",
+    number: "03",
+    name: "Apps",
+    ornament: "phone",
+    summary: "Web apps, and iPhone and Android apps. Built for the people who'll actually use them, gloves and patchy wifi included.",
+    body: [
+      "An app is usually a spreadsheet that's outgrown itself. Inventory, production, jobs, quotes: whatever the business runs on that's held together by one person's macros.",
+      "I build web apps in Next.js and phone apps in React Native, so one codebase covers iPhone and Android. Warehouse scanners and plant-floor tablets too.",
+      "It keeps working when the wifi drops, keeps each customer's data to itself, and doesn't fall over the week after launch.",
+    ],
+  },
+  {
+    slug: "desktop-software",
+    number: "04",
+    name: "Desktop software",
+    ornament: "computer",
+    summary: "Windows software for when a browser won't do: talking to hardware, running offline on a plant PC, or chewing through files locally.",
+    body: [
+      "Some jobs don't belong in a browser. The PC's bolted to a machine, the network comes and goes, or the files are too big to upload anywhere.",
+      "I write desktop tools that talk to serial devices, PLCs and label printers, run without an internet connection, and install without a fight with IT.",
+      "Usually it's a small utility someone's been wishing existed for years. Sometimes it's the whole operator station.",
+    ],
+  },
+];
+
+export function findService(slug: string): Service | undefined {
+  return services.find((s) => s.slug === slug);
+}
+
+/** The two ways to work with Kasper. Every service's Read more ends with them (existing site copy, verbatim). */
+export type EngagementModel = {
   slug: string;
   number: string;
   name: string;
@@ -12,11 +82,10 @@ export type Service = {
   requiresBody: string;
   replyHint: string;
   ctaLabel: string;
-  /** `?topic=` for the contact form, which pre-fills the subject. */
-  topic: "tools" | "platforms";
+  topic: Topic;
 };
 
-export const services: Service[] = [
+export const engagementModels: EngagementModel[] = [
   {
     slug: "tools-and-dashboards",
     number: "01",
@@ -54,7 +123,3 @@ export const services: Service[] = [
     topic: "platforms",
   },
 ];
-
-export function findService(slug: string): Service | undefined {
-  return services.find((s) => s.slug === slug);
-}

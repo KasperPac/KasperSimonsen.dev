@@ -11,9 +11,11 @@ describe("targetForPath", () => {
     ["/work/manuva", { hotspot: "hs_crate", item: "manuva" }],
     ["/work/nope", null],
     ["/work", null],
-    ["/services/tools-and-dashboards", { hotspot: "hs_shelf", item: "tools-and-dashboards" }],
+    ["/services/websites", { hotspot: "hs_shelf", item: "websites" }],
+    ["/services/apps", { hotspot: "hs_shelf", item: "apps" }],
     ["/services/nope", null],
-    ["/services/tools-and-dashboards/extra", null],
+    ["/services/websites/extra", null],
+    ["/services/tools-and-dashboards", null],
     ["/admin", null],
   ])("%s", (path, target) => expect(targetForPath(path)).toEqual(target));
 });
@@ -22,7 +24,7 @@ describe("pathForTarget", () => {
   it("routes the drawer, a record and an ornament", () => {
     expect(pathForTarget({ hotspot: "hs_drawer", item: null })).toBe("/contact");
     expect(pathForTarget({ hotspot: "hs_crate", item: "silio" })).toBe("/work/silio");
-    expect(pathForTarget({ hotspot: "hs_shelf", item: "platforms-and-systems" })).toBe("/services/platforms-and-systems");
+    expect(pathForTarget({ hotspot: "hs_shelf", item: "websites" })).toBe("/services/websites");
   });
   it("keeps browsing and the monitor local (no URL)", () => {
     expect(pathForTarget({ hotspot: "hs_crate", item: null })).toBeNull();
