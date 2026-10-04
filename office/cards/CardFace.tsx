@@ -22,6 +22,7 @@ export default function CardFace({
   widthPx = FACE_WIDTH_PX,
   hotspot,
   titleId,
+  focus = true,
   children,
 }: {
   surface: Mesh;
@@ -29,6 +30,8 @@ export default function CardFace({
   widthPx?: number;
   hotspot: HotspotName;
   titleId: string;
+  /** Move focus to the title as it shows; the laptop's decorative print doesn't. */
+  focus?: boolean;
   children: ReactNode;
 }) {
   const face = useMemo(() => {
@@ -49,7 +52,7 @@ export default function CardFace({
     const el = section.current;
     if (!el || el.dataset.placed !== undefined) return;
     el.dataset.placed = "";
-    document.getElementById(titleId)?.focus({ preventScroll: true });
+    if (focus) document.getElementById(titleId)?.focus({ preventScroll: true });
   });
   return createPortal(
     <Html transform position={face.position} rotation={face.rotation} distanceFactor={face.distanceFactor}>
