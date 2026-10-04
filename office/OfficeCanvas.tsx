@@ -19,12 +19,16 @@ import { cameraKey } from "./camera/key";
 import { FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, hitFor, pickHit, type Hit, type HotspotName } from "./hotspots/registry";
 import { addHitProxies } from "./hotspots/proxies";
 import { focusedHotspot, IDLE_AT, LEAVE_AT, type DirectorState } from "./director/director";
-import { CARD_NODE, findMotionNodes, ObjectMotion } from "./objects/motion";
+import { CARD_NODE, findMotionNodes, ObjectMotion, SCREEN_NODE } from "./objects/motion";
 import { CrateMotion, findCrateNodes, type PlayerPoses } from "./objects/crate";
+import { findShelfNodes, ShelfMotion } from "./objects/shelf";
+import { screenRect } from "./overlay/screenRect";
+import { placeCard } from "./overlay/place";
 import { addDigPlane, DIG_PLANE, digFromDepth } from "./crate/scrub";
 import { PLATTER_NODE, STAND_NODE } from "./idle/turntable";
 import CardFace from "./cards/CardFace";
 import { SLEEVE_WIDTH_PX } from "./cards/SleeveBack";
+import { SCREEN_WIDTH_PX } from "./cards/AgeGate";
 import { work } from "@/content/work";
 
 /** DOM the canvas positions each frame: the hover label and the touch markers. */
@@ -49,6 +53,14 @@ export type OfficeCanvasProps = {
   sleeveBack: { index: number; titleId: string; content: ReactNode } | null;
   /** A record finished going onto the player, its sleeve turned round on the stand (true), or started back (false). */
   onSleeveOut: (out: boolean) => void;
+  /** The shelf, read every frame: the ornament picked (index), or null. */
+  shelf: RefObject<{ presented: number | null }>;
+  /** The plaque card the canvas keeps beside the picked ornament (CSS docks it on narrow screens). */
+  plaque: RefObject<HTMLElement | null>;
+  /** What's printed on the monitor's screen while it's open, or null. */
+  monitorScreen: { titleId: string; content: ReactNode } | null;
+  /** The picked ornament finished floating out to the camera (true) or started back (false). */
+  onPresented: (out: boolean) => void;
   onProgressCross: (progress: number) => void;
   onSettled: () => void;
   onHover: (hit: Hit | null) => void;
@@ -184,13 +196,14 @@ function Street({ progress, pan, host, director, onProgressCross, onSettled, inf
 
 type OfficeProps = Pick<
   OfficeCanvasProps,
-  "host" | "director" | "hover" | "overlay" | "drawerCard" | "crate" | "sleeveBack" | "onHover" | "onActivate" | "onDrawerOpen" | "onSleeveOut"
+  "host" | "director" | "hover" | "overlay" | "drawerCard" | "crate" | "sleeveBack" | "shelf" | "plaque" | "monitorScreen"
+  | "onHover" | "onActivate" | "onDrawerOpen" | "onSleeveOut" | "onPresented"
 > & {
   info: RefObject<OfficeInfo | null>;
 };
 
 /** The office model: hover, click, highlight, object motion, where the label and markers go, and the business card's print. */
-function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack, onHover, onActivate, onDrawerOpen, onSleeveOut, info }: OfficeProps) {
+function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack, shelf, plaque, monitorScreen, onHover, onActivate, onDrawerOpen, onSleeveOut, onPresented, info }: OfficeProps) {
   const { gltf: office, handle } = useCleanEdges(manifest.office.url, highlightKey);
   const albumAway = useRef(false); // a project's record plays, or its sleeve is on the stand: the album is put away
   useTurntable(office.scene, albumAway);
@@ -218,6 +231,11 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
     return { platter, stand, toward };
   }, [office]);
   const sleeveWasOut = useRef(false);
+  const shelfNodes = useMemo(() => findShelfNodes(nodes.ornaments), [nodes]);
+  const shelfMotion = useMemo(() => new ShelfMotion(), []);
+  const shelfCam = useMemo(makePose, []);
+  const shelfWasOut = useRef(false);
+  const screen = useMemo(() => (office.scene.getObjectByName(SCREEN_NODE) as Mesh | undefined) ?? null, [office]);
   const v = useMemo(() => new Vector3(), []);
 
   // Each object's whole outline takes the pointer while nothing is focused (thin shelf, gaps between ornaments).
@@ -279,6 +297,30 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
       sleeveWasOut.current = crateMotion.playDone;
       onSleeveOut(crateMotion.playDone);
       if (host.current) host.current.dataset.sleeve = crateMotion.playDone ? "out" : "in";
+    }
+    // A picked ornament floats to where the shelf's camera ends up, so it arrives with the camera (or before it).
+    const aspect = (camera as PerspectiveCamera).aspect;
+    const cams = info.current?.focus.hs_shelf;
+    shelfMotion.update(
+      shelfNodes,
+      { presented: shelf.current.presented, camera: cams ? focusPose(cams.land, cams.portrait, aspect, shelfCam) : null, aspect, reduced },
+      dt,
+    );
+    if (shelfMotion.presented !== shelfWasOut.current) {
+      shelfWasOut.current = shelfMotion.presented;
+      onPresented(shelfMotion.presented);
+      if (host.current) host.current.dataset.shelf = shelfMotion.presented ? "out" : "in";
+    }
+    // Its plaque goes beside it (desktop); on narrow screens CSS docks it and ignores this.
+    const card = plaque.current;
+    const picked = shelf.current.presented;
+    if (card && picked !== null && shelfNodes.ornaments[picked]) {
+      const r = screenRect(shelfNodes.ornaments[picked], camera, size);
+      if (r) {
+        const at = placeCard({ x: r.right, y: (r.top + r.bottom) / 2 }, { width: card.offsetWidth, height: card.offsetHeight }, size);
+        card.style.left = `${at.left}px`;
+        card.style.top = `${at.top}px`;
+      }
     }
 
     const lit = hover.current ?? focused;
@@ -371,6 +413,11 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
       {sleeveBack && crateNodes.records[sleeveBack.index] && (
         <CardFace surface={crateNodes.records[sleeveBack.index] as Mesh} place="back" widthPx={SLEEVE_WIDTH_PX} hotspot="hs_crate" titleId={sleeveBack.titleId}>
           {sleeveBack.content}
+        </CardFace>
+      )}
+      {monitorScreen && screen && (
+        <CardFace surface={screen} place="screen" widthPx={SCREEN_WIDTH_PX} hotspot="hs_monitor" titleId={monitorScreen.titleId}>
+          {monitorScreen.content}
         </CardFace>
       )}
     </>

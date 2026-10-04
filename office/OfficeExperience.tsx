@@ -11,19 +11,24 @@ import { dragPan, inView, isPanGesture, panFor } from "./camera/pan";
 import { describeDirector, focusedHotspot, initialDirector, isLocked, reduceDirector, type DirectorState } from "./director/director";
 import { pathForTarget } from "./scene/targets";
 import { layerOf, sceneFor } from "./scene/location";
-import { clearLayer, pushLayer, useOfficeLocation } from "./history";
+import { clearLayer, pushLayer, replaceLayer, useOfficeLocation } from "./history";
 import { HOTSPOTS, labelFor, sameHit, type Hit, type HotspotName } from "./hotspots/registry";
 import type { OverlayElements } from "./OfficeCanvas";
 import BusinessCard from "./cards/BusinessCard";
 import SleeveBack from "./cards/SleeveBack";
+import Plaque from "./cards/Plaque";
+import AgeGate from "./cards/AgeGate";
 import { clampDig } from "./objects/crate";
 import { canPull, digFor, swipeStep } from "./crate/dig";
 import { tourAt } from "./hints/tour";
 import { GLINT_SECONDS, glintGap, nextGlint } from "./hints/glint";
 import { findWork, work } from "@/content/work";
+import { findService, services } from "@/content/services";
+import type { Topic } from "@/content/contact";
 import Panel from "@/panels/Panel";
 import ContactForm from "@/panels/ContactForm";
 import CaseStudy from "@/panels/CaseStudy";
+import ServiceArticle from "@/panels/ServiceArticle";
 
 // three.js never runs on the server and never ships to pages that don't render the office.
 const OfficeCanvas = dynamic(() => import("./OfficeCanvas"), { ssr: false });
@@ -47,7 +52,6 @@ export default function OfficeExperience() {
   const [hovered, setHovered] = useState<Hit | null>(null);
   const overlay = useRef<OverlayElements>({ label: null, markers: {} });
   const navRef = useRef<HTMLElement | null>(null);
-  const backRef = useRef<HTMLButtonElement | null>(null);
   const trigger = useRef<HTMLElement | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dig, setDig] = useState(0);
@@ -126,13 +130,23 @@ export default function OfficeExperience() {
     if (now?.hotspot === "hs_crate" && now.item && hit.hotspot === "hs_crate") return; // one record out at a time
     // Keyboard users opened it from the nav: focus moves into what opened, and comes back here when it closes.
     markUsed();
+    // Another ornament while one is out: swap them in the same history entry, so one Back still returns to the shelf.
+    if (now?.hotspot === "hs_shelf" && now.item && hit.hotspot === "hs_shelf" && hit.item) {
+      replaceLayer({ focus: "hs_shelf", reading: false, topic: null }, pathForTarget(hit)!);
+      return;
+    }
     const active = document.activeElement as HTMLElement | null;
     if (active && navRef.current?.contains(active)) trigger.current = active;
-    pushLayer({ focus: hit.hotspot, reading: false }, pathForTarget(hit) ?? "/");
+    pushLayer({ focus: hit.hotspot, reading: false, topic: null }, pathForTarget(hit) ?? "/");
   }, [markUsed]);
   const read = useCallback(() => {
     const { layer: l, scene: s } = live();
-    if (!l.reading && s.target) pushLayer({ focus: s.target.hotspot, reading: true });
+    if (!l.reading && s.target) pushLayer({ focus: s.target.hotspot, reading: true, topic: null });
+  }, []);
+  // An engagement model's button in a service's Read more: the contact form over it, its topic pre-filled (spec 3.4).
+  const write = useCallback((topic: Topic) => {
+    const { layer: l, scene: s } = live();
+    if (s.target && l.reading && l.topic !== topic) pushLayer({ focus: s.target.hotspot, reading: true, topic });
   }, []);
 
   // Esc backs out one layer. With focus inside the panel, its own handler takes Esc and stops it reaching here.
@@ -164,6 +178,29 @@ export default function OfficeExperience() {
   const crate = useRef({ dig: 0, playing: null as number | null, browsing: false });
   crate.current = { dig: digFor(dig, pulledSlug), playing: pulledIndex < 0 ? null : pulledIndex, browsing };
   const crateRef = useRef<HTMLDivElement | null>(null);
+
+  // The shelf (spec 3.4): browse it, pick an ornament (it floats to the camera, its plaque beside it), read it in the panel.
+  const shelfSlug = scene.target?.hotspot === "hs_shelf" ? scene.target.item : null;
+  const shelfIndex = shelfSlug ? services.findIndex((s) => s.slug === shelfSlug) : -1;
+  const shelf = useRef({ presented: null as number | null });
+  shelf.current = { presented: shelfIndex < 0 ? null : shelfIndex };
+  const [ornamentOut, setOrnamentOut] = useState(false);
+  const plaqueRef = useRef<HTMLElement | null>(null);
+  const shelfOpen = focusedOn === "hs_shelf" && !scene.reading;
+  const shelfBrowsing = shelfOpen && !shelfSlug;
+  const shelfLinks = useRef<Partial<Record<string, HTMLAnchorElement | null>>>({});
+  const lastShelf = useRef<string | null>(null);
+  useEffect(() => {
+    if (shelfSlug) lastShelf.current = shelfSlug;
+  }, [shelfSlug]);
+  // Browsing the shelf, an ornament's link has focus: the one that was just out, else the first.
+  useEffect(() => {
+    if (!shelfBrowsing) return;
+    (shelfLinks.current[lastShelf.current ?? ""] ?? shelfLinks.current[services[0].slug])?.focus({ preventScroll: true });
+  }, [shelfBrowsing]);
+  useEffect(() => {
+    if (state.kind === "idle") lastShelf.current = null;
+  }, [state.kind]);
 
   // A pulled record (a click, Enter or Forward) is at the front; the dig starts again at the front of a fresh visit.
   useEffect(() => {
@@ -253,12 +290,8 @@ export default function OfficeExperience() {
     }
   };
 
-  // Focus follows what's open (spec 7.3): the card's title when a card shows (CardFace moves it there), else the back
-  // control; home again at idle.
-  const hasCard = focusedOn === "hs_drawer";
-  useEffect(() => {
-    if (focusedOn && !hasCard && focusedOn !== "hs_crate" && trigger.current) backRef.current?.focus({ preventScroll: true });
-  }, [focusedOn, hasCard]);
+  // Focus follows what's open (spec 7.3): every object takes it into itself (the drawer's card and the monitor's screen
+  // through CardFace, the crate's control, the shelf's links or plaque), and it goes home again at idle.
   // Browsing the crate, its control has focus (the arrow keys flick, Enter pulls), again when a record goes back.
   useEffect(() => {
     if (browsing) crateRef.current?.focus({ preventScroll: true });
@@ -332,7 +365,7 @@ export default function OfficeExperience() {
   const navProps = (hit: Hit) => ({ onFocus: () => onHover(hit), onBlur: () => onHover(null) });
 
   return (
-    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-hints={hints} data-walking={walking}>
+    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-presented={shelfSlug ?? ""} data-shelf="in" data-hints={hints} data-walking={walking}>
       {/* First in the page, so the keyboard reaches it first (spec 7.3). Shows only on the street. */}
       <div className="office-arrive">
         <button type="button" className="office-come-in" onClick={comeIn}>
@@ -360,6 +393,10 @@ export default function OfficeExperience() {
                 : null
             }
             onSleeveOut={setSleeveOut}
+            shelf={shelf}
+            plaque={plaqueRef}
+            monitorScreen={focusedOn === "hs_monitor" ? { titleId: "gate-title", content: <AgeGate titleId="gate-title" /> } : null}
+            onPresented={setOrnamentOut}
             onProgressCross={(value) => dispatch({ type: "progress", value })}
             onSettled={() => dispatch({ type: "settled" })}
             onHover={onHover}
@@ -430,7 +467,7 @@ export default function OfficeExperience() {
       ))}
 
       {focusedOn && !scene.reading && (
-        <button ref={backRef} type="button" className="office-back" onClick={back}>
+        <button type="button" className="office-back" onClick={back}>
           {COPY.back}
         </button>
       )}
@@ -458,6 +495,38 @@ export default function OfficeExperience() {
         </>
       )}
 
+      {shelfOpen && (
+        <ul className="office-shelf" aria-label={COPY.shelf.label}>
+          {services.map((s) => (
+            <li key={s.slug}>
+              <a
+                ref={(el) => {
+                  shelfLinks.current[s.slug] = el;
+                }}
+                href={`/services/${s.slug}`}
+                onClick={(e) => {
+                  e.preventDefault();
+                  activate({ hotspot: "hs_shelf", item: s.slug });
+                }}
+                {...navProps({ hotspot: "hs_shelf", item: s.slug })}
+              >
+                {s.name}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+      {shelfBrowsing && (
+        <p className="office-hint" aria-hidden="true">
+          <span className="office-hint-pointer">{COPY.shelf.hint}</span>
+          <span className="office-hint-touch">{COPY.shelf.hintTouch}</span>
+        </p>
+      )}
+      {/* stays under the panel while reading, so closing it returns to the plaque and its Read more */}
+      {focusedOn === "hs_shelf" && ornamentOut && shelfIndex >= 0 && (
+        <Plaque service={services[shelfIndex]} titleId="plaque-title" cardRef={plaqueRef} onReadMore={read} />
+      )}
+
       {scene.reading && scene.target?.hotspot === "hs_drawer" && (
         <Panel hotspot="hs_drawer" titleId="panel-title" onClose={back}>
           <ContactForm titleId="panel-title" level={2} />
@@ -467,6 +536,18 @@ export default function OfficeExperience() {
       {scene.reading && pulledSlug && findWork(pulledSlug) && (
         <Panel hotspot="hs_crate" titleId="case-title" onClose={back}>
           <CaseStudy item={findWork(pulledSlug)!} titleId="case-title" />
+        </Panel>
+      )}
+
+      {scene.reading && shelfSlug && findService(shelfSlug) && (
+        <Panel hotspot="hs_shelf" titleId="service-title" onClose={back}>
+          <ServiceArticle service={findService(shelfSlug)!} titleId="service-title" level={2} onWrite={write} />
+        </Panel>
+      )}
+      {/* over the service, so Esc closes just the form and focus goes back to the button that opened it */}
+      {scene.reading && scene.topic && shelfSlug && (
+        <Panel hotspot="hs_shelf" titleId="write-title" onClose={back}>
+          <ContactForm topic={scene.topic} titleId="write-title" level={2} />
         </Panel>
       )}
 

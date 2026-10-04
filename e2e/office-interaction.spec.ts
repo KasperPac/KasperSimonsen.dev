@@ -1,4 +1,6 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
+import { services } from "../content/services";
+import { COPY } from "../office/copy";
 
 /**
  * How long to wait for the camera, the director or an object to arrive. On a GPU these take about a second; under
@@ -105,8 +107,13 @@ test("the crate, shelf and monitor focus locally with no URL change", async ({ p
     await page.keyboard.press("Enter");
     await expect(office(page)).toHaveAttribute("data-director", `focused:${hotspot}`, { timeout: MOVE_WAIT });
     expect(new URL(page.url()).pathname).toBe("/");
-    // the crate's own control takes focus (arrow keys flick, Enter pulls); the shelf and monitor give it to Back
-    const into = hotspot === "hs_crate" ? page.locator('[aria-roledescription="record crate"]') : page.getByRole("button", { name: "Back" });
+    // each takes focus into itself: the crate's control (arrow keys flick), the shelf's first ornament, the monitor's screen
+    const into =
+      hotspot === "hs_crate"
+        ? page.locator('[aria-roledescription="record crate"]')
+        : hotspot === "hs_shelf"
+          ? page.getByRole("link", { name: services[0].name })
+          : page.getByRole("heading", { name: COPY.monitor.title });
     await expect(into).toBeFocused();
     await page.getByRole("button", { name: "Back" }).click();
     await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
