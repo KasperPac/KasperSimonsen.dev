@@ -6,6 +6,9 @@
   `2026-10-01-office-redesign-design.md`, and phases 3 and 4 of its delivery list. Everything else in that spec
   still holds.
 - **Status:** agreed in brainstorming with Kasper on 2026-10-02, awaiting his review of this document
+- **Amended 2026-10-05** (Kasper, after the M3 preview): the monitor's age-check joke "reads like a part of the site that
+  isn't working". The monitor now shows previews of the crate's projects (section 3.5), the sticky notes fall off it onto
+  the desk while it's open, and the laptop beside it shows the next preview, dragged across onto the monitor.
 
 ## 1. Goal
 
@@ -13,7 +16,7 @@ The objects in the office are the site's navigation, and their content lives **i
 - records in the crate carry the case studies;
 - a business card in the drawer carries the contact details;
 - ornaments on the shelf carry the services;
-- the monitor carries a joke.
+- the monitor (and the laptop beside it) carries previews of the work.
 
 A short summary sits on or beside the object. "Read more" opens a panel for the long read. The office has to stay
 memorable without ever standing between a visitor and the work or the contact details.
@@ -29,6 +32,7 @@ memorable without ever standing between a visitor and the work or the contact de
 | Crate | Dig: records flip forward one at a time; the front one pulls out |
 | Drawer | Business card with email and links, plus "Write to me", which opens the contact form panel |
 | Shelf | Four services, one ornament each; the two engagement models close every service's Read more |
+| Monitor | A slideshow of the crate's projects as screenshots; "See the case study" plays that project's record. The notes fall off; the laptop shows the next slide and drags it across (amended 2026-10-05) |
 | Content in 3D | Real HTML. The business card's details are printed on the card in the drawer (drei `Html` in transform mode, on its top face; amended after Kasper's M1 review). Other cards are pinned beside their object (a DOM overlay positioned by projecting the object each frame; they face the camera, so no CSS 3D transform is needed). Static labels stay line geometry |
 | Phones | Cards beside an object dock at the bottom of the screen instead of floating in the scene; the business card and a pulled sleeve stay printed on the object, which is framed across most of the width |
 | Routing | `window.history.pushState`, synced with the Next router; no intercepting or parallel routes |
@@ -113,11 +117,33 @@ and come in close once the sleeve has turned round. The crate's hint says swipe 
    Dashboards and Platforms & Systems copy, each with a button that opens the contact form with its topic pre-filled.
 4. Back peels the layers as for the crate.
 
-### 3.5 Monitor (the joke)
+### 3.5 Monitor (previews of the work)
 
-Click: the camera pushes up to the screen, which shows a fake Australian age-verification gate in Kasper's voice. Both
-buttons get a punchline. There is no URL; Back or Esc returns to the standing spot. No adult imagery. Kasper approves
-the copy before it ships.
+Amended 2026-10-05. The age-check joke built in M3 is removed: Kasper found it read like a broken part of the site.
+
+1. **Click:** the camera pushes up to the screen (local, no URL, as before). As the move starts, the sticky notes peel off
+   the bezel one after another (~0.1 s apart): each tips off its top edge, drops with a small sideways flutter and
+   settles flat and slightly askew at its own landing spot on the desk. All are down within ~0.9 s, before the camera
+   arrives (~1.1 s), so the whole screen is clear.
+2. **The reel:** the monitor shows one crate project at a time as a little window: a thin title bar with the project's
+   name, its screenshot filling the window, and a strip along the bottom with its one-line headline and **See the case
+   study**. Small ‹ › arrows and dots step through by hand. Projects follow the crate's order. A project with no
+   screenshot yet (Pac-Hub until Kasper sends some) shows a card: its logo, name and headline.
+3. **The laptop** beside the monitor shows the next project. Every ~5 s (or on ‹ ›), a small pointer arrow grabs that
+   slide's title bar and drags it left off the laptop's screen; it slides in over the monitor from the right, as a window
+   crosses between two displays (~0.7 s, eased). The laptop then shows the one after. ‹ drags the previous one back in the
+   same way from the laptop's side.
+4. **Pausing:** the reel holds still while the pointer is over the screen or keyboard focus is in it, and never moves on
+   while the visitor is reading.
+5. **See the case study** plays that project's record exactly as picking it in the crate does: the camera goes to the
+   record player and the URL becomes `/work/<slug>`. Back returns to the monitor; Back again to the standing spot.
+6. **Leaving** (Back, Esc, or See the case study): the notes lift off the desk and hop back to their places on the bezel,
+   each reversing its own fall, finishing as the camera arrives where it's going. Leaving mid-fall, each note turns round
+   from wherever it is.
+7. **Phones:** the monitor keeps most of the width (it has to stay readable), so the laptop is mostly out of shot; the
+   slide still arrives from the right-hand edge, the laptop's side. The notes fall as on desktop.
+8. **Reduced motion:** no fall, no drag, no auto-advance. The notes are on the desk while the monitor is open and back on
+   the bezel otherwise; ‹ › switch both screens at once.
 
 ### 3.6 Direct visits
 
@@ -144,6 +170,8 @@ until the standalone restyle (old phase 5). `/services/<slug>` is new, in the of
     the vinyl goes onto the platter and the sleeve hops to the stand, turning round on the way;
   - drawer ~0.5 s;
   - ornament ~0.6 s;
+  - sticky notes falling off the monitor ~0.9 s in all (staggered ~0.1 s), and back the same way;
+  - a slide dragged from the laptop onto the monitor ~0.7 s, every ~5 s while nothing holds it;
   - teases ≤ 0.3 s;
   - camera moves as now (`FOCUS_SECONDS`).
 - **Movers:** picking a record or an ornament moves the object to the camera, not the camera again.
@@ -181,8 +209,11 @@ until the standalone restyle (old phase 5). `/services/<slug>` is new, in the of
 - **Record player:** focus cameras that frame the platter and the now-playing stand; the stand rotates Pink Floyd
   (The Dark Side of the Moon), Polaris (Fatalism), Pearl Jam (Black) and The Butterfly Effect (Begins Here).
 - **Drawer:** gets a business card.
-- **Monitor:** gets a flat screen surface named for its HTML.
-- **Cameras:** focus cameras retuned so each object leaves room for its card on the right (desktop).
+- **Monitor:** gets a flat screen surface named for its HTML. Its sticky notes become separate parts, each with a
+  landing spot on clear desk space (amended 2026-10-05).
+- **Laptop:** its lid gets a flat screen surface, like the monitor's, for the next slide (amended 2026-10-05).
+- **Cameras:** focus cameras retuned so each object leaves room for its card on the right (desktop). The monitor's
+  landscape camera also takes in the laptop's screen beside it (amended 2026-10-05).
 
 **Routing:** `pushState` URLs are read back by `usePathname` (Next 14.1+ syncs native history calls). A refresh or a
 shared link is an ordinary request for that path, so it renders the standalone page.
@@ -193,7 +224,7 @@ shared link is an ordinary request for that path, so it renders the standalone p
 - the four service descriptions (short: 2–3 lines; long: the Read more);
 - hover labels;
 - card button labels;
-- the monitor gag;
+- the monitor reel's labels (See the case study, the arrows);
 - the business card's links.
 
 Case-study text and the engagement-model copy are reused as they are.
@@ -207,7 +238,9 @@ Case-study text and the engagement-model copy are reused as they are.
   - each object's motion functions (flip angle by index and time, pull-out, drawer, ornament, teases, reduced motion);
   - URL ↔ state;
   - history bridge semantics;
-  - content integrity (four services, unique slugs, every project has a sleeve);
+  - content integrity (four services, unique slugs, every project has a sleeve, every screenshot file exists);
+  - the monitor reel: slide order, the laptop's next slide, pausing, the drag's timing, and the notes' fall (stagger,
+    reversal mid-fall, reduced motion);
   - the card docking rule.
 - **Playwright:**
   - keyboard path through each object;
@@ -217,6 +250,8 @@ Case-study text and the engagement-model copy are reused as they are.
   - refresh on a content URL gives the standalone page;
   - reduced motion: the camera cuts, never glides;
   - phone viewport: docked card;
+  - the monitor: the laptop shows the next project, › brings it onto the monitor, See the case study plays its record at
+    `/work/<slug>` and Back returns to the monitor; nothing overflows the screen on a phone;
   - the fallback still lists links.
 - **Visual review** with Kasper at each milestone.
 
@@ -230,3 +265,5 @@ Each one ends with something Kasper can click through at `localhost:3010`:
 2. **Crate:** sleeve labels, flipping, pull-out, sleeve card, case-study panel, `/work/<slug>`.
 3. **Shelf + monitor:** new ornaments, service content, plaque cards, service panels with the engagement models,
    standalone `/services/<slug>`, and the monitor gag with approved copy.
+4. **Monitor reel** (amended 2026-10-05, replaces M3's monitor gag): previews of the crate's projects on the monitor,
+   the next one on the laptop dragged across, See the case study, and the notes falling off and going back on.
