@@ -1,0 +1,445 @@
+:root {
+  color-scheme: dark;
+  --office-bg: #0b0b0b;
+  --office-fg: #e8e8e8;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  background: var(--office-bg);
+  color: var(--office-fg);
+  font-family: var(--font-ui), system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.office-stage {
+  position: fixed;
+  inset: 0;
+}
+
+.office-fallback {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  gap: 4px;
+  padding: 16px;
+  text-align: center;
+}
+
+.office-fallback a {
+  color: inherit;
+}
+
+/* With no 3D there is no walk-in to scroll through. */
+.office[data-office-fallback="true"] .office-track {
+  display: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* Scrolling would replay the walk-in under an open object. */
+html.office-locked {
+  overflow: hidden;
+}
+
+/* With no 3D, the fallback's own links are the navigation. */
+.office[data-office-fallback="true"] :is(.office-nav, .office-label, .office-marker, .office-back, .office-card) {
+  display: none;
+}
+
+/* Real controls for every object (spec 7.3), hidden until a keyboard user tabs into them. */
+.office-nav:not(:focus-within) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.office-nav:focus-within {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 3;
+  padding: 12px 14px;
+  background: var(--office-bg);
+  border: 1px solid rgba(232, 232, 232, 0.25);
+}
+.office-nav ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.office-nav a,
+.office-nav button {
+  color: var(--office-fg);
+  background: none;
+  border: 0;
+  padding: 0;
+  font: 14px/1.4 var(--font-ui), system-ui, sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+}
+.office-nav :focus-visible { outline: 1px solid var(--office-fg); outline-offset: 3px; }
+
+/* Hover/focus label, positioned by the canvas. */
+.office-label {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  pointer-events: none;
+  margin-top: -34px;
+  translate: -50% 0;
+  font: 11px/1 var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+/* The dots over what you can use: each in its object's colour, a solid dot in a ring (Kasper picked colour and glints
+   over plain white rings, which read as more line art). After the arrival tour they stay whenever you're standing in the
+   office. A dot is a way in too: tapping it opens its object. */
+.office-marker {
+  display: none;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 2;
+  width: 12px;
+  height: 12px;
+  margin: -30px 0 0 -6px;
+  border-radius: 50%;
+  background: var(--marker, var(--office-fg));
+  box-shadow: 0 0 0 3px var(--office-bg);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.office-marker::after {
+  content: "";
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--marker, var(--office-fg));
+  opacity: 0.55;
+}
+.office[data-director="idle"]:is([data-hints="dots"], [data-hints="used"]):not([data-office-fallback="true"]) .office-marker { display: block; }
+/* With the dots up, an object's label sits above its dot's ring rather than on it. */
+.office[data-director="idle"]:is([data-hints="dots"], [data-hints="used"]) .office-label { margin-top: -64px; }
+.office-hints-text { display: none; position: fixed; left: 16px; right: 16px; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 3; text-align: center; font: 11px/1.5 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.7); }
+.office[data-hints="dots"][data-director="idle"]:not([data-office-fallback="true"]) .office-hints-text { display: block; }
+/* Phones pan the standing view sideways (camera/pan.ts): the page keeps vertical drags (the walk-in's scroll) and hands
+   sideways ones to the office. */
+.office-hints-tall { display: none; }
+@media (orientation: portrait) {
+  .office[data-director="idle"] .office-stage { touch-action: pan-y; }
+  .office-hints-wide { display: none; }
+  .office-hints-tall { display: inline; }
+}
+
+/* On the street: a way in for anyone who doesn't think to scroll (Kasper). Gone once the camera is on its way down,
+   back if they scroll up to the top again. Fades rather than cuts; hidden, it can't be tabbed to. The street fades to
+   black behind it and the button is the one solid thing on screen, so it reads over all the line work (Kasper picked
+   this over an outlined button). The fade stays low in landscape, clear of The Commons just above. */
+.office-arrive {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 3;
+  display: grid;
+  justify-items: center;
+  gap: 16px;
+  padding: 14vh 16px max(28px, env(safe-area-inset-bottom));
+  background: linear-gradient(to bottom, rgba(11, 11, 11, 0), rgba(11, 11, 11, 0.88) 55%, var(--office-bg));
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s ease, visibility 0s linear 0.4s;
+}
+@media (orientation: portrait) {
+  .office-arrive { padding-top: 22vh; }
+}
+.office[data-scene-ready="true"][data-street="true"]:not([data-walking="true"]):not([data-office-fallback="true"]) .office-arrive {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.6s ease;
+}
+.office-come-in {
+  min-height: 52px;
+  padding: 0 30px;
+  background: var(--office-fg);
+  color: var(--office-bg);
+  border: 1px solid var(--office-fg);
+  font: 600 14px/1 var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  pointer-events: auto;
+  transition: background-color 0.2s ease;
+}
+.office-come-in:hover { background: #fff; }
+.office-come-in:focus-visible { outline: 1px solid var(--office-fg); outline-offset: 4px; }
+.office-scroll {
+  margin: 0;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  font: 12px/1 var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(232, 232, 232, 0.9);
+}
+/* The chevron breathes downwards, in time with the office's dots. */
+.office-scroll::after {
+  content: "";
+  width: 9px;
+  height: 9px;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  rotate: 45deg;
+  animation: office-nudge 2.4s ease-in-out infinite;
+}
+@keyframes office-nudge {
+  0%, 100% { translate: 0 0; opacity: 0.95; }
+  50% { translate: 0 5px; opacity: 0.5; }
+}
+
+.office-back {
+  position: fixed;
+  left: 16px;
+  top: 16px;
+  z-index: 4;
+  padding: 8px 12px;
+  background: var(--office-bg);
+  color: var(--office-fg);
+  border: 1px solid rgba(232, 232, 232, 0.35);
+  font: 11px/1 var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* Content cards beside their object (desktop: positioned by the canvas; narrow: docked). */
+.office-card {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 3;
+  width: min(340px, calc(100vw - 32px));
+  padding: 20px 22px;
+  background: var(--office-bg);
+  border: 1px solid rgba(232, 232, 232, 0.9);
+  font: 15px/1.5 var(--font-ui), system-ui, sans-serif;
+  animation: office-card-in 0.3s ease-out both;
+}
+@keyframes office-card-in {
+  from { opacity: 0; }
+}
+@media (max-width: 700px), (orientation: portrait) {
+  .office-card { top: auto !important; left: 16px !important; right: 16px; bottom: 16px; width: auto; }
+}
+.office-card-eyebrow {
+  margin: 0 0 6px;
+  font: 11px/1.2 var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.office-card-title { margin: 0 0 6px; font-size: 22px; font-weight: 600; line-height: 1.15; }
+.office-card-text { margin: 0 0 8px; color: rgba(232, 232, 232, 0.8); }
+.office-card a { color: var(--office-fg); }
+.office-card-links { margin: 0 0 14px; padding: 0; list-style: none; display: flex; gap: 14px; }
+.office-card-cta {
+  padding: 10px 16px;
+  background: var(--accent);
+  color: var(--office-bg);
+  border: 0;
+  font: 600 14px/1 var(--font-ui), system-ui, sans-serif;
+  cursor: pointer;
+}
+
+/* What's printed on the business card in the drawer: laid out at 520 px, then mapped onto the 90 mm card in 3D. */
+.office-card-face {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  padding: 34px 38px;
+  color: var(--office-fg);
+  font: 21px/1.35 var(--font-ui), system-ui, sans-serif;
+  animation: office-card-in 0.4s ease-out both;
+}
+.office-card-face:not([data-placed]) { visibility: hidden; }
+.office-card-face .office-card-title:focus { outline: none; } /* a focus target for the reader, not a control */
+.office-card-face .office-card-eyebrow { margin: 0 0 14px; font-size: 15px; }
+.office-card-face .office-card-title { margin: 0 0 4px; font-size: 44px; font-weight: 600; line-height: 1.05; }
+.office-card-face .office-card-text { margin: 0 0 4px; color: rgba(232, 232, 232, 0.8); }
+.office-card-face a { color: var(--office-fg); }
+.office-card-face .office-card-links { margin: auto 0 0; padding: 0; list-style: none; display: flex; gap: 18px; }
+.office-card-face .office-card-cta {
+  position: absolute;
+  right: 38px;
+  bottom: 34px;
+  padding: 12px 18px;
+  background: var(--accent);
+  color: var(--office-bg);
+  border: 0;
+  font: 600 19px/1 var(--font-ui), system-ui, sans-serif;
+  cursor: pointer;
+}
+
+/* What's printed on a pulled sleeve's back: laid out at 600 px square, mapped onto the 315 mm sleeve. */
+.office-sleeve-back { padding: 46px 48px; font-size: 22px; }
+.office-sleeve-back .office-card-title { font-size: 52px; }
+.office-sleeve-headline { margin: 0 0 18px; font-size: 26px; font-weight: 600; line-height: 1.2; }
+.office-sleeve-label { margin: 18px 0 6px; font: 14px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+.office-sleeve-stack { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 16px; font: 17px/1.4 var(--font-mono), ui-monospace, monospace; color: rgba(232, 232, 232, 0.8); }
+.office-sleeve-back .office-card-cta { right: 48px; bottom: 46px; }
+.article-eyebrow { margin: 0; font: 11px/1.2 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
+/* a section heading: h3 in a panel, h2 on a standalone page (not the title, which is an h2 in a panel) */
+.article h2:not(.article-title),
+.article h3 { margin: 28px 0 8px; font-size: 18px; font-weight: 600; }
+.article-stack { padding-left: 18px; color: rgba(232, 232, 232, 0.8); }
+/* the crate's hint, bottom centre while browsing it */
+.office-hint { position: fixed; left: 16px; right: 16px; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 3; text-align: center; font: 11px/1.5 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.7); }
+/* The crate says how to use it in the visitor's own terms: hover and click with a pointer, swipe and tap on a phone. */
+.office-hint-touch { display: none; }
+@media (hover: none) {
+  .office-hint-pointer { display: none; }
+  .office-hint-touch { display: inline; }
+}
+.office-crate,
+.office-sr { position: fixed; width: 1px; height: 1px; margin: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+/* browsing the crate, a finger on it is ours: the page doesn't pan, and the swipe flicks */
+.office[data-director="focused:hs_crate"] .office-stage { touch-action: none; }
+/* Printed on objects, phones see them small: larger type, and the sleeve's back trimmed to what fits (the full case
+   study is a tap away). The print is then mapped onto the object, so these sizes shrink with it. */
+@media (max-width: 700px), (orientation: portrait) {
+  .office-card-face { font-size: 25px; }
+  .office-card-face .office-card-eyebrow { font-size: 17px; }
+  .office-card-face .office-card-title { font-size: 48px; }
+  .office-card-face .office-card-cta { font-size: 21px; }
+  .office-sleeve-back { font-size: 26px; }
+  .office-sleeve-back .office-card-eyebrow { font-size: 18px; }
+  .office-sleeve-back .office-card-title { font-size: 58px; }
+  .office-sleeve-headline { font-size: 30px; }
+  .office-sleeve-back .office-card-text { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
+  .office-sleeve-label,
+  .office-sleeve-stack { display: none; }
+  .office-sleeve-back .office-card-cta { font-size: 23px; }
+}
+
+/* The Read more panel. */
+.panel-scrim { position: fixed; inset: 0; z-index: 10; }
+.panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(560px, 42vw);
+  overflow-y: auto;
+  padding: 64px 40px 48px;
+  background: var(--office-bg);
+  border-left: 1px solid rgba(232, 232, 232, 0.2);
+  outline: none;
+  animation: panel-in 0.35s ease-out both;
+}
+@keyframes panel-in { from { translate: 40px 0; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .panel { animation: panel-fade 0.2s ease-out both; }
+  .office-scroll::after { animation: none !important; }
+}
+@keyframes panel-fade { from { opacity: 0; } }
+@media (max-width: 900px) {
+  .panel { width: 100%; border-left: 0; padding: 64px 20px 40px; }
+}
+.panel-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  padding: 8px 12px;
+  background: none;
+  color: var(--office-fg);
+  border: 1px solid rgba(232, 232, 232, 0.35);
+  font: 11px/1 var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+/* Articles and forms inside panels. */
+.article { max-width: 62ch; font: 16px/1.6 var(--font-ui), system-ui, sans-serif; }
+.article-title { margin: 8px 0 12px; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
+.article-lede { font-size: 19px; color: var(--office-fg); }
+.article p { color: rgba(232, 232, 232, 0.8); }
+.article a { color: var(--office-fg); }
+.article-cta {
+  display: inline-block;
+  padding: 10px 16px;
+  background: var(--accent);
+  color: var(--office-bg);
+  border: 0;
+  font: 600 14px/1 var(--font-ui), system-ui, sans-serif;
+  text-decoration: none;
+  cursor: pointer;
+}
+.form { display: grid; gap: 14px; margin-top: 20px; }
+.form label {
+  display: grid;
+  gap: 6px;
+  font: 11px/1 var(--font-mono), ui-monospace, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(232, 232, 232, 0.7);
+}
+.form input,
+.form textarea {
+  padding: 10px 12px;
+  background: transparent;
+  color: var(--office-fg);
+  border: 1px solid rgba(232, 232, 232, 0.3);
+  font: 16px/1.4 var(--font-ui), system-ui, sans-serif;
+}
+.form :focus-visible { outline: 1px solid var(--accent); border-color: var(--accent); }
+
+/* The shelf's ornaments as real links (spec 5): focus lights the ornament in 3D, so the links themselves stay hidden. */
+.office-shelf { position: fixed; width: 1px; height: 1px; margin: 0; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+/* The plaque beside a picked ornament: a focus target for the reader, not a control. */
+.office-card .office-card-title:focus { outline: none; }
+
+/* What's printed on the monitor's screen: laid out at 640 px, mapped onto the screen. */
+.office-screen { padding: 40px 46px; font-size: 22px; }
+.office-screen .office-card-title { font-size: 46px; }
+.office-gate-buttons { display: flex; gap: 16px; margin-top: 18px; }
+.office-screen .office-gate-buttons .office-card-cta { position: static; }
+.office-screen .office-card-cta[aria-pressed="false"] { background: transparent; color: var(--office-fg); outline: 1px solid rgba(232, 232, 232, 0.6); }
+/* The screen face is 640 x 352 whatever the camera: on phones the type stays large enough to read, so the margins give
+   way and the title keeps to one line. */
+@media (max-width: 700px), (orientation: portrait) {
+  .office-screen { padding: 26px 34px; font-size: 26px; }
+  .office-screen .office-card-eyebrow { margin-bottom: 10px; }
+  .office-screen .office-card-title { margin-bottom: 8px; font-size: 44px; }
+  .office-gate-buttons { margin-top: 14px; }
+}
+
+/* A service's Read more ends with the two ways to work. */
+.article-model { margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(232, 232, 232, 0.2); }
+.article-model h3,
+.article-model h4 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
+.article-label { margin: 14px 0 2px; font: 11px/1.2 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.6); }
+.article-hint { font-size: 14px; }
+
+/* Standalone pages (a shared or refreshed link), in the office's style. */
+.standalone { max-width: 62ch; margin: 0 auto; padding: 48px 16px 80px; }
+.standalone-enter { display: inline-block; margin-bottom: 32px; color: var(--office-fg); font: 11px/1.2 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; }

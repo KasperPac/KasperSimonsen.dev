@@ -1,0 +1,16 @@
+{
+  "street": {
+    "url": "/models/street.glb",
+    "maxBytes": 819200,
+    "nodes": ["osm_buildings", "prop_commons", "prop_aami_park", "prop_mcg", "osm_roads", "prop_pelaco", "prop_skipping_girl", "prop_skipping_girl__pose_00", "prop_skipping_girl__pose_01", "prop_skipping_girl__pose_02", "prop_skipping_girl__pose_03", "prop_nylex", "prop_nylex_silos", "prop_mcg__portal_00", "prop_mcg__portal_01", "prop_mcg__portal_02", "prop_mcg__portal_03"],
+    "cameras": ["cam_walkin"],
+    "animated": ["cam_walkin", "prop_lobby_door", "prop_office_door"]
+  },
+  "office": {
+    "url": "/models/office.glb",
+    "maxBytes": 2097152,
+    "nodes": ["office_root", "hs_crate", "hs_drawer", "hs_monitor", "hs_shelf", "prop_turntable__platter", "prop_turntable__away", "prop_now_playing__sleeve_00", "prop_now_playing__sleeve_01", "prop_now_playing__sleeve_02", "prop_now_playing__sleeve_03", "hs_drawer__drawer", "hs_drawer__card", "hs_monitor__screen", "hs_crate__record_00__art", "hs_crate__record_01__art", "hs_crate__record_02__art", "hs_crate__record_00__vinyl", "hs_crate__record_01__vinyl", "hs_crate__record_02__vinyl", "hs_shelf__ornament_00", "hs_shelf__ornament_01", "hs_shelf__ornament_02", "hs_shelf__ornament_03"],
+    "cameras": ["cam_stand", "cam_stand_portrait", "cam_focus_crate", "cam_focus_crate_portrait", "cam_focus_drawer", "cam_focus_drawer_portrait", "cam_focus_monitor", "cam_focus_monitor_portrait", "cam_focus_shelf", "cam_focus_shelf_portrait", "cam_focus_player", "cam_focus_player_portrait"],
+    "animated": []
+  }
+}

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { currently } from "@/app/work/data";
+import { currently } from "@/app/(main)/work/data";
 
 const mono   = { fontFamily: "var(--font-geist-mono), ui-monospace, monospace" };
 const serif  = { fontFamily: "var(--font-fraunces), 'Instrument Serif', Georgia, serif" };

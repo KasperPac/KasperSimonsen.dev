@@ -25,6 +25,13 @@ const nextConfig: NextConfig = {
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
         ],
       },
+      {
+        // The redesign's temporary home: public to anyone with the link, kept out of search so it doesn't compete with
+        // kaspersimonsen.dev.
+        source: "/(.*)",
+        has: [{ type: "host", value: "new.kaspersimonsen.dev" }],
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
     ];
   },
 };
