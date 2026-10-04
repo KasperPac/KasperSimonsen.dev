@@ -131,8 +131,8 @@ Amended 2026-10-05. The age-check joke built in M3 is removed: Kasper found it r
    screenshot yet (Pac-Hub until Kasper sends some) shows a card: its logo, name and headline.
 3. **The laptop** beside the monitor shows the next project. Every ~5 s (or on ‹ ›), a small pointer arrow grabs that
    slide's title bar and drags it left off the laptop's screen; it slides in over the monitor from the right, as a window
-   crosses between two displays (~0.7 s, eased). The laptop then shows the one after. ‹ drags the previous one back in the
-   same way from the laptop's side.
+   crosses between two displays (~0.7 s, eased). The laptop then shows the one after. ‹ plays it backwards: the
+   monitor's slide is dragged right, back onto the laptop, and the previous project shows on the monitor.
 4. **Pausing:** the reel holds still while the pointer is over the screen or keyboard focus is in it, and never moves on
    while the visitor is reading.
 5. **See the case study** plays that project's record exactly as picking it in the crate does: the camera goes to the
