@@ -192,8 +192,8 @@ type OfficeProps = Pick<
 /** The office model: hover, click, highlight, object motion, where the label and markers go, and the business card's print. */
 function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack, onHover, onActivate, onDrawerOpen, onSleeveOut, info }: OfficeProps) {
   const { gltf: office, handle } = useCleanEdges(manifest.office.url, highlightKey);
-  const onStand = useRef(false); // a project's sleeve is on the now-playing stand: its covers hide
-  useTurntable(office.scene, onStand);
+  const albumAway = useRef(false); // a project's record plays, or its sleeve is on the stand: the album is put away
+  useTurntable(office.scene, albumAway);
   const motion = useMemo(() => new ObjectMotion(), []);
   const nodes = useMemo(() => findMotionNodes(office.scene), [office]);
   const card = useMemo(() => (office.scene.getObjectByName(CARD_NODE) as Mesh | undefined) ?? null, [office]);
@@ -273,7 +273,7 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
     }
     const c = crate.current;
     crateMotion.update(crateNodes, { dig: c.dig, playing: c.playing, player, reduced }, dt);
-    onStand.current = crateMotion.onStand;
+    albumAway.current = crateMotion.onStand || c.playing !== null;
     if (info.current) info.current.sleeveOut = crateMotion.playDone;
     if (crateMotion.playDone !== sleeveWasOut.current) {
       sleeveWasOut.current = crateMotion.playDone;
@@ -324,7 +324,15 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
     const plane = digPlane.current;
     const across = plane && e.intersections.find((i) => i.object.name === DIG_PLANE);
     let dig = crate.current.dig;
-    if (plane?.parent && across) {
+    // On the record at the front (its cover, its top edge, its vinyl), that's the one meant: the depth bands are a third
+    // of the crate each but the projects are its front three records, so the front one's top edge and cover fall in
+    // later bands, and moving down to click it, or tapping it, picked the one behind (Kasper: "it selects Manuva").
+    const front = crateNodes?.records[dig];
+    const onFront = !!front && e.intersections.some((i) => {
+      for (let o: Object3D | null = i.object; o; o = o.parent) if (o === front) return true;
+      return false;
+    });
+    if (plane?.parent && across && !onFront) {
       const z = plane.parent.worldToLocal(across.point.clone()).z;
       dig = digFromDepth(z, plane.userData.front, plane.userData.back, work.length, dig);
     }

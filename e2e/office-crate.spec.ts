@@ -187,3 +187,40 @@ test.describe("touch", () => {
     await expect(office(page)).toHaveAttribute("data-dig", "1"); // and stays there
   });
 });
+
+/** Where the crate's dot sits on screen: the top centre of the crate. */
+const crateTop = (page: Page) =>
+  page.evaluate(() => {
+    const m = /([-\d.]+)px ([-\d.]+)px/.exec((document.querySelector(".office-marker") as HTMLElement).style.translate)!;
+    return { x: Number(m[1]), y: Number(m[2]) };
+  });
+
+test.describe("picking the record you mean", () => {
+  test.describe("by touch", () => {
+    test.use({ viewport: { width: 390, height: 664 }, hasTouch: true, isMobile: true });
+    test("a tap on the front record's top edge plays that record, not the one behind", async ({ page }) => {
+      await standInOffice(page);
+      await openCrate(page);
+      await expect(office(page)).toHaveAttribute("data-camera", "focus", { timeout: MOVE_WAIT });
+      const at = await crateTop(page);
+      await page.touchscreen.tap(at.x, at.y + 30);
+      await expect(office(page)).toHaveAttribute("data-playing", work[0].slug, { timeout: MOVE_WAIT });
+    });
+  });
+
+  test("bringing a record forward and moving down onto its cover to click it plays that record", async ({ page }) => {
+    await standInOffice(page);
+    await openCrate(page);
+    await expect(crate(page)).toBeFocused();
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("ArrowDown");
+    await expect(office(page)).toHaveAttribute("data-dig", "2");
+    await expect(office(page)).toHaveAttribute("data-camera", "focus", { timeout: MOVE_WAIT });
+    const at = await crateTop(page);
+    await page.mouse.move(at.x, at.y - 150); // above the crate, then down over the records' tops onto its cover
+    await page.mouse.move(at.x, at.y + 40, { steps: 16 });
+    await expect(office(page)).toHaveAttribute("data-dig", "2");
+    await page.mouse.click(at.x, at.y + 40);
+    await expect(office(page)).toHaveAttribute("data-playing", work[2].slug, { timeout: MOVE_WAIT });
+  });
+});
