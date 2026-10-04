@@ -22,13 +22,15 @@ import { focusedHotspot, IDLE_AT, LEAVE_AT, type DirectorState } from "./directo
 import { CARD_NODE, findMotionNodes, ObjectMotion, SCREEN_NODE } from "./objects/motion";
 import { CrateMotion, findCrateNodes, type PlayerPoses } from "./objects/crate";
 import { findShelfNodes, ShelfMotion } from "./objects/shelf";
+import { findNotesNodes, NotesMotion } from "./objects/notes";
 import { screenRect } from "./overlay/screenRect";
 import { placeCard } from "./overlay/place";
 import { addDigPlane, DIG_PLANE, digFromDepth } from "./crate/scrub";
 import { PLATTER_NODE, STAND_NODE } from "./idle/turntable";
 import CardFace from "./cards/CardFace";
 import { SLEEVE_WIDTH_PX } from "./cards/SleeveBack";
-import { SCREEN_WIDTH_PX } from "./cards/AgeGate";
+import { SCREEN_WIDTH_PX } from "./cards/ReelScreen";
+import { LAPTOP_WIDTH_PX } from "./cards/LaptopScreen";
 import { work } from "@/content/work";
 
 /** DOM the canvas positions each frame: the hover label and the touch markers. */
@@ -59,6 +61,8 @@ export type OfficeCanvasProps = {
   plaque: RefObject<HTMLElement | null>;
   /** What's printed on the monitor's screen while it's open, or null. */
   monitorScreen: { titleId: string; content: ReactNode } | null;
+  /** What's printed on the laptop beside the monitor while the monitor is open, or null. */
+  laptopScreen: { content: ReactNode } | null;
   /** Which ornament is out in front of the camera (its index), or null: each arrival, swap and start back. */
   onPresented: (out: number | null) => void;
   onProgressCross: (progress: number) => void;
@@ -196,14 +200,14 @@ function Street({ progress, pan, host, director, onProgressCross, onSettled, inf
 
 type OfficeProps = Pick<
   OfficeCanvasProps,
-  "host" | "director" | "hover" | "overlay" | "drawerCard" | "crate" | "sleeveBack" | "shelf" | "plaque" | "monitorScreen"
+  "host" | "director" | "hover" | "overlay" | "drawerCard" | "crate" | "sleeveBack" | "shelf" | "plaque" | "monitorScreen" | "laptopScreen"
   | "onHover" | "onActivate" | "onDrawerOpen" | "onSleeveOut" | "onPresented"
 > & {
   info: RefObject<OfficeInfo | null>;
 };
 
 /** The office model: hover, click, highlight, object motion, where the label and markers go, and the business card's print. */
-function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack, shelf, plaque, monitorScreen, onHover, onActivate, onDrawerOpen, onSleeveOut, onPresented, info }: OfficeProps) {
+function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack, shelf, plaque, monitorScreen, laptopScreen, onHover, onActivate, onDrawerOpen, onSleeveOut, onPresented, info }: OfficeProps) {
   const { gltf: office, handle } = useCleanEdges(manifest.office.url, highlightKey);
   const albumAway = useRef(false); // a project's record plays, or its sleeve is on the stand: the album is put away
   useTurntable(office.scene, albumAway);
@@ -238,6 +242,11 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
   // The CSS that docks the plaque on narrow screens (office.css), asked without a per-frame getComputedStyle.
   const docked = useMemo(() => (typeof window === "undefined" ? null : window.matchMedia("(max-width: 700px), (orientation: portrait)")), []);
   const screen = useMemo(() => (office.scene.getObjectByName(SCREEN_NODE) as Mesh | undefined) ?? null, [office]);
+  const notesRoot = useMemo(() => office.scene.getObjectByName("hs_monitor__notes") ?? null, [office]);
+  const notesNodes = useMemo(() => (notesRoot ? findNotesNodes(notesRoot) : { notes: [], stuck: [], rest: [] }), [notesRoot]);
+  const notesMotion = useMemo(() => new NotesMotion(), []);
+  const notesWereDown = useRef(false);
+  const laptop = useMemo(() => (office.scene.getObjectByName("prop_laptop__screen") as Mesh | undefined) ?? null, [office]);
   const v = useMemo(() => new Vector3(), []);
 
   // Each object's whole outline takes the pointer while nothing is focused (thin shelf, gaps between ornaments).
@@ -325,6 +334,12 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
         plaqueEl.style.left = `${at.left}px`;
         plaqueEl.style.top = `${at.top}px`;
       }
+    }
+    // The notes come off the monitor as its camera move starts and go back on as the camera leaves (spec 3.5).
+    notesMotion.update(notesNodes, { open: focused?.hotspot === "hs_monitor", reduced }, dt);
+    if (notesMotion.down !== notesWereDown.current) {
+      notesWereDown.current = notesMotion.down;
+      if (host.current) host.current.dataset.notes = notesMotion.down ? "down" : "up";
     }
 
     const lit = hover.current ?? focused;
@@ -422,6 +437,11 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
       {monitorScreen && screen && (
         <CardFace surface={screen} place="screen" widthPx={SCREEN_WIDTH_PX} hotspot="hs_monitor" titleId={monitorScreen.titleId}>
           {monitorScreen.content}
+        </CardFace>
+      )}
+      {laptopScreen && laptop && (
+        <CardFace surface={laptop} place="screen" widthPx={LAPTOP_WIDTH_PX} hotspot="hs_monitor" titleId="laptop-print" focus={false}>
+          {laptopScreen.content}
         </CardFace>
       )}
     </>

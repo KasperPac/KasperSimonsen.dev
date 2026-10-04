@@ -49,18 +49,6 @@ export const COPY = {
   service: { eyebrow: "What I do", ways: "Two ways to work with me" },
   /** On the standalone pages, back into the office. */
   enter: "Enter the office",
-  /** The monitor's gag (spec 3.5): a fake Australian age check. No real agency's name. */
-  monitor: {
-    eyebrow: "Age verification",
-    title: "Hang on. How old are you?",
-    text: "Australian law wants to know who's looking at screens now. This one's got TypeScript on it, so I have to ask.",
-    over: "I'm 18 or over",
-    under: "I'm under 18",
-    replies: {
-      over: "No ID, no questions. About as thorough as the real ones. It's only terminal windows on here anyway.",
-      under: "Honest. Nobody ever presses this one. You're fine, it's just code. Go tell your parents to hire me.",
-    },
-  },
   /** The monitor's reel of past work (spec 3.5). DRAFT. */
   reel: {
     title: "Some things I've built",

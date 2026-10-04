@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useReducer, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import OfficeErrorBoundary from "./OfficeErrorBoundary";
 import { theme } from "./theme";
 import { COPY } from "./copy";
@@ -17,7 +17,9 @@ import type { OverlayElements } from "./OfficeCanvas";
 import BusinessCard from "./cards/BusinessCard";
 import SleeveBack from "./cards/SleeveBack";
 import Plaque from "./cards/Plaque";
-import AgeGate from "./cards/AgeGate";
+import ReelScreen from "./cards/ReelScreen";
+import LaptopScreen from "./cards/LaptopScreen";
+import { useReel } from "./monitor/useReel";
 import { clampDig } from "./objects/crate";
 import { canPull, digFor, swipeStep } from "./crate/dig";
 import { tourAt } from "./hints/tour";
@@ -167,6 +169,11 @@ export default function OfficeExperience() {
   }, [state]);
 
   const focusedOn = state.kind === "focused" ? state.target.hotspot : null;
+  // The monitor's reel of past work (spec 3.5): runs while the monitor is open, and keeps its place between visits.
+  // Asked once, on the client: this page is also rendered on the server, where there is no matchMedia.
+  const reduced = useMemo(() => typeof window !== "undefined" && reducedMotion(), []);
+  const reel = useReel(focusedOn === "hs_monitor", work.length, reduced);
+  const play = useCallback((slug: string) => activate({ hotspot: "hs_crate", item: slug }), [activate]);
   const showCard = focusedOn === "hs_drawer" && drawerOpen;
 
   // The crate (spec 3.2): flick through the records, pull the front one out, read it on its back and in the panel.
@@ -366,7 +373,7 @@ export default function OfficeExperience() {
   const navProps = (hit: Hit) => ({ onFocus: () => onHover(hit), onBlur: () => onHover(null) });
 
   return (
-    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-presented={shelfSlug ?? ""} data-shelf="in" data-hints={hints} data-walking={walking}>
+    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-presented={shelfSlug ?? ""} data-shelf="in" data-notes="up" data-hints={hints} data-walking={walking}>
       {/* First in the page, so the keyboard reaches it first (spec 7.3). Shows only on the street. */}
       <div className="office-arrive">
         <button type="button" className="office-come-in" onClick={comeIn}>
@@ -396,7 +403,12 @@ export default function OfficeExperience() {
             onSleeveOut={setSleeveOut}
             shelf={shelf}
             plaque={plaqueRef}
-            monitorScreen={focusedOn === "hs_monitor" ? { titleId: "gate-title", content: <AgeGate titleId="gate-title" /> } : null}
+            monitorScreen={
+              focusedOn === "hs_monitor"
+                ? { titleId: "reel-title", content: <ReelScreen titleId="reel-title" view={reel.view} hold={reel.hold} onStep={reel.step} onShow={reel.show} onPlay={play} /> }
+                : null
+            }
+            laptopScreen={focusedOn === "hs_monitor" ? { content: <LaptopScreen view={reel.view} /> } : null}
             onPresented={setOutIndex}
             onProgressCross={(value) => dispatch({ type: "progress", value })}
             onSettled={() => dispatch({ type: "settled" })}

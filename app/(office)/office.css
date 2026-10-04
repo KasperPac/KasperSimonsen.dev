@@ -418,20 +418,8 @@ html.office-locked {
 /* The plaque beside a picked ornament: a focus target for the reader, not a control. */
 .office-card .office-card-title:focus { outline: none; }
 
-/* What's printed on the monitor's screen: laid out at 640 px, mapped onto the screen. */
-.office-screen { padding: 40px 46px; font-size: 22px; }
-.office-screen .office-card-title { font-size: 46px; }
-.office-gate-buttons { display: flex; gap: 16px; margin-top: 18px; }
-.office-screen .office-gate-buttons .office-card-cta { position: static; }
-.office-screen .office-card-cta[aria-pressed="false"] { background: transparent; color: var(--office-fg); outline: 1px solid rgba(232, 232, 232, 0.6); }
-/* The screen face is 640 x 352 whatever the camera: on phones the type stays large enough to read, so the margins give
-   way and the title keeps to one line. */
-@media (max-width: 700px), (orientation: portrait) {
-  .office-screen { padding: 26px 34px; font-size: 26px; }
-  .office-screen .office-card-eyebrow { margin-bottom: 10px; }
-  .office-screen .office-card-title { margin-bottom: 8px; font-size: 44px; }
-  .office-gate-buttons { margin-top: 14px; }
-}
+/* The monitor's and the laptop's prints fill their screens edge to edge; .office-reel lays them out. */
+.office-screen { padding: 0; }
 
 /* A service's Read more ends with the two ways to work. */
 .article-model { margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(232, 232, 232, 0.2); }
