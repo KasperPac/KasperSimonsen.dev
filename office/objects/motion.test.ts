@@ -124,6 +124,12 @@ describe("ObjectMotion", () => {
     m.update(nodes, { open: null, hovered: "hs_monitor", reduced: false }, 1 / 60, 10.5);
     expect(s.screen.visible).toBe(true);
   });
+  it("holds the ornaments still while the shelf is open: the picked one floats, the rest wait", () => {
+    const s = scene();
+    const nodes = findMotionNodes(s.root);
+    step(new ObjectMotion(), nodes, { open: "hs_shelf", hovered: "hs_shelf", reduced: false }, 0.5);
+    nodes.ornaments.forEach((o, i) => expect(o.position.y).toBe(nodes.ornamentRest[i]));
+  });
   it("is a no-op on a model without the nodes", () => {
     const nodes = findMotionNodes(new Group());
     expect(() => new ObjectMotion().update(nodes, { open: "hs_drawer", hovered: "hs_shelf", reduced: false }, 1 / 60, 0)).not.toThrow();

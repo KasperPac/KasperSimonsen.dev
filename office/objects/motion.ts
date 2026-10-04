@@ -118,8 +118,10 @@ export class ObjectMotion {
     nodes.records.forEach((r, i) => {
       r.position.y = nodes.recordRest[i] + (i < work.length ? RECORD_NUDGE_M * easeOutCubic(this.tease.hs_crate) : 0);
     });
+    // While the shelf is open the picked ornament floats (ShelfMotion) and the rest wait still for a pick.
+    const bob = input.open === "hs_shelf" ? 0 : this.tease.hs_shelf;
     nodes.ornaments.forEach((o, i) => {
-      o.position.y = nodes.ornamentRest[i] + ornamentBob(i, now, this.tease.hs_shelf);
+      o.position.y = nodes.ornamentRest[i] + ornamentBob(i, now, bob);
     });
     if (nodes.screen) nodes.screen.visible = hovered === "hs_monitor" ? screenVisible(now - this.hoverSince) : true;
   }
