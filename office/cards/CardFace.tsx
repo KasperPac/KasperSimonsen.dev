@@ -14,7 +14,7 @@ export const FACE_WIDTH_PX = 520;
 /**
  * Content printed on an object in the scene (interactions spec 3.2, 3.3): real HTML laid onto a card's top face, a
  * sleeve's back, or a monitor's screen with drei's `Html` in transform mode. It moves with the object and is seen in perspective, and its
- * links, focus and accessible name still work. Focus moves to its title (`titleId`) as it shows.
+ * links, focus and accessible name still work. Focus moves to its title (`titleId`) as it shows, unless `focus` is off.
  */
 export default function CardFace({
   surface,

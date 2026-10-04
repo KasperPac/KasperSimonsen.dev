@@ -10,9 +10,12 @@ export type HoldProps = {
   onBlur: (e: FocusEvent<HTMLElement>) => void;
 };
 
-/** Whether focus on `target` holds the reel: a control the visitor moved to, not the title the screen focuses on arrival. */
+/**
+ * Whether focus on `target` holds the reel: a control the visitor moved to by keyboard. Not the title the screen focuses
+ * on arrival, and not a control a click or tap focused (browsers focus a clicked button), which would hold the reel for good.
+ */
 export function holdFor(target: Element | null): boolean {
-  return !!target && target.matches("button, a");
+  return !!target && target.matches("button, a") && target.matches(":focus-visible");
 }
 
 const viewKey = (v: ReelView) => `${v.monitor}:${v.laptop}:${v.moving?.slide ?? ""}`;
@@ -20,7 +23,7 @@ const viewKey = (v: ReelView) => `${v.monitor}:${v.laptop}:${v.moving?.slide ?? 
 /**
  * Runs the monitor's reel while `active` (spec 3.5). React re-renders only when a slide changes; a dragged window's
  * position goes to `--at` on every `[data-reel]` print each frame. Frames longer than 0.1 s count as 0.1 s, so a stall or
- * a background tab never skips a drag. The slide is kept between visits.
+ * a background tab never skips a drag (and a frame stamped before `last` counts as 0). The slide is kept between visits.
  */
 export function useReel(active: boolean, count: number, reduced: boolean) {
   const state = useRef(initialReel());
@@ -44,18 +47,19 @@ export function useReel(active: boolean, count: number, reduced: boolean) {
     let frame = 0;
     let last = performance.now();
     const loop = (now: number) => {
-      const dt = Math.min(0.1, (now - last) / 1000);
+      const dt = Math.max(0, Math.min(0.1, (now - last) / 1000));
       last = now;
       state.current = tickReel(state.current, dt, { count, paused: pointer.current || focus.current, reduced });
       publish();
       frame = requestAnimationFrame(loop);
     };
     frame = requestAnimationFrame(loop);
-    return () => {
-      cancelAnimationFrame(frame);
-      pointer.current = focus.current = false;
-    };
+    return () => cancelAnimationFrame(frame);
   }, [active, count, reduced, publish]);
+  // A hold only lasts while the reel runs; a change of count or reduced motion mid-run keeps it.
+  useEffect(() => {
+    if (!active) pointer.current = focus.current = false;
+  }, [active]);
 
   const step = useCallback(
     (dir: 1 | -1) => {

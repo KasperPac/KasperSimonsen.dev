@@ -56,9 +56,12 @@ describe("LaptopScreen", () => {
 });
 
 describe("holdFor", () => {
-  it("a focused control holds the reel, the title the screen focuses on arrival doesn't", () => {
-    expect(holdFor({ matches: (s: string) => s.includes("button") } as unknown as Element)).toBe(true);
-    expect(holdFor({ matches: () => false } as unknown as Element)).toBe(false);
+  const matching = (...selectors: string[]) => ({ matches: (s: string) => selectors.some((m) => s.includes(m)) }) as unknown as Element;
+  it("a control focused by keyboard holds the reel; a clicked or tapped one, and the title the screen focuses on arrival, don't", () => {
+    expect(holdFor(matching("button", ":focus-visible"))).toBe(true);
+    expect(holdFor(matching("button"))).toBe(false);
+    expect(holdFor(matching(":focus-visible"))).toBe(false);
+    expect(holdFor(matching())).toBe(false);
     expect(holdFor(null)).toBe(false);
   });
 });
