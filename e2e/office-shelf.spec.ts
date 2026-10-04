@@ -84,6 +84,7 @@ test("picking another ornament swaps it without a new history entry", async ({ p
   await expect(plaque(page, 0)).toBeVisible({ timeout: MOVE_WAIT });
   await link(page, 2).focus();
   await page.keyboard.press("Enter");
+  await expect(link(page, 2)).toBeFocused(); // while the first goes home and the next comes out, not lost to <body>
   await expect(page).toHaveURL(new RegExp(`/services/${services[2].slug}$`));
   await expect(plaque(page, 2)).toBeVisible({ timeout: MOVE_WAIT });
   await expect(plaque(page, 0)).toBeHidden();
@@ -178,5 +179,12 @@ test.describe("phone", () => {
     const screen = page.getByRole("region", { name: COPY.monitor.title });
     await expect(screen).toBeVisible({ timeout: MOVE_WAIT });
     expect(await printedPx(screen, ".office-card-text")).toBeGreaterThanOrEqual(12);
+    const fits = () => screen.evaluate((el) => el.scrollHeight <= el.clientHeight + 1);
+    expect(await fits()).toBe(true);
+    for (const answer of ["over", "under"] as const) {
+      await screen.getByRole("button", { name: COPY.monitor[answer] }).click();
+      await expect(screen.getByRole("status")).toHaveText(COPY.monitor.replies[answer]);
+      expect(await fits()).toBe(true);
+    }
   });
 });

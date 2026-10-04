@@ -8,7 +8,8 @@ export const SCREEN_WIDTH_PX = 640;
 
 /**
  * What the monitor shows (interactions spec 3.5): a fake Australian age check. Both buttons get a punchline, and either
- * can be pressed after the other. No URL; Back or Esc leaves.
+ * can be pressed after the other, landing in the question's place (the screen has room for one). No URL; Back or Esc
+ * leaves.
  */
 export default function AgeGate({ titleId }: { titleId: string }) {
   const [answer, setAnswer] = useState<"over" | "under" | null>(null);
@@ -18,7 +19,9 @@ export default function AgeGate({ titleId }: { titleId: string }) {
       <h2 id={titleId} className="office-card-title" tabIndex={-1}>
         {COPY.monitor.title}
       </h2>
-      <p className="office-card-text">{COPY.monitor.text}</p>
+      <p className="office-card-text" role="status">
+        {answer ? COPY.monitor.replies[answer] : COPY.monitor.text}
+      </p>
       <div className="office-gate-buttons">
         {(["over", "under"] as const).map((a) => (
           <button key={a} type="button" className="office-card-cta" aria-pressed={answer === a} onClick={() => setAnswer(a)}>
@@ -26,9 +29,6 @@ export default function AgeGate({ titleId }: { titleId: string }) {
           </button>
         ))}
       </div>
-      <p className="office-gate-reply" role="status">
-        {answer ? COPY.monitor.replies[answer] : ""}
-      </p>
     </>
   );
 }
