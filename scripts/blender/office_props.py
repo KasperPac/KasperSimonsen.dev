@@ -735,7 +735,7 @@ def build_crate(name, location, rotation_z, parent, col, records=9, sleeves=()):
 
 
 def build_shelf(name, location, rotation_z, parent, col, width=1.0, depth=0.22):
-    """Wall shelf on two triangular steel brackets, with ornaments <name>__ornament_00..04 standing on it, each with
+    """Wall shelf on two triangular steel brackets, with ornaments <name>__ornament_00..03 standing on it, each with
     its origin at its base. Origin on the wall plane at the board's top centre; the board stands out to -y."""
     root = _root(name, location, rotation_z, parent, col)
     bm = bmesh.new()
@@ -748,61 +748,58 @@ def build_shelf(name, location, rotation_z, parent, col, width=1.0, depth=0.22):
     _part(f"{name}__board", bm, root, col)
 
     y = -depth / 2
-    builders = (_ornament_cog, _ornament_layers, _ornament_rocket, _ornament_trophy, _ornament_hourglass)
-    for i, (build, x) in enumerate(zip(builders, (-0.4, -0.2, 0.0, 0.2, 0.4))):
+    builders = (_ornament_gear, _ornament_globe, _ornament_phone, _ornament_computer)  # services order (content/services.ts)
+    for i, (build, x) in enumerate(zip(builders, (-0.36, -0.12, 0.12, 0.36))):
         bm = bmesh.new()
         build(bm)
-        _part(f"{name}__ornament_{i:02d}", bm, root, col, (x * width, y, 0), (0, 0, 0.15 * (i % 2 * 2 - 1)))
+        _part(f"{name}__ornament_{i:02d}", bm, root, col, (x * width, y, 0), (0, 0, 0.12 * (i % 2 * 2 - 1)))
     return root
 
 
-def _ornament_cog(bm):
-    """A cog standing on a little plinth."""
-    teeth, r_out, r_root = 10, 0.065, 0.052
+def _ornament_gear(bm):
+    """Industrial automation: a gear standing on a little plinth, its face to the room."""
+    teeth, r_out, r_root = 10, 0.07, 0.056
     pts = []
     for k in range(teeth):
         a = 2 * math.pi * k / teeth
         for da, r in ((-0.36, r_root), (-0.2, r_out), (0.2, r_out), (0.36, r_root)):
             pts.append((r * math.cos(a + da * math.pi / teeth * 2), r * math.sin(a + da * math.pi / teeth * 2)))
-    inner = [(0.02 * x / math.hypot(x, y), 0.02 * y / math.hypot(x, y)) for x, y in pts]
-    _strip(bm, pts, inner, 0.022, Matrix.Translation((0, -0.011, 0.083)) @ XZ, closed=True)
+    inner = [(0.022 * x / math.hypot(x, y), 0.022 * y / math.hypot(x, y)) for x, y in pts]
+    _strip(bm, pts, inner, 0.022, Matrix.Translation((0, -0.011, 0.088)) @ XZ, closed=True)
     _slab(bm, 0.08, 0.05, 0.0, 0.02, r=0.006, top=0.004)
 
 
-def _ornament_layers(bm):
-    """Three stacked platforms on a post, each turned a little further: systems in layers."""
-    _lathe(bm, [(0.01, 0.0), (0.01, 0.15)], 6)
-    for k, z in enumerate((0.0, 0.06, 0.12)):
-        _slab(bm, 0.1 - 0.015 * k, 0.1 - 0.015 * k, z, z + 0.014, r=0.004, top=0.003, m=_m(rot=(0, 0, math.radians(18 * k))))
+def _ornament_globe(bm):
+    """Websites: a desk globe, tilted on its axis inside a half-meridian, on a stem and a round foot."""
+    r, zc = 0.058, 0.098
+    tilt = _m((0, 0, zc), (0, math.radians(-23.5), 0))  # this way round the meridian passes over the stem
+    _lathe(bm, [(r * math.sin(a), -r * math.cos(a)) for a in (math.pi * k / 8 for k in range(9))], 12, tilt)
+    ring = r + 0.008
+    _tube(bm, [(-ring * math.sin(a), 0, -ring * math.cos(a)) for a in (math.pi * k / 10 for k in range(11))], 0.003, 6, m=tilt, hint=(0, 1, 0))
+    _lathe(bm, [(0.004, 0.012), (0.004, zc - ring + 0.004)], 6)
+    _lathe(bm, [(0.04, 0.0), (0.04, 0.008), (0.028, 0.014), (0.0, 0.014)], 12)
 
 
-def _ornament_rocket(bm):
-    """A retro rocket on three fins."""
-    _lathe(bm, [(0.013, 0.012), (0.024, 0.04), (0.028, 0.07), (0.028, 0.12), (0.02, 0.155), (0.0, 0.19)], 8, phase=math.pi / 8)
-    _lathe(bm, [(0.018, 0.0), (0.012, 0.014)], 8)
-    for k in range(3):
-        fin = [(0.02, 0.07), (0.02, 0.012), (0.05, 0.0), (0.05, 0.03)]
-        _prism(bm, fin, 0.004, _m(rot=(0, 0, math.radians(90 + 120 * k))) @ Matrix.Translation((0, -0.002, 0)) @ XZ)
-    _lathe(bm, [(0.01, 0.0), (0.01, 0.005)], 8, _m((0, -0.026, 0.1), (math.pi / 2, 0, 0)))
+def _ornament_phone(bm):
+    """Apps: a phone leaning back in a little desk stand, its screen to the room."""
+    w, h, t = 0.072, 0.145, 0.009
+    lean = _m((0, -0.013, 0.012), (math.radians(-12), 0, 0))  # its foot against the stand's lip
+    _prism(bm, _rrect(w, h, 0.011, 3, c=(0, h / 2)), t, lean @ Matrix.Translation((0, -t / 2, 0)) @ XZ)
+    _prism(bm, _rrect(w - 0.008, h - 0.022, 0.006, 2, c=(0, h / 2)), 0.001, lean @ Matrix.Translation((0, -t / 2 - 0.001, 0)) @ XZ)
+    _lathe(bm, [(0.0028, 0.0), (0.0028, 0.001)], 8, lean @ _m((0, -t / 2, h - 0.007), (math.pi / 2, 0, 0)))
+    _box(bm, (0.05, 0.006, 0.074), (0, t / 2 + 0.003, 0.033), lean)  # the back it rests on
+    _slab(bm, 0.085, 0.05, 0.0, 0.012, r=0.006, top=0.003)
+    _box(bm, (0.085, 0.006, 0.02), (0, -0.022, 0.016))
 
 
-def _ornament_trophy(bm):
-    """A small cup trophy with two handles."""
-    _lathe(bm, [(0.034, 0.0), (0.034, 0.014), (0.012, 0.022), (0.008, 0.055), (0.02, 0.064), (0.038, 0.11), (0.042, 0.135),
-                (0.036, 0.135), (0.0, 0.095)], 10)
-    for side in (-1, 1):
-        arc = [(side * (0.036 + 0.028 * math.sin(a)), 0, 0.09 + 0.03 * math.cos(a)) for a in (math.pi * k / 6 for k in range(7))]
-        _tube(bm, arc, 0.005, 6, hint=(0, 1, 0))
-
-
-def _ornament_hourglass(bm):
-    """An hourglass: two end plates, a pinched glass and three posts."""
-    for z in (0.0, 0.13):
-        _lathe(bm, [(0.042, z), (0.042, z + 0.012)], 8)
-    _lathe(bm, [(0.03, 0.012), (0.032, 0.03), (0.007, 0.071), (0.032, 0.112), (0.03, 0.13)], 8, phase=math.pi / 8)
-    for k in range(3):
-        a = 2 * math.pi * k / 3
-        _lathe(bm, [(0.004, 0.012), (0.004, 0.13)], 6, Matrix.Translation((0.036 * math.cos(a), 0.036 * math.sin(a), 0)))
+def _ornament_computer(bm):
+    """Desktop software: a little all-in-one computer, the old beige kind, with a keyboard lying in front of it."""
+    w, h, d = 0.1, 0.125, 0.085
+    _slab(bm, w, d, 0.0, h, r=0.006, segs=2, top=0.004, m=Matrix.Translation((0, 0.015, 0)))
+    front = 0.015 - d / 2
+    _prism(bm, _rrect(0.072, 0.056, 0.006, 2, c=(0, 0.082)), 0.002, Matrix.Translation((0, front - 0.001, 0)) @ XZ)
+    _box(bm, (0.034, 0.002, 0.004), (0.016, front - 0.001, 0.032))
+    _slab(bm, 0.09, 0.03, 0.0, 0.008, r=0.003, top=0.002, m=Matrix.Translation((0, front - 0.018, 0)))
 
 
 def build_turntable(name, location, rotation_z, parent, col):

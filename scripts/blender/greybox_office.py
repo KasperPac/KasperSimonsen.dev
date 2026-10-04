@@ -102,9 +102,12 @@ FOCUS = {
     # portrait eye rises over the chair's headrest to fit the monitor's width
     "monitor": {"land": ((-0.25, 4.02, 1.04), (-0.25, 4.957, 1.04), 40.0),
                 "portrait": ((-0.25, 3.75, 1.75), (-0.25, 4.95, 1.0), 65.0)},
-    # level with the shelf, all five ornaments in frame
-    "shelf": {"land": ((1.4, 3.6, 1.6), (1.57, 5.0, 1.58), 45.0),
-              "portrait": ((1.3, 3.0, 1.6), (1.3, 5.0, 1.55), 70.0)},
+    # square on to the wall, a little above the ornaments: the plaque goes beside a picked one on 16:10, so the four
+    # span half the width with the shelf's centre a third in (the outer one 8.5% in) and the right ~40% clear. On
+    # portrait the plaque docks at the bottom, so the eye looks 18 degrees down to put them in the upper third,
+    # spanning 77% of the width
+    "shelf": {"land": ((1.6, 3.66, 1.72), (1.6, 4.99, 1.6), 45.0),
+              "portrait": ((1.3, 3.24, 1.75), (1.3, 4.99, 1.18), 70.0)},
     # a played record: its vinyl on the platter and its sleeve turned round on the now-playing stand, the details
     # printed on its back. Nearly square on to the stand's sleeve (10 degrees round towards the room, 5 above) so the
     # back reads: on 16:10 it is 42% of the height with the platter in shot beside it, on portrait 80% of the width

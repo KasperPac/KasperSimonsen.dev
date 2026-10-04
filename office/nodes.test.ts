@@ -5,6 +5,7 @@ import { PLATTER_NODE, SLEEVE_NODE } from "./idle/turntable";
 import { POSE_NODE } from "./walkin/skippingGirl";
 import { CARD_NODE, DRAWER_NODE, SCREEN_NODE } from "./objects/motion";
 import { work } from "@/content/work";
+import { services } from "@/content/services";
 
 // The runtime finds these nodes by name. check:models enforces the manifest, so the manifest must name
 // them too, or a rename in Blender leaves the build green while the animation silently stops.
@@ -44,5 +45,10 @@ describe("runtime node names are required by the manifest", () => {
     expect(manifest.office.nodes).not.toContain(`hs_crate__record_${String(work.length).padStart(2, "0")}__vinyl`);
     expect(manifest.office.cameras).toContain("cam_focus_player");
     expect(manifest.office.cameras).toContain("cam_focus_player_portrait");
+  });
+
+  it("the shelf has one ornament per service, and no more", () => {
+    services.forEach((_, i) => expect(manifest.office.nodes).toContain(`hs_shelf__ornament_${String(i).padStart(2, "0")}`));
+    expect(manifest.office.nodes).not.toContain(`hs_shelf__ornament_${String(services.length).padStart(2, "0")}`);
   });
 });
