@@ -51,4 +51,12 @@ describe("runtime node names are required by the manifest", () => {
     services.forEach((_, i) => expect(manifest.office.nodes).toContain(`hs_shelf__ornament_${String(i).padStart(2, "0")}`));
     expect(manifest.office.nodes).not.toContain(`hs_shelf__ornament_${String(services.length).padStart(2, "0")}`);
   });
+
+  it("the monitor's notes come off one by one, each with a landing spot, and the laptop has a screen", () => {
+    const notes = numbered(manifest.office.nodes, /^hs_monitor__notes__note_(\d\d)$/);
+    expect(notes.length).toBeGreaterThanOrEqual(1);
+    expect(notes).toEqual(notes.map((_, i) => i));
+    notes.forEach((i) => expect(manifest.office.nodes).toContain(`hs_monitor__notes__rest_${String(i).padStart(2, "0")}`));
+    expect(manifest.office.nodes).toContain("prop_laptop__screen");
+  });
 });

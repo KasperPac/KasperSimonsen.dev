@@ -494,7 +494,8 @@ def _screen_uv(co, pose, w, h, dz):
 
 def build_laptop(name, location, rotation_z, parent, col, width=0.31, depth=0.215, open_deg=110):
     """Open laptop: tapered base with a raised key grid and trackpad, lid hinged at the back with an inset screen.
-    The lid is <name>__lid, its origin on the hinge line."""
+    The lid is <name>__lid, its origin on the hinge line. <name>__screen, its child, is a UV-mapped quad over the
+    recess (0..1 across the visible screen) facing the lid's front (-y), for anything the site wants to show on it."""
     root = _root(name, location, rotation_z, parent, col)
     base_h = 0.015
     bm = bmesh.new()
@@ -510,10 +511,14 @@ def build_laptop(name, location, rotation_z, parent, col, width=0.31, depth=0.21
         return [(x, y, z + zc) for x, z in ((-w / 2, -hh / 2), (w / 2, -hh / 2), (w / 2, hh / 2), (-w / 2, hh / 2))]
 
     bm = bmesh.new()
-    zc = depth / 2
+    zc, recess = depth / 2, 0.0015
     _loft(bm, [rect(width, depth, lid_t, zc), rect(width, depth, 0, zc), rect(sw, sh, 0, zc + 0.002),
-               rect(sw, sh, 0.0015, zc + 0.002)])
-    _part(f"{name}__lid", bm, root, col, location=(0, depth / 2 - lid_t, base_h), rotation=(math.radians(-(open_deg - 90)), 0, 0))
+               rect(sw, sh, recess, zc + 0.002)])
+    lid = _part(f"{name}__lid", bm, root, col, location=(0, depth / 2 - lid_t, base_h), rotation=(math.radians(-(open_deg - 90)), 0, 0))
+
+    bm = bmesh.new()
+    _poly(bm, rect(sw, sh, recess - 0.0015, zc + 0.002))  # 1.5 mm in front of the recess face
+    _part(f"{name}__screen", bm, lid, col, uv=lambda co: (co.x / sw + 0.5, (co.z - zc - 0.002) / sh + 0.5))
     return root
 
 
@@ -1805,7 +1810,9 @@ def build_monitor_notes(name, location, rotation_z, parent, col, texts=(), width
     """Sticky notes round a monitor's bezel, some hanging over the screen. Give it the same location, rotation and
     size as the build_monitor it decorates. `count` (up to 12) takes spots in a fixed order: two along the top and
     one down each side first. Six or fewer come out 1.3 times bigger, so they still read from across the room. Mostly
-    blank; `texts` go on the first notes placed (<name>__text_00...)."""
+    blank; `texts` go on the first notes placed (<name>__text_NN, each a child of its note). Each note is its own part,
+    <name>__note_00..., built in its own frame (origin on its top centre) with its place on the bezel as its
+    transform, so the site can peel them off one at a time."""
     root = _root(name, location, rotation_z, parent, col)
     pose, hw, hh = _monitor_pose(height), width / 2, height / 2
     spots = ((-0.25, hh - 0.004, -6), (-0.13, hh - 0.002, 4), (0.05, hh - 0.004, -3), (0.17, hh - 0.003, 7), (0.27, hh - 0.005, -2),
@@ -1813,13 +1820,14 @@ def build_monitor_notes(name, location, rotation_z, parent, col, texts=(), width
              (-0.18, -hh + 0.012, 3), (0.12, -hh + 0.012, -4))
     order = (0, 3, 6, 9, 1, 4, 8, 7, 2, 5, 10, 11)
     grow = Matrix.Scale(1.3 if count <= 6 else 1.0, 4)
-    bm = bmesh.new()
     for i, (x, z, deg) in enumerate(spots[k] for k in order[:count]):
         m = pose @ Matrix.Translation((x, 0, z)) @ Matrix.Rotation(math.radians(deg), 4, "Y") @ grow
-        _note(bm, m, curl=18 + 9 * (i % 3))
+        bm = bmesh.new()
+        _note(bm, I4, curl=18 + 9 * (i % 3))
+        note = _part(f"{name}__note_{i:02d}", bm, root, col)
+        note.matrix_basis = m  # its place on the bezel; the runtime moves it between here and its rest_ empty
         if i < len(texts) and texts[i]:
-            _note_text(f"{name}__text_{i:02d}", texts[i], root, col, m)
-    _part(f"{name}__notes", bm, root, col)
+            _note_text(f"{name}__text_{i:02d}", texts[i], note, col, I4)
     return root
 
 
