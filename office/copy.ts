@@ -61,4 +61,12 @@ export const COPY = {
       under: "Honest. Nobody ever presses this one. You're fine, it's just code. Go tell your parents to hire me.",
     },
   },
+  /** The monitor's reel of past work (spec 3.5). DRAFT. */
+  reel: {
+    title: "Some things I've built",
+    caseStudy: "See the case study",
+    prev: "Previous project",
+    next: "Next project",
+    show: (name: string) => `Show ${name}`,
+  },
 } as const;
