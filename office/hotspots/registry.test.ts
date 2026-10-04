@@ -75,8 +75,11 @@ describe("items", () => {
     expect(itemNode("hs_crate", "nope")).toBeNull();
   });
   it("has room in the crate and on the shelf for all the content", () => {
+    expect(ORNAMENTS).toBe(4);
+    expect(services.length).toBe(ORNAMENTS); // every ornament carries a service
     expect(work.length).toBeLessThanOrEqual(RECORDS);
-    expect(services.length).toBeLessThanOrEqual(ORNAMENTS);
+    expect(itemAt("hs_shelf", 3)).toBe(services[3].slug);
+    expect(itemAt("hs_shelf", 4)).toBeNull();
   });
 });
 

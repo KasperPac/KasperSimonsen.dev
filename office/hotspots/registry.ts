@@ -18,7 +18,7 @@ export const FOCUS_CAMERA: Record<HotspotName, string> = {
 
 /** Records in the crate and ornaments on the shelf, as modelled (office_props.py). */
 export const RECORDS = 9;
-export const ORNAMENTS = 5;
+export const ORNAMENTS = 4;
 
 const ITEM = /^(hs_crate)__record_(\d\d)$|^(hs_shelf)__ornament_(\d\d)$/;
 

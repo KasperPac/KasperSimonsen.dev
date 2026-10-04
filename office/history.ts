@@ -12,6 +12,12 @@ export function pushLayer(layer: Layer, path?: string): void {
   window.dispatchEvent(new Event(CHANGE));
 }
 
+/** Swaps what the live entry shows for `layer` at `path`, adding no entry: picking another ornament while one is out. */
+export function replaceLayer(layer: Layer, path?: string): void {
+  window.history.replaceState({ [LAYER_KEY]: layer }, "", path ?? window.location.pathname);
+  window.dispatchEvent(new Event(CHANGE));
+}
+
 /** A reload keeps history.state, so a fresh office drops any layer it finds. */
 export function clearLayer(): void {
   if (layerOf(window.history.state) === NO_LAYER) return;
