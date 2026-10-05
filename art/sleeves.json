@@ -1,5 +1,7 @@
 [
   { "slug": "pac-forge", "logos": ["art/logos/pac-tech-mark.svg"], "label": "Pac-Hub" },
+  { "slug": "mariannes-hair", "logos": ["art/logos/mariannes-hair-mark.svg"], "label": "Marianne's" },
+  { "slug": "pac-technologies", "logos": ["art/logos/pac-tech-mark.svg"], "label": "Pac Technologies" },
   { "slug": "manuva", "logos": ["art/logos/manuva-mark.svg", "art/logos/manuva-wordmark.svg"], "label": null },
   { "slug": "silio", "logos": ["art/logos/silio-logo.svg"], "label": null }
 ]

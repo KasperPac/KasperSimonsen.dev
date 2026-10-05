@@ -33,11 +33,12 @@ export const FOCUS_PORTRAIT_ASPECT = 390 / 844;
 
 /**
  * How much of the monitor's portrait close-up must stay in view, top to bottom, as a fraction of its authored height
- * (390 x 844) measured out from the centre. The strip under the monitor ends ~0.72 of the way to the frame's bottom edge
- * (measured at 390 x 844: its bottom edge at y 726), so 0.78 keeps it, and its ‹ ›, on screen with a margin. A phone
- * (aspect under ~0.59) already sees that much, so this only widens squarer portrait screens: tablets, near-square windows.
+ * (390 x 844) measured out from the centre. The strip under the 16:9 monitor ends ~0.69 of the way to the frame's bottom
+ * edge (measured in Blender at 390 x 844: its bottom edge at y 714, 292 px below the centre's 422), so 0.75 keeps it, and
+ * its ‹ ›, on screen with a margin. A phone (aspect under ~0.62) already sees that much, so this only widens squarer
+ * portrait screens: tablets, near-square windows.
  */
-export const MONITOR_MIN_HEIGHT = 0.78;
+export const MONITOR_MIN_HEIGHT = 0.75;
 
 /**
  * A hotspot's focus camera: its portrait variant on portrait screens when there is one, keeping its width across phones
