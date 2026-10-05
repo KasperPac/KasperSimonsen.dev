@@ -65,33 +65,45 @@ describe("ToolMotion", () => {
   it("lifts the held tool to the hand over TOOL_SECONDS and leaves the others in the tray", () => {
     const { nodes } = rig();
     const m = new ToolMotion();
-    m.update(nodes, { held: 2, hand, reduced: false }, TOOL_SECONDS / 2);
+    m.update(nodes, { held: 2, hand, reduced: false, pressing: false }, TOOL_SECONDS / 2);
     const two = nodes.tools.get(2)!;
     expect(two.position.distanceTo(nodes.rest.get(2)!.position)).toBeGreaterThan(0.01);
-    for (let i = 0; i < 30; i++) m.update(nodes, { held: 2, hand, reduced: false }, 1 / 60);
+    for (let i = 0; i < 30; i++) m.update(nodes, { held: 2, hand, reduced: false, pressing: false }, 1 / 60);
     expect(two.getWorldPosition(new Vector3()).distanceTo(hand.position)).toBeLessThan(0.002);
     expect(nodes.tools.get(0)!.position.equals(nodes.rest.get(0)!.position)).toBe(true);
   });
   it("puts it back in the tray when nothing's held (leaving the board)", () => {
     const { nodes } = rig();
     const m = new ToolMotion();
-    m.update(nodes, { held: "eraser", hand, reduced: false }, 1);
-    m.update(nodes, { held: null, hand: null, reduced: false }, 1);
+    m.update(nodes, { held: "eraser", hand, reduced: false, pressing: false }, 1);
+    m.update(nodes, { held: null, hand: null, reduced: false, pressing: false }, 1);
     expect(nodes.tools.get("eraser")!.position.equals(nodes.rest.get("eraser")!.position)).toBe(true);
   });
   it("jumps under reduced motion", () => {
     const { nodes } = rig();
     const m = new ToolMotion();
-    m.update(nodes, { held: 0, hand, reduced: true }, 1 / 60);
+    m.update(nodes, { held: 0, hand, reduced: true, pressing: false }, 1 / 60);
     expect(nodes.tools.get(0)!.getWorldPosition(new Vector3()).distanceTo(hand.position)).toBeLessThan(1e-9);
   });
   it("swapping tools sends the old one home while the new one comes", () => {
     const { nodes } = rig();
     const m = new ToolMotion();
-    m.update(nodes, { held: 0, hand, reduced: false }, 1);
-    m.update(nodes, { held: 3, hand, reduced: false }, TOOL_SECONDS / 2);
+    m.update(nodes, { held: 0, hand, reduced: false, pressing: false }, 1);
+    m.update(nodes, { held: 3, hand, reduced: false, pressing: false }, TOOL_SECONDS / 2);
     expect(nodes.tools.get(0)!.position.distanceTo(nodes.rest.get(0)!.position)).toBeGreaterThan(0.001);
-    m.update(nodes, { held: 3, hand, reduced: false }, 1);
+    m.update(nodes, { held: 3, hand, reduced: false, pressing: false }, 1);
     expect(nodes.tools.get(0)!.position.equals(nodes.rest.get(0)!.position)).toBe(true);
+  });
+  it("keeps the tip exactly on the hand while pressing, and only follows it loosely when not", () => {
+    const moved = { position: new Vector3(0.2, -0.05, 0), quaternion: new Quaternion() };
+    const tipAfterMove = (pressing: boolean) => {
+      const { nodes } = rig();
+      const m = new ToolMotion();
+      m.update(nodes, { held: 1, hand, reduced: false, pressing: false }, 1); // fully lifted (t = 1), settled on the hand
+      m.update(nodes, { held: 1, hand: moved, reduced: false, pressing }, 1 / 120);
+      return nodes.tools.get(1)!.getWorldPosition(new Vector3()).distanceTo(moved.position);
+    };
+    expect(tipAfterMove(true)).toBeLessThan(1e-9);
+    expect(tipAfterMove(false)).toBeGreaterThan(0.005);
   });
 });

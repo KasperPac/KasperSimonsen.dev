@@ -1874,7 +1874,8 @@ def build_whiteboard(name, location, rotation_z, parent, col, text="", note="", 
     split on \\n) and underlined, `note` smaller underneath. Origin on the wall plane at its centre.
 
     drawable=True makes it the one the site draws on: no writing (the site draws it), <name>__surface over the
-    writing area 1 mm in front of the board (UV-mapped 0..1, facing out), and a full-width tray holding five markers
+    writing area 1 mm in front of the board (facing out; it carries no UVs, as the GLB exports none: the runtime
+    draws the ink on its own quad, hs_whiteboard__ink, placed from the face mapping), and a full-width tray holding five markers
     <name>__marker_00..04 and <name>__eraser as parts of their own. A marker's origin is its felt tip, its body along
     its local -y (glTF +z); the eraser's is the centre of its felt, its back along its local -y (glTF +z)."""
     root = _root(name, location, rotation_z, parent, col)

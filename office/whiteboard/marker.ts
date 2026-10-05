@@ -73,7 +73,7 @@ export class ToolMotion {
   private t = new Map<ToolId, number>();
   private followed = new Map<ToolId, Placement>();
 
-  update(nodes: ToolNodes, input: { held: ToolId | null; hand: Placement | null; reduced: boolean }, dt: number): void {
+  update(nodes: ToolNodes, input: { held: ToolId | null; hand: Placement | null; reduced: boolean; pressing: boolean }, dt: number): void {
     for (const [id, o] of nodes.tools) {
       const rest = nodes.rest.get(id)!;
       const holding = input.held === id && input.hand !== null;
@@ -85,7 +85,7 @@ export class ToolMotion {
         this.followed.delete(id);
         continue;
       }
-      // the hand, in the tool's parent's space, followed tightly (or exactly under reduced motion)
+      // the hand, in the tool's parent's space, followed tightly (exactly under reduced motion, and while pressing, so the tip is never behind the ink)
       if (input.hand) {
         o.parent.updateWorldMatrix(true, false);
         world.compose(input.hand.position, input.hand.quaternion, ONE).premultiply(inverse.copy(o.parent.matrixWorld).invert());
@@ -96,7 +96,8 @@ export class ToolMotion {
           this.followed.set(id, f);
         } else {
           const k = 1 - Math.exp(-dt * FOLLOW_RATE);
-          f.position.lerp(local.position, k);
+          if (input.pressing) f.position.copy(local.position);
+          else f.position.lerp(local.position, k);
           f.quaternion.slerp(local.quaternion, k);
         }
       }

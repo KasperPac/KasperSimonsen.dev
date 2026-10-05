@@ -479,7 +479,6 @@ html.office-locked {
 }
 
 /* The whiteboard (a hidden extra): a canvas to draw on, the tool strip along its bottom edge. */
-.office-screen:has(.office-whiteboard) { padding: 0; }
 .office-whiteboard { position: relative; display: flex; flex-direction: column; height: 100%; }
 /* The board's canvas, laid in under the pointer: see-through, since the ink shows on the 3D board (under the held marker). */
 .whiteboard-ink { flex: none; touch-action: none; cursor: crosshair; }
@@ -492,12 +491,14 @@ html.office-locked {
 .whiteboard-eraser[aria-pressed="true"] { outline: 3px solid var(--office-fg); outline-offset: 4px; }
 .whiteboard-wipe { margin-left: auto; padding: 14px 22px; background: none; border: 1px solid rgba(232, 232, 232, 0.6); color: var(--office-fg); font: 600 24px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; }
 /* Phones see the board at under half size (~0.45 at 390 px across), so every tool is made at least 40 px on screen to
-   tap. The strip grows with them; Whiteboard.tsx measures it, so the canvas takes what's left. */
-@media (max-width: 700px), (orientation: portrait) {
-  .whiteboard-tools { box-sizing: border-box; height: 116px; gap: 12px; padding: 0 14px; }
+   tap. The strip grows with them; Whiteboard.tsx measures it, so the canvas takes what's left. A landscape phone
+   (too wide for the width query, not portrait) is coarse-pointer, so it gets the same sizes. The seven items and their
+   gaps must add up to under the board's 800 px. */
+@media (max-width: 700px), (orientation: portrait), (pointer: coarse) {
+  .whiteboard-tools { box-sizing: border-box; height: 116px; gap: 10px; padding: 0 14px; }
   .whiteboard-swatch,
   .whiteboard-eraser { flex: none; width: 96px; height: 96px; border-width: 3px; }
   .whiteboard-swatch[aria-pressed="true"],
   .whiteboard-eraser[aria-pressed="true"] { outline-width: 5px; outline-offset: 5px; }
-  .whiteboard-wipe { flex: none; box-sizing: border-box; min-width: 96px; height: 96px; padding: 0 12px; border-width: 2px; font-size: 30px; }
+  .whiteboard-wipe { flex: none; box-sizing: border-box; min-width: 96px; height: 96px; padding: 0 8px; border-width: 2px; font-size: 30px; }
 }

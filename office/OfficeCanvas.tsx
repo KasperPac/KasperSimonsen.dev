@@ -472,7 +472,7 @@ function Office({
       }
       hand = handPlacement(surface, wb.lastBoardLocal, board.held === "eraser" ? "eraser" : "marker", board.pointer.pressing, wb.handPose);
     }
-    toolMotion.update(toolNodes, { held: board.held, hand, reduced }, dt);
+    toolMotion.update(toolNodes, { held: board.held, hand, reduced, pressing: board.pointer.pressing }, dt);
     // The board's canvas changed: lay its quad over the drawing area again if it was resized, and upload it again.
     if (ink && boardFace) {
       const now = boardSize();
