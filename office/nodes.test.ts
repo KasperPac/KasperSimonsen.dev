@@ -6,6 +6,8 @@ import { POSE_NODE } from "./walkin/skippingGirl";
 import { CARD_NODE, DRAWER_NODE, SCREEN_NODE } from "./objects/motion";
 import { work } from "@/content/work";
 import { services } from "@/content/services";
+// plain NodeIO can't read the shipped GLB: it is meshopt-compressed (EXT_meshopt_compression is required)
+import { createIO } from "../scripts/models/io.mjs";
 
 // The runtime finds these nodes by name. check:models enforces the manifest, so the manifest must name
 // them too, or a rename in Blender leaves the build green while the animation silently stops.
@@ -65,5 +67,15 @@ describe("runtime node names are required by the manifest", () => {
     for (let i = 0; i < 5; i++) expect(manifest.office.nodes).toContain(`hs_whiteboard__marker_0${i}`);
     expect(manifest.office.cameras).toContain("cam_focus_whiteboard");
     expect(manifest.office.cameras).toContain("cam_focus_whiteboard_portrait");
+  });
+
+  it("the monitor's screen is 16:10, like the reel's screenshots (spec 3.5)", async () => {
+    const doc = await (await createIO()).read("public/models/office.glb");
+    const node = doc.getRoot().listNodes().find((n) => n.getName() === "hs_monitor__screen")!;
+    const pos = node.getMesh()!.listPrimitives()[0].getAttribute("POSITION")!;
+    const pts = Array.from({ length: pos.getCount() }, (_, i) => pos.getElement(i, [0, 0, 0]));
+    const span = (k: number) => Math.max(...pts.map((p) => p[k])) - Math.min(...pts.map((p) => p[k]));
+    // the screen leans back about x, so its height lies in the y-z plane
+    expect(span(0) / Math.hypot(span(1), span(2))).toBeCloseTo(1.6, 2);
   });
 });

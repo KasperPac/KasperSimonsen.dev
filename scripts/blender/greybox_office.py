@@ -92,11 +92,12 @@ PILLOW_TURN = -math.pi / 2  # the pillow stood side-on to the couch, its top lea
 # each on the side of its place on the bezel. Re-run that search if the desk's layout changes.
 NOTE_RESTS = ((-0.16, -0.30, -25), (0.04, -0.16, 15), (-0.44, 0.0, 25), (0.30, -0.18, -20))
 NOTE_LIFT = 0.001  # a resting note's lowest point above the desk top
+MONITOR_H = 0.4055  # panel height: 0.008 bezel + 0.3775 screen + 0.02 chin, so the screen is 16:10 at the panel's 0.62 m width (spec 3.5)
 # Focus cameras (spec 3.5), room frame: (eye, look-at, vertical fov). Landscape frames (16:10) leave the right ~40% for
 # the panel, so the object's centre sits about a third in from the left; the monitor, the crate, the player and the
 # whiteboard have no panel beside them and are centred. Portrait frames (390 x 844) centre the object, as the panel is
 # a full-screen sheet there. Every eye is at least 0.3 m from any mesh (the crate and monitor eyes pass closest, by the
-# desk top and over the chair), except the drawer's: it looks into the open drawer under the desk, 0.17 m from the
+# desk top and the chair's back), except the drawer's: it looks into the open drawer under the desk, 0.17 m from the
 # drawer front on portrait.
 FOCUS = {
     # square on to the crate's front and 63 degrees down: a flicked record stands upright against the corner posts, and
@@ -110,13 +111,16 @@ FOCUS = {
     # frame (45 degrees down); on portrait it is ~72% of the width with the back of the drawer above it (40 degrees)
     "drawer": {"land": ((0.3, 4.0357, 0.7963), (0.3, 4.368, 0.464), 24.0),
                "portrait": ((0.3, 4.1063, 0.734), (0.3, 4.428, 0.464), 42.0)},
-    # square on to the screen and level with it, slid right so the laptop's screen is in shot beside it: the monitor
-    # shows a project and the laptop the next, which gets dragged across. On 16:10 the monitor's screen is 54% of the
-    # width (8% in from the left) and the laptop's 28% (to 94%), with the duck on top just in; the desk's front is
-    # below the frame, so the notes lie out of shot there. The portrait eye rises over the chair's headrest to fit the
-    # monitor's width
-    "monitor": {"land": ((-0.08, 3.99, 1.07), (-0.08, 4.957, 1.035), 40.0),
-                "portrait": ((-0.25, 3.75, 1.75), (-0.25, 4.95, 1.0), 65.0)},
+    # square on to the 16:10 screen (looking 5 degrees down, along its lean) so the reel's screenshots print on it without
+    # keystone. On 16:10 the eye is on the screen's centre line, slid right to bring in the laptop, which carries the
+    # reel's words: the monitor's screen is 53% of the width (7% in from the left) and the laptop's wholly in shot beside
+    # it, 27% (to 91%), with the duck on top cut; the desk's front is below the frame, so the fallen notes lie out of
+    # shot. On portrait the screen is 92% of the width with the strip the site hangs under it (0.306 m tall, 0.011 m
+    # below its bottom edge, in its plane) ending 15% above the frame's bottom, not 5%: a 390 x 664 phone keeps the
+    # width and crops 11% off the top and bottom, which still leaves it a 5% margin. The portrait eye is between the
+    # chair's back and the desk, 0.33 m off the chair
+    "monitor": {"land": ((-0.06, 3.981, 1.126), (-0.06, 4.957, 1.041), 40.0),
+                "portrait": ((-0.25, 3.96, 1.118), (-0.25, 4.956, 1.031), 70.7)},
     # square on to the wall, a little above the ornaments: the plaque goes beside a picked one on 16:10, so the four
     # span half the width with the shelf's centre a third in (the outer one 8.5% in) and the right ~40% clear. On
     # portrait the plaque docks at the bottom, so the eye looks 18 degrees down to put them in the upper third,
@@ -277,11 +281,11 @@ def furnish(room, col, w, back):
     props.build_pedestal("hs_drawer", (desk.x + 0.4, desk.y - 0.04, 0), 0, room, col, card=True)
     # on the desk, where build_desk_mess expects them: monitor back left of centre, laptop to its right
     monitor = on_desk(-0.15, 0.2)
-    screen = props.build_monitor("hs_monitor", monitor, 0, room, col)
+    screen = props.build_monitor("hs_monitor", monitor, 0, room, col, height=MONITOR_H)
     # the notes stuck round its bezel are part of the monitor hotspot, so they light up with it
-    notes = props.build_monitor_notes("hs_monitor__notes", (0, 0, 0), 0, screen, col, count=len(NOTE_RESTS))
+    notes = props.build_monitor_notes("hs_monitor__notes", (0, 0, 0), 0, screen, col, count=len(NOTE_RESTS), height=MONITOR_H)
     # the duck sits side-on along the top of the bezel
-    props.build_rubber_duck("prop_rubber_duck", monitor + Vector((0.1, 0.051, 0.441)), -math.pi / 2, room, col)
+    props.build_rubber_duck("prop_rubber_duck", monitor + Vector((0.1, 0.051, 0.441 + (MONITOR_H - 0.36))), -math.pi / 2, room, col)
     props.build_laptop("prop_laptop", on_desk(0.32, 0.1), -0.25, room, col)
     props.build_keyboard("prop_keyboard", on_desk(-0.05, -0.15), 0, room, col)
     props.build_mouse("prop_mouse", on_desk(0.08, -0.29), 0.1, room, col)
