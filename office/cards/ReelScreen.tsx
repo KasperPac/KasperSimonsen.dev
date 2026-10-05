@@ -10,7 +10,7 @@ import ReelWindow from "./ReelWindow";
 /** CSS px the monitor's print is laid out at (its screen face is 640 x 352). */
 export const SCREEN_WIDTH_PX = 640;
 
-/** What's printed on the monitor (spec 3.5): the slide's window, its headline, See the case study (or Visit the site), ‹ › and dots. */
+/** What's printed on the monitor (spec 3.5): the slide's window, its headline, See the case study (or Visit the site, or nothing for a site not live yet), ‹ › and dots. */
 export default function ReelScreen({
   titleId,
   view,
@@ -27,8 +27,8 @@ export default function ReelScreen({
   onPlay: () => void;
 }) {
   const slide = slides[view.monitor];
-  // A slide that plays a crate record shows its headline; one that opens a page has no record to read it from.
-  const headline = slide.slug ? findWork(slide.slug)!.headline : COPY.reel.site;
+  // A slide that plays a crate record shows its headline; work with no record carries its own line.
+  const headline = slide.slug ? findWork(slide.slug)!.headline : slide.line;
   return (
     <div className="office-reel" data-reel data-slide={view.monitor} {...hold}>
       <h2 id={titleId} className="visually-hidden" tabIndex={-1}>
@@ -44,9 +44,11 @@ export default function ReelScreen({
       </div>
       <div className="reel-strip">
         <p className="reel-headline">{headline}</p>
-        <button type="button" className="office-card-cta" onClick={onPlay}>
-          {slide.slug ? COPY.reel.caseStudy : COPY.reel.visit}
-        </button>
+        {(slide.slug || slide.href) && (
+          <button type="button" className="office-card-cta" onClick={onPlay}>
+            {slide.slug ? COPY.reel.caseStudy : COPY.reel.visit}
+          </button>
+        )}
       </div>
       <div className="reel-controls">
         <button type="button" aria-label={COPY.reel.prev} onClick={() => onStep(-1)}>

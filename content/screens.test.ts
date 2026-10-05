@@ -13,8 +13,11 @@ describe("slides", () => {
       expect(s.shot.alt.length, s.shot.src).toBeGreaterThan(10);
     }
   });
-  it("plays a crate record or opens a page, never both and never neither", () => {
-    for (const s of slides) expect(!!s.slug !== !!s.href, s.label).toBe(true);
+  it("plays a crate record, or has its own line (and maybe a page to open), never both", () => {
+    for (const s of slides) {
+      expect(!!s.slug !== !!s.line, s.label).toBe(true);
+      if (s.slug) expect(s.href, s.label).toBeUndefined();
+    }
   });
   it("plays only records that are in the crate, and every crate project has a slide", () => {
     for (const s of slides) if (s.slug) expect(findWork(s.slug), s.slug).toBeDefined();
@@ -23,13 +26,14 @@ describe("slides", () => {
   it("opens the Pac Technologies site in a new tab from the last slide", () => {
     expect(slides.at(-1)?.href).toBe("https://www.pac-technologies.com.au");
   });
-  it("runs Pac Hub, Manuva (site, then the app twice), Silio, then the Pac Technologies site", () => {
-    expect(slides.map((s) => [s.slug ?? "href", s.label, s.shot.src])).toEqual([
+  it("runs Pac Hub, Manuva (site, then the app twice), Silio, Marianne's Hair, then the Pac Technologies site", () => {
+    expect(slides.map((s) => [s.slug ?? (s.href ? "href" : "none"), s.label, s.shot.src])).toEqual([
       ["pac-forge", "Pac Hub", "/reel/pac-hub.jpg"],
       ["manuva", "Manuva · site", "/reel/manuva-site.jpg"],
       ["manuva", "Manuva · bill of materials", "/reel/manuva-app-bom.jpg"],
       ["manuva", "Manuva · components", "/reel/manuva-app-components.jpg"],
       ["silio", "Silio", "/reel/silio-dashboard.jpg"],
+      ["none", "Marianne's Hair · site", "/reel/mariannes-hair-site.jpg"],
       ["href", "Pac Technologies · site", "/reel/pac-tech-site.jpg"],
     ]);
   });

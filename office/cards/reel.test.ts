@@ -30,9 +30,17 @@ describe("ReelScreen", () => {
   it("the slide that opens a page says Visit the site, with a line of its own for a strip", () => {
     const out = screen({ monitor: hrefAt, laptop: 0, moving: null });
     expect(out).toContain(esc(COPY.reel.visit));
-    expect(out).toContain(esc(COPY.reel.site));
+    expect(out).toContain(esc(slides[hrefAt].line!));
     expect(out).not.toContain(esc(COPY.reel.caseStudy));
     expect(out).toContain(`src="${slides[hrefAt].shot.src}"`);
+  });
+  it("a site that isn't live yet has its line and no button", () => {
+    const at = slides.findIndex((s) => !s.slug && !s.href);
+    const out = screen({ monitor: at, laptop: 0, moving: null });
+    expect(out).toContain(esc(slides[at].line!));
+    expect(out).not.toContain(esc(COPY.reel.visit));
+    expect(out).not.toContain(esc(COPY.reel.caseStudy));
+    expect(out).not.toContain("office-card-cta");
   });
   it("has ‹ › and a dot per slide, each named for its slide", () => {
     const out = screen({ monitor: 0, laptop: 1, moving: null });
