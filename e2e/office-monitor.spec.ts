@@ -101,6 +101,47 @@ test("it moves on by itself, and holds while the pointer is on the screen", asyn
   await expect(page.locator(".office-reel[data-slide]")).toHaveAttribute("data-slide", "1");
 });
 
+test("‹ drags the monitor's slide back to the laptop, and the window never flashes back over the monitor when it lands", async ({ page }) => {
+  test.slow(); // a 0.7 s drag on the reel's clock (see reelSeconds)
+  await standInOffice(page);
+  await openMonitor(page);
+  await page.mouse.move(2, 2);
+  // Watch every write to --at. A write lands in the middle of a frame's script, and the observer's callback runs right after
+  // it, before React's own render: so what it sees (the moving window still mounted or not) is what that frame paints.
+  const watched = page.evaluate(
+    () =>
+      new Promise<{ seen: number[]; flashed: boolean }>((done) => {
+        const root = document.querySelector<HTMLElement>(".office-reel[data-slide]")!;
+        const seen: number[] = [];
+        let flashed = false;
+        const observer = new MutationObserver(() => {
+          const at = parseFloat(root.style.getPropertyValue("--at"));
+          if (!root.querySelector(".reel-moving--monitor")) return;
+          // Going back the window moves 0 -> 1; a drop with the window still there covers the monitor with the slide that left.
+          if (seen.length && at < Math.max(...seen) - 0.3) flashed = true;
+          seen.push(at);
+        });
+        observer.observe(root, { attributes: true, attributeFilter: ["style"] });
+        let mounted = false;
+        let after = 0;
+        const frame = () => {
+          // The window is mounted from the click to the landing (the slide itself changes at the click).
+          mounted ||= !!root.querySelector(".reel-moving--monitor");
+          if (mounted && !root.querySelector(".reel-moving--monitor") && ++after > 4) {
+            observer.disconnect();
+            done({ seen, flashed });
+          } else requestAnimationFrame(frame);
+        };
+        requestAnimationFrame(frame);
+      }),
+  );
+  await reel(page).getByRole("button", { name: COPY.reel.prev }).click();
+  await expect(page.locator(".office-reel[data-slide]")).toHaveAttribute("data-slide", String(work.length - 1), { timeout: MOVE_WAIT });
+  const { seen, flashed } = await watched;
+  expect(seen.length).toBeGreaterThan(1);
+  expect(flashed, `--at while the window was mounted: ${seen.join(", ")}`).toBe(false);
+});
+
 test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
   test("no fall, no drag, no auto-advance: the arrows switch it at once", async ({ page }) => {

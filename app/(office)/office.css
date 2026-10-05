@@ -467,10 +467,9 @@ html.office-locked {
   .reel-headline { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; white-space: normal; line-height: 1.2; }
   .office-reel .office-card-cta { box-sizing: border-box; width: 350px; height: 120px; padding: 0 16px; font-size: 32px; white-space: normal; }
   .reel-controls { box-sizing: border-box; height: 34px; padding: 0; }
-  /* The window is shorter here: a logo card keeps its logo and name (its headline is in the strip just below). */
+  /* The window is shorter here. */
   .reel-card { gap: 4px; padding: 6px; }
   .reel-card img { width: 40%; }
-  .reel-card p + p { display: none; }
   .reel-controls .reel-dot { width: 14px; height: 14px; }
   .reel-controls button:not(.reel-dot) {
     position: absolute;

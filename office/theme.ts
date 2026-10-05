@@ -7,7 +7,7 @@ export const theme = {
     hs_crate: "#C6FF3D", // work
     hs_shelf: "#FF3B30", // services
     hs_drawer: "#2EF2FF", // contact
-    hs_monitor: "#FFB224", // the monitor gag
+    hs_monitor: "#FFB224", // the monitor's reel
   },
   /** CSS pixels */
   lineWidth: 1.3,

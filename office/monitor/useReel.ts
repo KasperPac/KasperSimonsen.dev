@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FocusEvent } from "react";
-import { initialReel, showSlide, stepReel, tickReel, viewOf, type ReelView } from "./reel";
+import { work } from "@/content/work";
+import { atToWrite, initialReel, showSlide, slideInView, stepReel, tickReel, viewOf, type ReelView } from "./reel";
 
 export type HoldProps = {
   onPointerEnter: () => void;
@@ -31,10 +32,17 @@ export function useReel(active: boolean, count: number, reduced: boolean) {
   const focus = useRef(false);
   const [view, setView] = useState<ReelView>(() => viewOf(state.current, count));
   const shown = useRef(viewKey(view));
+  const written = useRef<number | null>(null);
 
   const publish = useCallback(() => {
     const v = viewOf(state.current, count);
-    document.querySelectorAll<HTMLElement>("[data-reel]").forEach((el) => el.style.setProperty("--at", String(v.moving?.at ?? 0)));
+    // `--at` is written only mid-drag: the DOM keeps the old view for a frame after a drag lands, so the last in-drag value
+    // must stay until React removes the moving window (zeroing it would flash that window over the monitor).
+    const at = atToWrite(v, written.current);
+    if (at !== null) {
+      written.current = at;
+      document.querySelectorAll<HTMLElement>("[data-reel]").forEach((el) => el.style.setProperty("--at", String(at)));
+    } else if (!v.moving) written.current = null; // the next drag writes its first value whatever was written before
     const key = viewKey(v);
     if (key !== shown.current) {
       shown.current = key;
@@ -86,5 +94,7 @@ export function useReel(active: boolean, count: number, reduced: boolean) {
     }),
     [],
   );
-  return { view, step, show, hold };
+  /** The slug "See the case study" plays: the project the visitor mostly sees, read now (the view in props is stale mid-drag). */
+  const current = useCallback(() => work[slideInView(viewOf(state.current, count))].slug, [count]);
+  return { view, step, show, hold, current };
 }

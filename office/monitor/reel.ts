@@ -60,3 +60,16 @@ export function viewOf(s: ReelState, count: number): ReelView {
   if (s.drag.dir === 1) return { monitor: s.index, laptop: wrap(s.index + 2, count), moving: { slide: next, at: 1 - e } };
   return { monitor: wrap(s.index - 1, count), laptop: next, moving: { slide: s.index, at: e } };
 }
+
+/** The slide the visitor mostly sees on the monitor: a window dragged in covers it once it is past halfway. */
+export function slideInView(v: ReelView): number {
+  return v.moving && v.moving.at < 0.5 ? v.moving.slide : v.monitor;
+}
+
+/**
+ * What to write to `--at` this frame, or null to leave it. Only a drag writes: when it lands, the DOM still shows the old
+ * view for a painted frame or two, and zeroing `--at` then would throw the moving window over the monitor.
+ */
+export function atToWrite(v: ReelView, last: number | null): number | null {
+  return v.moving && v.moving.at !== last ? v.moving.at : null;
+}

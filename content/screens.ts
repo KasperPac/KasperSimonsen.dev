@@ -5,7 +5,7 @@ export type Screen = { shot?: { src: string; alt: string }; logo?: string };
 const SCREENS: Record<string, Screen> = {
   "pac-forge": { logo: "/PacTechnologiesEdit_White.png" },
   manuva: { shot: { src: "/v2/manuva-live.jpg", alt: "Manuva's site: a manufacturing app's home page" } },
-  silio: { shot: { src: "/silio-dashboard.png", alt: "Silio's dashboard: silo levels and batches at a glance" } },
+  silio: { shot: { src: "/silio-dashboard.png", alt: "Silio's dashboard: throughput, orders and hours at a glance" } },
 };
 
 export function screenFor(slug: string): Screen {

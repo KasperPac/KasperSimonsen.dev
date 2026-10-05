@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { DRAG_SECONDS, initialReel, REEL_HOLD_SECONDS, showSlide, stepReel, tickReel, viewOf, wrap, type ReelState } from "./reel";
+import { atToWrite, DRAG_SECONDS, initialReel, REEL_HOLD_SECONDS, showSlide, slideInView, stepReel, tickReel, viewOf, wrap, type ReelState } from "./reel";
 
 const go = { count: 3, paused: false, reduced: false };
 const run = (s: ReelState, seconds: number, o = go) => {
@@ -81,5 +81,31 @@ describe("viewOf", () => {
     const after = viewOf({ index: 1, wait: 0, drag: null }, 3);
     expect(end.moving!.slide).toBe(after.monitor);
     expect(end.laptop).toBe(after.laptop);
+  });
+});
+
+describe("slideInView", () => {
+  const view = (at: number | null) => ({ monitor: 0, laptop: 2, moving: at === null ? null : { slide: 1, at } });
+  it("is the monitor's slide at rest and while the dragged window is mostly off the monitor", () => {
+    expect(slideInView(view(null))).toBe(0);
+    expect(slideInView(view(0.5))).toBe(0);
+    expect(slideInView(view(0.9))).toBe(0);
+  });
+  it("is the dragged window's slide once it covers more than half", () => {
+    expect(slideInView(view(0.49))).toBe(1);
+    expect(slideInView(view(0))).toBe(1);
+  });
+});
+
+describe("atToWrite", () => {
+  const view = (at: number | null) => ({ monitor: 0, laptop: 2, moving: at === null ? null : { slide: 1, at } });
+  it("writes the position while a window moves, and not again when it hasn't changed", () => {
+    expect(atToWrite(view(0.3), null)).toBe(0.3);
+    expect(atToWrite(view(0.3), 0.2)).toBe(0.3);
+    expect(atToWrite(view(0.3), 0.3)).toBeNull();
+  });
+  it("writes nothing when nothing moves, so the last in-drag value stays until the DOM catches up", () => {
+    expect(atToWrite(view(null), 0.97)).toBeNull();
+    expect(atToWrite(view(null), null)).toBeNull();
   });
 });

@@ -22,8 +22,7 @@ export default function ReelWindow({ item, dragged = false }: { item: WorkItem; 
         ) : (
           <div className="reel-card">
             {logo && <img src={logo} alt="" draggable={false} />}
-            <p>{item.name}</p>
-            <p>{item.headline}</p>
+            <p aria-hidden="true">{item.name}</p>
           </div>
         )}
       </div>

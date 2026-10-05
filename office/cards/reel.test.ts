@@ -26,10 +26,12 @@ describe("ReelScreen", () => {
     expect(out).toContain(`data-slide="${withShot}"`);
     expect(out).toMatch(/<h2[^>]*id="r"/);
   });
-  it("a project without a screenshot gets a card with its logo", () => {
+  it("a project without a screenshot gets a card with its logo and name, not its headline (the strip has that)", () => {
     const out = screen({ monitor: withLogo, laptop: 0, moving: null });
-    expect(out).toContain('class="reel-card"');
-    expect(out).toContain(`src="${screenFor(work[withLogo].slug).logo}"`);
+    const card = out.match(/<div class="reel-card">.*?<\/div>/)![0];
+    expect(card).toContain(`src="${screenFor(work[withLogo].slug).logo}"`);
+    expect(card).toContain(`<p aria-hidden="true">${esc(work[withLogo].name)}</p>`);
+    expect(card).not.toContain(esc(work[withLogo].headline));
   });
   it("has ‹ › and a dot per project", () => {
     const out = screen({ monitor: 0, laptop: 1, moving: null });

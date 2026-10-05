@@ -174,6 +174,9 @@ export default function OfficeExperience() {
   const reduced = useMemo(() => typeof window !== "undefined" && reducedMotion(), []);
   const reel = useReel(focusedOn === "hs_monitor", work.length, reduced);
   const play = useCallback((slug: string) => activate({ hotspot: "hs_crate", item: slug }), [activate]);
+  // The reel's own button plays what's mostly on the monitor now, which mid-drag isn't the slide ReelScreen last rendered.
+  const reelCurrent = reel.current;
+  const playReel = useCallback(() => play(reelCurrent()), [play, reelCurrent]);
   const showCard = focusedOn === "hs_drawer" && drawerOpen;
 
   // The crate (spec 3.2): flick through the records, pull the front one out, read it on its back and in the panel.
@@ -405,7 +408,7 @@ export default function OfficeExperience() {
             plaque={plaqueRef}
             monitorScreen={
               focusedOn === "hs_monitor"
-                ? { titleId: "reel-title", content: <ReelScreen titleId="reel-title" view={reel.view} hold={reel.hold} onStep={reel.step} onShow={reel.show} onPlay={play} /> }
+                ? { titleId: "reel-title", content: <ReelScreen titleId="reel-title" view={reel.view} hold={reel.hold} onStep={reel.step} onShow={reel.show} onPlay={playReel} /> }
                 : null
             }
             laptopScreen={focusedOn === "hs_monitor" ? { content: <LaptopScreen view={reel.view} /> } : null}
