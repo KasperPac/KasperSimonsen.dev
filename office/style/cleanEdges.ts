@@ -167,15 +167,18 @@ export function updateEdgeFades(handle: CleanEdgesHandle, cameraPosition: Vector
   for (const g of handle.fades) g.material.opacity = fadeOpacity(cameraPosition.distanceTo(g.centre), g.near, g.far, g.min);
 }
 
-/** Recolours the lines of `prefix` and everything under it (`prefix__…`); every other highlight group goes back to its tint, else the base colour. */
+/**
+ * Recolours the lines of `prefix` and everything under it (`prefix__…`); every other group goes back to the base colour.
+ * A tinted group keeps its tint throughout, lit or not (the whiteboard's tray markers stay their colours).
+ */
 export function setHighlight(handle: CleanEdgesHandle, prefix: string | null, color: string): void {
   for (const [key, material] of handle.highlights) {
     const on = prefix !== null && (key === prefix || key.startsWith(`${prefix}__`));
-    material.color.set(on ? color : (handle.tints.get(key) ?? handle.baseColor));
+    material.color.set(handle.tints.get(key) ?? (on ? color : handle.baseColor));
   }
 }
 
-/** A highlight group's own resting line colour (the whiteboard's tray markers); highlights come and go over it. */
+/** A highlight group's own line colour (the whiteboard's tray markers), kept through highlights. */
 export function setTint(handle: CleanEdgesHandle, key: string, color: string): void {
   handle.tints.set(key, color);
   handle.highlights.get(key)?.color.set(color);

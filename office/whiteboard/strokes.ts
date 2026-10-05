@@ -34,11 +34,7 @@ export function drawItems(ctx: Ctx2D, items: Item[], font: string): void {
       ctx.textBaseline = "alphabetic";
       ctx.fillText(item.text, item.x, item.y);
     } else {
-      ctx.globalCompositeOperation = item.erase ? "destination-out" : "source-over";
-      ctx.strokeStyle = item.erase ? "#000" : item.color;
-      ctx.lineWidth = item.width;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
+      penFor(ctx, item);
       const p = item.points;
       ctx.beginPath();
       ctx.moveTo(p[0].x, p[0].y);
@@ -49,4 +45,39 @@ export function drawItems(ctx: Ctx2D, items: Item[], font: string): void {
     }
     ctx.restore();
   }
+}
+
+/**
+ * Draws only what the stroke's newest point added, over what's already drawn, so a stroke in progress never replays the
+ * whole board: the curve through the point before it (as drawItems smooths it) and the straight end to the new point.
+ * The end drawn last time stays under the curve, a hair off it at most; a full replay (drawItems) draws it exactly.
+ */
+export function drawStrokeTail(ctx: Ctx2D, stroke: Stroke): void {
+  const p = stroke.points;
+  const n = p.length - 1;
+  ctx.save();
+  penFor(ctx, stroke);
+  ctx.beginPath();
+  if (n === 0) {
+    ctx.moveTo(p[0].x, p[0].y);
+    ctx.lineTo(p[0].x + 0.01, p[0].y);
+  } else if (n === 1) {
+    ctx.moveTo(p[0].x, p[0].y);
+    ctx.lineTo(p[1].x, p[1].y);
+  } else {
+    const from = n === 2 ? p[0] : { x: (p[n - 2].x + p[n - 1].x) / 2, y: (p[n - 2].y + p[n - 1].y) / 2 };
+    ctx.moveTo(from.x, from.y);
+    ctx.quadraticCurveTo(p[n - 1].x, p[n - 1].y, (p[n - 1].x + p[n].x) / 2, (p[n - 1].y + p[n].y) / 2);
+    ctx.lineTo(p[n].x, p[n].y);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function penFor(ctx: Ctx2D, stroke: Stroke): void {
+  ctx.globalCompositeOperation = stroke.erase ? "destination-out" : "source-over";
+  ctx.strokeStyle = stroke.erase ? "#000" : stroke.color;
+  ctx.lineWidth = stroke.width;
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
 }

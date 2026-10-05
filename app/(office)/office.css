@@ -481,7 +481,9 @@ html.office-locked {
 /* The whiteboard (a hidden extra): a canvas to draw on, the tool strip along its bottom edge. */
 .office-screen:has(.office-whiteboard) { padding: 0; }
 .office-whiteboard { position: relative; display: flex; flex-direction: column; height: 100%; }
-.whiteboard-canvas { display: block; flex: none; touch-action: none; cursor: crosshair; }
+/* The board's canvas, laid in under the pointer: see-through, since the ink shows on the 3D board (under the held marker). */
+.whiteboard-ink { flex: none; touch-action: none; cursor: crosshair; }
+.whiteboard-canvas { display: block; opacity: 0; }
 .whiteboard-tools { display: flex; flex: none; align-items: center; gap: 18px; height: 96px; padding: 0 24px; border-top: 1px solid rgba(232, 232, 232, 0.25); }
 .whiteboard-swatch,
 .whiteboard-eraser { width: 56px; height: 56px; padding: 0; border: 2px solid rgba(232, 232, 232, 0.5); border-radius: 50%; background: var(--swatch, transparent); cursor: pointer; }

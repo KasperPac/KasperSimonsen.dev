@@ -310,7 +310,7 @@ describe("highlight groups", () => {
 });
 
 describe("setTint", () => {
-  it("keeps a group in its own colour, back to it after a highlight passes", () => {
+  it("keeps a group in its own colour, through a highlight and after it", () => {
     const root = new Group();
     const marker = new Mesh(new BoxGeometry());
     marker.name = "hs_whiteboard__marker_01";
@@ -322,9 +322,9 @@ describe("setTint", () => {
     setTint(handle, "hs_whiteboard__marker_01", "#C6FF3D");
     expect(hex("hs_whiteboard__marker_01")).toBe("c6ff3d");
     setHighlight(handle, "hs_whiteboard", "#e8e8e8");
-    expect(hex("hs_whiteboard__marker_01")).toBe("e8e8e8"); // lit with the board
+    expect(hex("hs_whiteboard__marker_01")).toBe("c6ff3d"); // lit with the board, still its colour
     setHighlight(handle, null, "#e8e8e8");
-    expect(hex("hs_whiteboard__marker_01")).toBe("c6ff3d"); // back to its tint
+    expect(hex("hs_whiteboard__marker_01")).toBe("c6ff3d");
     expect(hex("hs_crate")).toBe("ffffff"); // untinted groups go to the base
   });
 });

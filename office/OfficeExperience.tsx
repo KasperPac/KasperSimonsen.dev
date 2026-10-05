@@ -205,11 +205,13 @@ export default function OfficeExperience() {
     }),
     [],
   );
-  // Leaving mid-stroke (Esc or Back with the pointer down) closes the stroke and lets go of the board.
+  // Leaving mid-stroke (Esc or Back with the pointer down) closes the stroke and lets go of the board. The next visit
+  // to the board picks up the white marker again (whiteboard spec 3.2).
   useEffect(() => {
     if (focusedOn === "hs_whiteboard") return;
     whiteboard.current.pointer = { pt: null, pressing: false };
     endStroke();
+    setTool(0);
   }, [focusedOn]);
   // The print's height follows the board's surface, measured by the canvas once the model has loaded.
   const [boardHeightPx, setBoardHeightPx] = useState(590);

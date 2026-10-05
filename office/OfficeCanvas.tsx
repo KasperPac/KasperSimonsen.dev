@@ -3,7 +3,19 @@
 import { Suspense, useEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
-import { Box3, Quaternion, Vector3, type Mesh, type Object3D, type PerspectiveCamera } from "three";
+import {
+  Box3,
+  CanvasTexture,
+  Euler,
+  Mesh,
+  MeshBasicMaterial,
+  PlaneGeometry,
+  Quaternion,
+  SRGBColorSpace,
+  Vector3,
+  type Object3D,
+  type PerspectiveCamera,
+} from "three";
 import manifest from "./manifest.json";
 import { theme } from "./theme";
 import { applyCleanEdges, setHighlight, setLineResolution, setTint, updateEdgeFades, type CleanEdgesHandle } from "./style/cleanEdges";
@@ -32,9 +44,10 @@ import CardFace from "./cards/CardFace";
 import { SLEEVE_WIDTH_PX } from "./cards/SleeveBack";
 import { SCREEN_WIDTH_PX } from "./cards/ReelScreen";
 import { LAPTOP_WIDTH_PX } from "./cards/LaptopScreen";
-import { TOOLS, WHITEBOARD_WIDTH_PX, type BoardPointer } from "./cards/Whiteboard";
+import { STRIP_PX, TOOLS, WHITEBOARD_WIDTH_PX, type BoardPointer } from "./cards/Whiteboard";
 import { screenFaceFor } from "./cards/face";
-import { boardPoint, findTools, handPlacement, ToolMotion, type ToolId, type ToolNodes } from "./whiteboard/marker";
+import { boardPoint, findTools, handPlacement, ToolMotion, type Face, type ToolId, type ToolNodes } from "./whiteboard/marker";
+import { boardCanvas, boardSize, boardVersion, sizeBoard } from "./whiteboard/surface";
 import { work } from "@/content/work";
 
 /** DOM the canvas positions each frame: the hover label and the touch markers. */
@@ -128,6 +141,19 @@ function toolsOf(root: Object3D): ToolNodes {
   let nodes = toolsByRoot.get(root);
   if (!nodes) toolsByRoot.set(root, (nodes = findTools(root)));
   return nodes;
+}
+
+/**
+ * Lays the ink quad (1 × 1, facing +z) over the board's drawing area: the canvas's `widthPx × heightPx` from the top
+ * left of the print's face, at boardPoint's scale (drei's distanceFactor / 400 metres per CSS px) and in its plane, so
+ * a canvas pixel and the held marker's tip agree. The tool strip's part of the face, below it, is left bare.
+ */
+const inkEuler = new Euler();
+function placeInk(mesh: Mesh, face: Face, size: { widthPx: number; heightPx: number }) {
+  const k = face.distanceFactor / 400;
+  boardPoint(face, WHITEBOARD_WIDTH_PX, { x: size.widthPx / 2, y: size.heightPx / 2 }, mesh.position);
+  mesh.quaternion.setFromEuler(inkEuler.set(...face.rotation));
+  mesh.scale.set(Math.max(size.widthPx * k, 1e-6), Math.max(size.heightPx * k, 1e-6), 1);
 }
 
 type StreetProps = Pick<OfficeCanvasProps, "progress" | "pan" | "host" | "director" | "onProgressCross" | "onSettled"> & { info: RefObject<OfficeInfo | null> };
@@ -299,6 +325,41 @@ function Office({
     }),
     [boardFace],
   );
+  // The drawing, on the 3D board for the whole visit (whiteboard spec 3.3): the board's canvas as a texture on a quad
+  // over the surface's drawing area, so it's seen from across the room and the held marker is drawn in front of it.
+  const ink = useMemo(() => {
+    const canvas = boardCanvas();
+    if (!surface || !boardFace || !canvas) return null;
+    // before the print has measured its strip, the drawing area is the face less the desktop strip
+    if (!boardSize().widthPx) sizeBoard(WHITEBOARD_WIDTH_PX, boardFace.heightPx - STRIP_PX);
+    const texture = new CanvasTexture(canvas);
+    texture.colorSpace = SRGBColorSpace;
+    texture.anisotropy = 4; // read at a slant from the standing spot
+    const material = new MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false, // the ink's colours are the office's line colours, as printed
+      polygonOffset: true, // in front of the board's own fill, which is pushed back
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1,
+    });
+    const mesh = new Mesh(new PlaneGeometry(1, 1), material); // its UVs run u left → right, v bottom → top
+    mesh.name = "hs_whiteboard__ink";
+    mesh.userData.cleanEdges = true; // never outlined
+    mesh.raycast = () => {}; // the board's own parts take the pointer
+    return { mesh, texture, material, size: { widthPx: 0, heightPx: 0 }, version: -1 };
+  }, [surface, boardFace]);
+  useEffect(() => {
+    if (!ink || !surface) return;
+    surface.add(ink.mesh);
+    return () => {
+      ink.mesh.removeFromParent();
+      ink.mesh.geometry.dispose();
+      ink.material.dispose();
+      ink.texture.dispose();
+    };
+  }, [ink, surface]);
 
   // Each object's whole outline takes the pointer while nothing is focused (thin shelf, gaps between ornaments).
   useEffect(() => {
@@ -409,6 +470,20 @@ function Office({
       hand = handPlacement(surface, wb.lastBoardLocal, board.held === "eraser" ? "eraser" : "marker", board.pointer.pressing, wb.handPose);
     }
     toolMotion.update(toolNodes, { held: board.held, hand, reduced }, dt);
+    // The board's canvas changed: lay its quad over the drawing area again if it was resized, and upload it again.
+    if (ink && boardFace) {
+      const now = boardSize();
+      if (now !== ink.size) {
+        ink.size = now;
+        placeInk(ink.mesh, boardFace, now);
+        ink.texture.dispose(); // a new size needs new texture storage
+      }
+      const version = boardVersion();
+      if (version !== ink.version) {
+        ink.version = version;
+        ink.texture.needsUpdate = true;
+      }
+    }
     const open = focused?.hotspot === "hs_whiteboard";
     if (open !== wb.wasOpen) {
       wb.wasOpen = open;
@@ -419,8 +494,6 @@ function Office({
     const key = lit ? `${highlightFor(lit)}:${lit.hotspot}` : null;
     if (key !== shown.current) {
       setHighlight(handle, lit ? highlightFor(lit) : null, lit ? theme.accents[lit.hotspot] : theme.line);
-      // The whiteboard lights white, the base colour: its tray's markers keep their own colours through it.
-      if (lit?.hotspot === "hs_whiteboard") for (let i = 1; i < TOOLS.length; i++) setTint(handle, `hs_whiteboard__marker_0${i}`, TOOLS[i].color);
       shown.current = key;
     }
 

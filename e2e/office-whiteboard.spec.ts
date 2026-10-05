@@ -22,6 +22,16 @@ const inked = (page: Page) =>
     for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++;
     return n;
   });
+/** Count of red pixels (the red marker's) on the board's canvas. */
+const reddened = (page: Page) =>
+  canvas(page).evaluate((c: HTMLCanvasElement) => {
+    const d = c.getContext("2d")!.getImageData(0, 0, c.width, c.height).data;
+    let n = 0;
+    for (let i = 0; i < d.length; i += 4) if (d[i + 3] > 200 && d[i] > 200 && d[i + 1] < 120 && d[i + 2] < 120) n++;
+    return n;
+  });
+/** Within 2% of `expected`: the same drawing redrawn can anti-alias a few edge pixels differently. */
+const about = (n: number, expected: number) => expect(Math.abs(n - expected)).toBeLessThan(expected * 0.02);
 /** Count of inked pixels in the middle ninth of the canvas (the drag below goes through it). */
 const inkedMiddle = (page: Page) =>
   canvas(page).evaluate((c: HTMLCanvasElement) => {
@@ -71,7 +81,9 @@ test("draw where the pointer goes, swap colours, wipe it, leave and come back to
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
   await expect(item).toBeFocused();
   await openBoard(page);
-  expect(await inked(page)).toBe(drawn); // still there
+  about(await inked(page), drawn); // still there
+  expect(await reddened(page)).toBeGreaterThan(0); // the red line too
+  await expect(page.getByRole("button", { name: COPY.whiteboard.tools.white })).toHaveAttribute("aria-pressed", "true"); // back with the white marker
 
   await page.getByRole("button", { name: COPY.whiteboard.wipe }).click();
   expect(await inked(page)).toBe(0);
@@ -79,7 +91,7 @@ test("draw where the pointer goes, swap colours, wipe it, leave and come back to
   await page.reload();
   await standInOffice(page);
   await openBoard(page);
-  expect(await inked(page)).toBe(start); // a fresh visit: TODO: sleep again
+  about(await inked(page), start); // a fresh visit: TODO: sleep again
 });
 
 test.describe("phone", () => {

@@ -8,9 +8,9 @@ const html = (tool: (typeof TOOLS)[number]["id"] = 0) =>
   renderToStaticMarkup(createElement(Whiteboard, { titleId: "w", heightPx: 590, tool, onTool: () => {}, pointer: { current: { pt: null, pressing: false } } }));
 
 describe("Whiteboard", () => {
-  it("has a canvas to draw on and a hidden heading to take focus", () => {
+  it("has a place for the board's canvas to draw on and a hidden heading to take focus", () => {
     const out = html();
-    expect(out).toContain("<canvas");
+    expect(out).toMatch(/<div class="whiteboard-ink" style="width:800px;height:494(\.\d+)?px"/); // 590 less the strip's 96
     expect(out).toMatch(/<h2[^>]*id="w"[^>]*class="visually-hidden"|<h2[^>]*class="visually-hidden"[^>]*id="w"/);
   });
   it("prints five swatches, the eraser and Wipe it as buttons, the held one pressed", () => {

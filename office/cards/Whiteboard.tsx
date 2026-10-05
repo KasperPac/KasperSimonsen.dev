@@ -3,8 +3,9 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { COPY } from "@/office/copy";
 import { theme } from "@/office/theme";
-import { boardItems, endStroke, extendStroke, startStroke, wipe } from "@/office/whiteboard/board";
-import { drawItems, type Ctx2D, type Pt } from "@/office/whiteboard/strokes";
+import { endStroke, extendStroke, startStroke, wipe } from "@/office/whiteboard/board";
+import { boardCanvas, inkStroke, redrawBoard, sizeBoard } from "@/office/whiteboard/surface";
+import type { Pt, Stroke } from "@/office/whiteboard/strokes";
 import type { ToolId } from "@/office/whiteboard/marker";
 
 /** CSS px the board's print is laid out at (whiteboard spec): mapped onto hs_whiteboard__surface. */
@@ -13,9 +14,7 @@ export const WHITEBOARD_WIDTH_PX = 800;
  * Height of the tool strip along the board's bottom edge, in CSS px, until it's measured: phones see the print at under
  * half size, so office.css makes the strip taller there for fingers, and the canvas takes what's left.
  */
-const STRIP_PX = 96;
-/** The canvas's bitmap is this many times its CSS size, so lines stay crisp when the camera comes in close. */
-const DENSITY = 2;
+export const STRIP_PX = 96;
 
 export const TOOLS: { id: Exclude<ToolId, "eraser">; color: string; label: string }[] = [
   { id: 0, color: theme.line, label: COPY.whiteboard.tools.white },
@@ -28,7 +27,11 @@ export const TOOLS: { id: Exclude<ToolId, "eraser">; color: string; label: strin
 /** Where the pointer is on the board and whether it's drawing: read by the canvas each frame to move the held marker. */
 export type BoardPointer = { pt: Pt | null; pressing: boolean };
 
-/** What's printed on the whiteboard: a canvas drawn on with the held tool, and the tool strip along the bottom. */
+/**
+ * What's printed on the whiteboard: the board's canvas to draw on with the held tool, and the tool strip along the bottom.
+ * The canvas is the visit's one board canvas (surface.ts), laid in here under the pointer; the ink you see is the 3D
+ * board's, which shows the same canvas, so here it's see-through (office.css) and the held marker is drawn over the ink.
+ */
 export default function Whiteboard({
   titleId,
   heightPx,
@@ -42,7 +45,7 @@ export default function Whiteboard({
   onTool: (t: ToolId) => void;
   pointer: { current: BoardPointer };
 }) {
-  const canvas = useRef<HTMLCanvasElement>(null);
+  const ink = useRef<HTMLDivElement>(null);
   const strip = useRef<HTMLDivElement>(null);
   const [stripPx, setStripPx] = useState(STRIP_PX);
   // The strip's laid-out height (CSS px; the print's 3D transform doesn't change it), again if the media query flips.
@@ -55,36 +58,35 @@ export default function Whiteboard({
     watch.observe(el);
     return () => watch.disconnect();
   }, []);
-  const font = () => getComputedStyle(document.body).fontFamily;
-  const redraw = () => {
-    const c = canvas.current;
-    // Kept on the CPU from the first draw: Chrome moves a canvas off the GPU the first time its pixels are read back,
-    // and the two anti-alias a line differently, so the same drawing would come back a few pixels different.
-    const ctx = c?.getContext("2d", { willReadFrequently: true });
-    if (!c || !ctx) return;
-    ctx.setTransform(DENSITY, 0, 0, DENSITY, 0, 0);
-    ctx.clearRect(0, 0, c.width, c.height);
-    drawItems(ctx as unknown as Ctx2D, boardItems(), font());
-  };
   const drawHeight = heightPx - stripPx;
-  // Changing the canvas's height attribute clears its bitmap, so redraw whenever its height changes.
-  // Redraw again once web fonts have loaded, so the printed text leaves the fallback face.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(redraw, [drawHeight]);
-  useEffect(() => {
-    let live = true;
-    document.fonts?.ready.then(() => {
-      if (live) redraw();
-    });
-    return () => {
-      live = false;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  // The board's canvas is laid in under the pointer while the print shows (it outlives the print), sized to what the
+  // strip leaves; resizing it replays the drawing.
+  useLayoutEffect(() => {
+    const c = boardCanvas();
+    if (!c || !ink.current) return;
+    ink.current.replaceChildren(c);
+    return () => c.remove();
   }, []);
+  useLayoutEffect(() => sizeBoard(WHITEBOARD_WIDTH_PX, drawHeight), [drawHeight]);
   /** The one pointer that is drawing, so a second finger or another button can't start, extend or end its stroke. */
   const drawing = useRef<number | null>(null);
+  const stroke = useRef<Stroke | null>(null);
+  const finish = () => {
+    drawing.current = null;
+    stroke.current = null;
+    endStroke();
+    pointer.current = { ...pointer.current, pressing: false };
+  };
+  // Leaving mid-stroke: nothing here can extend it again (the next print starts fresh).
+  useEffect(
+    () => () => {
+      if (drawing.current !== null) endStroke();
+    },
+    [],
+  );
 
-  const at = (e: React.PointerEvent<HTMLCanvasElement>): Pt => ({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
+  // offsetX/Y are in the canvas's own CSS px, through the print's 3D transform (the canvas sits at the wrapper's corner).
+  const at = (e: React.PointerEvent<HTMLDivElement>): Pt => ({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
   const colour = tool === "eraser" ? "" : TOOLS[tool].color;
 
   return (
@@ -92,41 +94,30 @@ export default function Whiteboard({
       <h2 id={titleId} className="visually-hidden" tabIndex={-1}>
         {COPY.whiteboard.title}
       </h2>
-      <canvas
-        ref={canvas}
-        className="whiteboard-canvas"
-        width={WHITEBOARD_WIDTH_PX * DENSITY}
-        height={drawHeight * DENSITY}
+      <div
+        ref={ink}
+        className="whiteboard-ink"
         style={{ width: WHITEBOARD_WIDTH_PX, height: drawHeight }}
         onPointerDown={(e) => {
           if (!e.isPrimary || e.button !== 0) return;
           drawing.current = e.pointerId;
           e.currentTarget.setPointerCapture(e.pointerId);
           const p = at(e);
-          startStroke(tool === "eraser", colour, p);
+          stroke.current = startStroke(tool === "eraser", colour, p);
+          inkStroke(stroke.current);
           pointer.current = { pt: p, pressing: true };
-          redraw();
         }}
         onPointerMove={(e) => {
           if (!e.isPrimary) return;
           const p = at(e);
           pointer.current = { pt: p, pressing: pointer.current.pressing };
-          if (drawing.current === e.pointerId && extendStroke(p)) redraw();
+          if (drawing.current === e.pointerId && stroke.current && extendStroke(p)) inkStroke(stroke.current);
         }}
         onPointerUp={(e) => {
-          if (drawing.current !== e.pointerId) return;
-          drawing.current = null;
-          endStroke();
-          pointer.current = { ...pointer.current, pressing: false };
+          if (drawing.current === e.pointerId) finish();
         }}
         onPointerCancel={(e) => {
-          if (drawing.current !== e.pointerId) return;
-          drawing.current = null;
-          endStroke();
-          pointer.current = { ...pointer.current, pressing: false };
-        }}
-        onPointerLeave={() => {
-          if (!pointer.current.pressing) pointer.current = { pt: pointer.current.pt, pressing: false };
+          if (drawing.current === e.pointerId) finish();
         }}
       />
       <div ref={strip} className="whiteboard-tools">
@@ -139,7 +130,7 @@ export default function Whiteboard({
           className="whiteboard-wipe"
           onClick={() => {
             wipe();
-            redraw();
+            redrawBoard();
           }}
         >
           {COPY.whiteboard.wipe}
