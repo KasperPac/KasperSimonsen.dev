@@ -15,7 +15,7 @@ export const slides: Slide[] = [
   {
     slug: "manuva",
     label: "Manuva · site",
-    shot: { src: "/reel/manuva-site.jpg", alt: "Manuva's home page: \"Less chaos. More crafting.\"" },
+    shot: { src: "/reel/manuva-site.jpg", alt: "Manuva's home page: \"Less chaos. More making.\"" },
   },
   {
     slug: "manuva",
