@@ -1,8 +1,9 @@
 /**
- * One slide of the monitor's reel (interactions spec 3.5): a screenshot filling the monitor edge to edge (16:10, 1280 x
- * 800), with its label and a line printed beside it, on the laptop or on the strip under the monitor. A slide plays a
- * crate project's record (`slug`, whose headline is its line). Work with no record yet has its own `line`, and opens its
- * site (`href`) or, not live yet, has no button at all. Adding a project is a slide here and its screenshot in public/reel.
+ * One slide of the monitor's reel (interactions spec 3.5): a screenshot filling the monitor edge to edge (16:9, 1280 x
+ * 720), with its label and a line printed beside it, on the laptop or on the strip under the monitor. A slide plays a
+ * crate project's record (`slug`, whose headline is its line), and every slide does today. The type keeps `href` and
+ * `line` for work with no record: that has its own `line`, and opens its site (`href`) or, not live yet, has no button at
+ * all. Adding a project is its record in the crate, a slide here and its screenshot in public/reel.
  */
 export type Slide = { label: string; shot: { src: string; alt: string }; slug?: string; href?: string; line?: string };
 
@@ -33,17 +34,15 @@ export const slides: Slide[] = [
     label: "Silio",
     shot: { src: "/reel/silio-dashboard.jpg", alt: "Silio's dashboard: throughput, orders and hours at a glance" },
   },
-  // Not live yet: no button until it has a domain (then an href, Visit the site). DRAFT line and alt.
+  // Not live yet, so its record has no liveUrl and its button is See the case study only.
   {
+    slug: "mariannes-hair",
     label: "Marianne's Hair · site",
-    line: "A one-chair salon in West End. Its site's nearly ready to open.",
     shot: { src: "/reel/mariannes-hair-site.jpg", alt: "Marianne's Hair's home page: a line drawing of the salon's shopfront above its name in script" },
   },
-  // Not in the crate yet: it becomes a slug slide (See the case study) once it has a record.
   {
-    href: "https://www.pac-technologies.com.au",
+    slug: "pac-technologies",
     label: "Pac Technologies · site",
-    line: "Where Pac Technologies starts: the site I built for it.",
     shot: { src: "/reel/pac-tech-site.jpg", alt: "Pac Technologies' home page: \"The plant does not stop. Neither do we.\"" },
   },
 ];

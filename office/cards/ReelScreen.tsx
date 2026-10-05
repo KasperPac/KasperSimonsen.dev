@@ -4,7 +4,7 @@ import { slides, type Slide } from "@/content/screens";
 import type { ReelView } from "@/office/monitor/reel";
 import type { HoldProps } from "@/office/monitor/useReel";
 
-/** CSS px the monitor's print is laid out at (its 16:10 screen face is 640 x 400). */
+/** CSS px the monitor's print is laid out at (its 16:9 screen face is 640 x 360). */
 export const SCREEN_WIDTH_PX = 640;
 
 /** One screenshot filling the screen; `sliding` is the one moving over it, which screen readers skip (they get it as it lands). */

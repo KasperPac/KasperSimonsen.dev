@@ -74,9 +74,9 @@ test("the notes come off, the screenshot fills the monitor, the words are on the
   await expect(page.locator(".reel-words--laptop")).toHaveCount(1);
   await expect(page.locator(".reel-words--strip")).toHaveCount(0);
   await expect(shotOnMonitor(page)).toBeVisible({ timeout: MOVE_WAIT }); // placed in the scene (hidden until then)
-  const img =(await shotOnMonitor(page).boundingBox())!;
-  expect(img.width / img.height).toBeGreaterThan(1.57);
-  expect(img.width / img.height).toBeLessThan(1.63);
+  const img = (await shotOnMonitor(page).boundingBox())!;
+  expect(img.width / img.height).toBeGreaterThan(1.75); // 16:9
+  expect(img.width / img.height).toBeLessThan(1.8);
   await expect(words(page)).toHaveAttribute("data-slide", "0");
   // Each screenshot keeps its alt text, read with its label.
   await expect(shotOnMonitor(page)).toHaveAttribute("alt", `${slides[0].label}: ${slides[0].shot.alt}`);

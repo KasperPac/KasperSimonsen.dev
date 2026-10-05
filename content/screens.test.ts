@@ -27,10 +27,11 @@ function imageSize(src: string): [number, number] {
 }
 
 /**
- * Screenshots taken at 2:1 before the monitor went 16:10, shown cropped at the sides until Kasper retakes them. Remove
- * each one as its 16:10 capture arrives; nothing new joins this list.
+ * Screenshots taken before the monitor went 16:9, shown cropped (the 2:1 ones at the sides, the 16:10 one top and bottom)
+ * until Kasper sends full-screen captures. Remove each one as its 16:9 capture arrives; nothing new joins this list.
  */
-const KNOWN_2_TO_1 = new Set(["/reel/pac-hub.jpg", "/reel/manuva-app-bom.jpg", "/reel/manuva-app-components.jpg"]);
+const KNOWN_NOT_16_9 = new Set(["/reel/pac-hub.jpg", "/reel/manuva-app-bom.jpg", "/reel/manuva-app-components.jpg", "/reel/silio-dashboard.jpg"]);
+const RATIO = 16 / 9;
 
 describe("slides", () => {
   it("points only at screenshots that exist, each described", () => {
@@ -39,17 +40,17 @@ describe("slides", () => {
       expect(s.shot.alt.length, s.shot.src).toBeGreaterThan(10);
     }
   });
-  it("fills the monitor's 16:10 screen: every screenshot is 16:10 (1280 x 800), but for the known 2:1 ones", () => {
+  it("fills the monitor's 16:9 screen: every screenshot is 16:9 (1280 x 720), but for the known others", () => {
     for (const s of slides) {
       const [w, h] = imageSize(s.shot.src);
-      if (KNOWN_2_TO_1.has(s.shot.src)) continue;
-      expect(Math.abs(w / h - 1.6), `${s.shot.src} is ${w} x ${h}`).toBeLessThanOrEqual(0.01);
+      if (KNOWN_NOT_16_9.has(s.shot.src)) continue;
+      expect(Math.abs(w / h - RATIO), `${s.shot.src} is ${w} x ${h}`).toBeLessThanOrEqual(0.01);
     }
   });
-  it("still has each known 2:1 screenshot at 2:1 (once retaken at 16:10, take it off the list)", () => {
-    for (const { shot: { src } } of slides.filter((s) => KNOWN_2_TO_1.has(s.shot.src))) {
+  it("still has each known exception off 16:9 (once retaken at 16:9, take it off the list)", () => {
+    for (const { shot: { src } } of slides.filter((s) => KNOWN_NOT_16_9.has(s.shot.src))) {
       const [w, h] = imageSize(src);
-      expect(Math.abs(w / h - 1.6), `${src} is ${w} x ${h}: 16:10 now, so remove it from KNOWN_2_TO_1`).toBeGreaterThan(0.01);
+      expect(Math.abs(w / h - RATIO), `${src} is ${w} x ${h}: 16:9 now, so remove it from KNOWN_NOT_16_9`).toBeGreaterThan(0.01);
     }
   });
   it("plays a crate record, or has its own line (and maybe a page to open), never both", () => {
@@ -62,8 +63,14 @@ describe("slides", () => {
     for (const s of slides) if (s.slug) expect(findWork(s.slug), s.slug).toBeDefined();
     for (const w of work) expect(slides.some((s) => s.slug === w.slug), w.slug).toBe(true);
   });
-  it("opens the Pac Technologies site in a new tab from the last slide", () => {
-    expect(slides.at(-1)?.href).toBe("https://www.pac-technologies.com.au");
+  it("plays Marianne's Hair and Pac Technologies from the crate: their headline comes from the record, and there's no page or line of their own", () => {
+    for (const slug of ["mariannes-hair", "pac-technologies"]) {
+      const s = slides.find((x) => x.slug === slug)!;
+      expect(s, slug).toBeDefined();
+      expect(s.href, slug).toBeUndefined();
+      expect(s.line, slug).toBeUndefined();
+    }
+    expect(slides.at(-1)?.slug).toBe("pac-technologies");
   });
   it("runs Pac Hub, Manuva (site, then the app twice), Silio, Marianne's Hair, then the Pac Technologies site", () => {
     expect(slides.map((s) => [s.slug ?? (s.href ? "href" : "none"), s.label, s.shot.src])).toEqual([
@@ -72,8 +79,8 @@ describe("slides", () => {
       ["manuva", "Manuva · bill of materials", "/reel/manuva-app-bom.jpg"],
       ["manuva", "Manuva · components", "/reel/manuva-app-components.jpg"],
       ["silio", "Silio", "/reel/silio-dashboard.jpg"],
-      ["none", "Marianne's Hair · site", "/reel/mariannes-hair-site.jpg"],
-      ["href", "Pac Technologies · site", "/reel/pac-tech-site.jpg"],
+      ["mariannes-hair", "Marianne's Hair · site", "/reel/mariannes-hair-site.jpg"],
+      ["pac-technologies", "Pac Technologies · site", "/reel/pac-tech-site.jpg"],
     ]);
   });
 });

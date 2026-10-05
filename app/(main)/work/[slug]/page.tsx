@@ -7,6 +7,7 @@ import InversionCursor from "@/app/components/InversionCursor";
 import PacForgeContent from "./content/pac-forge";
 import ManuvaContent from "./content/manuva";
 import SilioContent from "./content/silio";
+import CaseStudyContent from "./content/case-study";
 
 type Params = Promise<{ slug: string }>;
 
@@ -16,6 +17,7 @@ const serif   = { fontFamily: "var(--font-fraunces), 'Instrument Serif', Georgia
 
 const allProjects = [...currently, ...previously];
 
+// Long-form pages written by hand. Any other project is written up from its case study (CaseStudyContent).
 const contentBySlug: Record<string, ComponentType> = {
   "pac-forge": PacForgeContent,
   "manuva":    ManuvaContent,
@@ -43,7 +45,7 @@ export default async function CaseStudyPage({ params }: { params: Params }) {
 
   const github = await fetchRepoMeta(project.githubRepo);
 
-  const Content = contentBySlug[project.slug] ?? PacForgeContent;
+  const Content = contentBySlug[project.slug];
 
   return (
     <article>
@@ -154,7 +156,7 @@ export default async function CaseStudyPage({ params }: { params: Params }) {
 
           {/* Prose — last on mobile (sidebar floats above), first col on desktop */}
           <div className="order-last lg:order-none min-w-0">
-            <Content />
+            {Content ? <Content /> : <CaseStudyContent slug={project.slug} />}
           </div>
 
           {/* Sidebar — first on mobile, second col on desktop */}

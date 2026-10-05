@@ -78,8 +78,8 @@ describe("screenFaceFor", () => {
 });
 
 describe("belowFaceFor", () => {
-  // the monitor's 16:10 screen, upright, facing +z, printed 640 px wide
-  const corners = [new Vector3(-0.302, -0.18875, 0), new Vector3(0.302, -0.18875, 0), new Vector3(0.302, 0.18875, 0), new Vector3(-0.302, 0.18875, 0)];
+  // the monitor's 16:9 screen (0.604 x 0.33975 m), upright, facing +z, printed 640 px wide
+  const corners = [new Vector3(-0.302, -0.169875, 0), new Vector3(0.302, -0.169875, 0), new Vector3(0.302, 0.169875, 0), new Vector3(-0.302, 0.169875, 0)];
   const screen = screenFaceFor(corners, 640);
   it("hangs a print of the same width under the screen, gapPx below its bottom edge, in its plane", () => {
     const k = screen.distanceFactor / 400;
@@ -88,7 +88,7 @@ describe("belowFaceFor", () => {
     expect(f.rotation).toEqual(screen.rotation);
     expect(f.heightPx).toBe(300);
     expect(f.position[0]).toBeCloseTo(screen.position[0], 9);
-    expect(f.position[1]).toBeCloseTo(-0.18875 - (12 + 150) * k, 9);
+    expect(f.position[1]).toBeCloseTo(-0.169875 - (12 + 150) * k, 9);
     expect(f.position[2]).toBeCloseTo(screen.position[2], 9);
   });
   it("follows the screen's lean", () => {

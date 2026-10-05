@@ -4,8 +4,28 @@ import { findService, services, engagementModels } from "./services";
 import { CONTACT_EMAIL, CONTACT_LINKS, CONTACT_NAME, subjectForTopic, isTopic } from "./contact";
 
 describe("work", () => {
-  it("has the three case studies, newest first", () =>
-    expect(work.map((w) => w.slug)).toEqual(["pac-forge", "manuva", "silio"]));
+  it("has the five case studies, newest first", () =>
+    expect(work.map((w) => w.slug)).toEqual(["pac-forge", "mariannes-hair", "pac-technologies", "manuva", "silio"]));
+  it("gives Marianne's Hair and Pac Technologies a case study each, not just the project's description", () => {
+    for (const slug of ["mariannes-hair", "pac-technologies"]) {
+      const w = findWork(slug)!;
+      expect(w.intro.length, slug).toBeGreaterThanOrEqual(2);
+      expect(w.sections.length, slug).toBeGreaterThanOrEqual(3);
+      for (const s of w.sections) {
+        expect(s.title, slug).not.toBe("");
+        expect(s.paras.length, `${slug}: ${s.title}`).toBeGreaterThan(0);
+      }
+    }
+  });
+  it("keeps the Pac Technologies site's address, and gives Marianne's Hair none: it isn't live", () => {
+    expect(findWork("pac-technologies")?.liveUrl).toBe("https://www.pac-technologies.com.au");
+    expect(findWork("mariannes-hair")?.liveUrl).toBeUndefined();
+  });
+  it("never prints a phone number in Marianne's Hair's record", () => {
+    const text = JSON.stringify(findWork("mariannes-hair"));
+    expect(text).not.toMatch(/(?<!\d)(\+?61|0)[\s-]?[2-478](?:[\s-]?\d){8}(?!\d)/);
+    expect(text).not.toMatch(/\d{4}[\s-]\d{3}[\s-]\d{3}/);
+  });
   it("gives every item a name, a headline and an intro", () => {
     for (const w of work) {
       expect(w.name).not.toBe("");
