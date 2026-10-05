@@ -10,7 +10,8 @@
   isn't working". The monitor now shows previews of the crate's projects (section 3.5), the sticky notes fall off it onto
   the desk while it's open, and the laptop beside it shows the next preview, dragged across onto the monitor.
 - **Amended again 2026-10-05** (Kasper, after the whiteboard preview): the screenshot squeezed into a window on the
-  monitor had the wrong aspect. The monitor's screen becomes 16:10 and shows the screenshot edge to edge; the words and
+  monitor had the wrong aspect. The monitor's screen becomes 16:9 (Kasper, same day: "isn't 16:9 the usual ratio"; a
+  full-screen capture is 1920 x 1080) and shows the screenshot edge to edge; the words and
   controls move to the laptop (section 3.5).
 
 ## 1. Goal
@@ -129,7 +130,7 @@ Amended 2026-10-05. The age-check joke built in M3 is removed: Kasper found it r
    settles flat and slightly askew at its own landing spot on the desk. All are down within ~0.9 s, before the camera
    arrives (~1.1 s), so the whole screen is clear.
 2. **The reel:** the monitor shows one screenshot at a time, **edge to edge**: no window, title bar or caption on it.
-   Amended 2026-10-05 (Kasper): the monitor's screen is 16:10 like the screenshots (1280 x 800), so nothing is cropped
+   Amended 2026-10-05 (Kasper): the monitor's screen is 16:9 like the screenshots (1280 x 720, captured full screen), so nothing is cropped
    or letterboxed. One slide per screenshot, not per project; a project can have several (Manuva's site and app). The
    order is Pac Hub, Manuva (site, bill of materials, components), Silio, Marianne's Hair, then the Pac Technologies
    site. Pac Hub's screenshot is blurred where it shows a customer, a job or people's names; Marianne's Hair's phone
@@ -157,7 +158,7 @@ Amended 2026-10-05. The age-check joke built in M3 is removed: Kasper found it r
    on the bezel otherwise; ‹ › switch the screenshot and the words at once.
 9. **Accessibility:** the visually hidden heading that takes focus as the monitor opens is with the laptop's controls;
    each screenshot keeps its alt text, read with its label.
-10. **Model:** the monitor's screen (and its bezel) is 16:10, keeping its width; the stand and the sticky notes' bezel
+10. **Model:** the monitor's screen (and its bezel) is 16:9, keeping its width; the stand and the sticky notes' bezel
     spots move to suit. The focus cameras frame the monitor and the laptop on desktop, and the monitor across the width
     with room for the strip under it on phones.
 

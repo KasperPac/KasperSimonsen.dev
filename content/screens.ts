@@ -37,7 +37,7 @@ export const slides: Slide[] = [
   {
     label: "Marianne's Hair · site",
     line: "A one-chair salon in West End. Its site's nearly ready to open.",
-    shot: { src: "/reel/mariannes-hair-site.jpg", alt: "Marianne's Hair's home page: a line drawing of the salon's shopfront above the name, \"Love your Hair\"" },
+    shot: { src: "/reel/mariannes-hair-site.jpg", alt: "Marianne's Hair's home page: a line drawing of the salon's shopfront above its name in script" },
   },
   // Not in the crate yet: it becomes a slug slide (See the case study) once it has a record.
   {
