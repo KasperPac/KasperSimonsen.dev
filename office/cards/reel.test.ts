@@ -17,6 +17,17 @@ const monitor = (v: ReturnType<typeof view>, dots: "buttons" | "marker" = "butto
 const monitorOf = (i: number, dots: "buttons" | "marker" = "buttons") => monitor(view(i), dots);
 
 const n = slides.length;
+/** The markup of the element `start` opens, to its matching close (divs only, as the reel's markup nests). */
+function elementAt(out: string, start: string): string {
+  const from = out.indexOf(start);
+  expect(from).toBeGreaterThanOrEqual(0);
+  let depth = 0;
+  for (const m of out.slice(from).matchAll(/<div\b|<\/div>/g)) {
+    depth += m[0] === "</div>" ? -1 : 1;
+    if (depth === 0) return out.slice(from, from + m.index! + m[0].length);
+  }
+  throw new Error(`unclosed: ${start}`);
+}
 /** A slide in the middle of the reel when there is one, so its neighbours either side are other slides. */
 const mid = Math.min(2, n - 1);
 
@@ -56,6 +67,14 @@ describe("ReelScreen's carousel", () => {
     expect(out.match(/class="reel-dot"/g)).toHaveLength(slides.length);
     expect(out).toContain(`aria-label="${esc(COPY.reel.expand)}"`);
   });
+  it("has no button inside the screenshot that opens full screen: a click on ‹ ›, a dot or expand never also opens it", () => {
+    for (const dots of ["buttons", "marker"] as const) {
+      const out = monitor(view(0, 0, { slide: 1 % n, at: 0.5 }), dots);
+      const open = elementAt(out, '<div class="reel-open"');
+      expect(open).toContain("reel-shot");
+      expect(open).not.toContain("<button");
+    }
+  });
   it("on portrait screens the dots only mark the position, read as Slide n of N", () => {
     const out = monitorOf(1, "marker");
     expect(out).not.toContain('class="reel-dot"');
@@ -76,9 +95,13 @@ describe("ReelWords", () => {
     expect(out).not.toContain("reel-dot");
     expect(out).toContain(`data-slide="${crate}"`);
   });
-  it("on the strip: the same words, description clamped by CSS", (ctx) => {
+  it("on the strip: the label, headline, description (clamped by CSS) and action, and no details line", (ctx) => {
     if (crate < 0) return ctx.skip();
-    expect(words(crate, "strip")).toContain("reel-words--strip");
+    const out = words(crate, "strip");
+    expect(out).toContain("reel-words--strip");
+    expect(out).toContain('class="reel-description"');
+    expect(out).toContain(esc(findWork(slides[crate].slug!)!.description));
+    expect(out).not.toContain("reel-details");
   });
   it("shows the words of the slide it's on, not the one sliding in", () =>
     expect(renderToStaticMarkup(createElement(ReelWords, { view: view(0, 0, { slide: 1 % n, at: 0.4 }), hold, onPlay: () => {}, place: "laptop" }))).toContain(esc(slides[0].label)));

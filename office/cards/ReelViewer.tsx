@@ -9,26 +9,34 @@ const FOCUSABLE = "button:not([disabled])";
 /**
  * The reel's full-screen view (spec 3.5 3a): the screenshot over the whole window, on black, uncropped at its own size,
  * with its label, ‹ › and close. Esc and close call `onClose` (one history step back); ← → step; focus returns to the
- * monitor (whatever opened it).
+ * monitor: to what opened it when that's a control on the monitor's print (the expand button), else to `returnTo`, the
+ * print's heading (a click on the screenshot leaves focus on the page, not on the monitor).
  */
-export default function ReelViewer({ index, titleId, onStep, onClose }: { index: number; titleId: string; onStep: (dir: 1 | -1) => void; onClose: () => void }) {
+export default function ReelViewer({ index, titleId, returnTo, onStep, onClose }: {
+  index: number; titleId: string; returnTo: string; onStep: (dir: 1 | -1) => void; onClose: () => void;
+}) {
   const dialog = useRef<HTMLDivElement>(null);
   const opener = useRef<HTMLElement | null>(null);
   useLayoutEffect(() => {
     if (!opener.current) opener.current = document.activeElement as HTMLElement | null;
   }, []);
   useEffect(() => {
-    const back = opener.current;
+    const from = opener.current;
     dialog.current?.focus({ preventScroll: true });
-    return () => back?.focus?.({ preventScroll: true });
-  }, []);
+    return () => {
+      const home = document.getElementById(returnTo);
+      const back = from && from.isConnected && home?.parentElement?.contains(from) ? from : home;
+      back?.focus({ preventScroll: true });
+    };
+  }, [returnTo]);
   const slide = slides[index];
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key === "Escape") {
       e.stopPropagation();
       e.nativeEvent.stopImmediatePropagation();
       onClose();
-    } else if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+    } else if ((e.key === "ArrowLeft" || e.key === "ArrowRight") && !e.altKey && !e.ctrlKey && !e.metaKey) {
+      // Alt+← is the browser's Back: left to it
       e.preventDefault();
       onStep(e.key === "ArrowLeft" ? -1 : 1);
     } else if (e.key === "Tab" && dialog.current) {

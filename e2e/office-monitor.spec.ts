@@ -1,16 +1,22 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
 import { slides } from "../content/screens";
+import { findWork } from "../content/work";
 import { COPY } from "../office/copy";
 
 /** See office-crate.spec.ts: software WebGL can stall for seconds at a time late in a run. */
 const MOVE_WAIT = 30_000;
 
 const office = (page: Page) => page.locator(".office");
+/** The monitor's print: the screenshot, and the carousel over it (‹ ›, the dots, the expand button), named by its hidden heading. */
 const reel = (page: Page) => page.getByRole("region", { name: COPY.reel.title });
+/** The reel's words: on the laptop, or on a strip under the monitor. */
 const words = (page: Page) => page.locator(".reel-words");
 const shotOnMonitor = (page: Page) => page.locator(".office-reel .reel-shot:not(.reel-moving) img");
-/** A slide's dot on the laptop, by its exact name (one label may start another's). */
+/** A slide's dot on the monitor, by its exact name (one label may start another's). */
 const dot = (page: Page, i: number) => reel(page).getByRole("button", { name: COPY.reel.show(slides[i].label), exact: true });
+/** The full-screen view of slide `i`, by its exact name. */
+const viewer = (page: Page, i: number) => page.getByRole("dialog", { name: slides[i].label, exact: true });
+const slideNow = async (page: Page) => Number(await words(page).getAttribute("data-slide"));
 /** Whether a print holds all its content: nothing pushed out below or to the side. */
 const fits = (print: Locator) => print.evaluate((el) => el.scrollHeight <= el.clientHeight + 1 && el.scrollWidth <= el.clientWidth + 1);
 
@@ -65,15 +71,26 @@ async function printedPx(region: Locator, selector: string) {
   }, selector);
 }
 
-test("the notes come off, the screenshot fills the monitor, the words are on the laptop, and See the case study plays the record and comes back", async ({ page }) => {
+test("the notes come off, the screenshot fills the monitor with the carousel over it, the words are on the laptop, and See the case study plays the record and comes back", async ({ page }) => {
   await standInOffice(page);
   const button = await openMonitor(page);
   await expect(office(page)).toHaveAttribute("data-notes", "down", { timeout: MOVE_WAIT });
+  // the hidden heading that takes focus is on the monitor, with the carousel
   await expect(page.getByRole("heading", { name: COPY.reel.title })).toBeFocused({ timeout: MOVE_WAIT });
+  await expect(page.locator(".office-reel").getByRole("heading", { name: COPY.reel.title })).toHaveCount(1);
   await page.mouse.move(2, 2);
   await expect(page.locator(".reel-words--laptop")).toHaveCount(1);
   await expect(page.locator(".reel-words--strip")).toHaveCount(0);
   await expect(shotOnMonitor(page)).toBeVisible({ timeout: MOVE_WAIT }); // placed in the scene (hidden until then)
+  // ‹ › and a dot per slide are on the monitor's print; the words have none of them
+  for (const name of [COPY.reel.prev, COPY.reel.next]) {
+    await expect(page.locator(".office-reel").getByRole("button", { name })).toHaveCount(1);
+    await expect(words(page).getByRole("button", { name })).toHaveCount(0);
+  }
+  await expect(page.locator(".office-reel .reel-dot")).toHaveCount(slides.length);
+  await expect(words(page).locator(".reel-dot")).toHaveCount(0);
+  // laid out at 1280 px across, so the browser shrinks it onto the screen (sharp) rather than blowing it up
+  expect(await page.locator(".office-reel").evaluate((el) => (el as HTMLElement).offsetWidth)).toBe(1280);
   const img = (await shotOnMonitor(page).boundingBox())!;
   expect(img.width / img.height).toBeGreaterThan(1.75); // 16:9
   expect(img.width / img.height).toBeLessThan(1.8);
@@ -85,14 +102,16 @@ test("the notes come off, the screenshot fills the monitor, the words are on the
   expect(new URL(page.url()).pathname).toBe("/"); // the reel is local
   await expect(shotOnMonitor(page)).toHaveAttribute("src", slides[1].shot.src);
   await expect(words(page).locator(".reel-label")).toHaveText(slides[1].label);
-  expect(await fits(words(page))).toBe(true); // the laptop's print holds its words, action and every row of dots
+  await expect(page.getByRole("dialog")).toHaveCount(0); // › steps; it doesn't open full screen
+  expect(await fits(words(page))).toBe(true); // the laptop's print holds its words and action
 
   // A live site with no record in the crate yet: its button opens the site (not clicked here, it opens another tab).
   if (SITE >= 0) {
     await dot(page, SITE).click();
     await expect(words(page)).toHaveAttribute("data-slide", String(SITE), { timeout: MOVE_WAIT });
-    await expect(reel(page).getByRole("button", { name: COPY.reel.visit })).toBeVisible();
-    await expect(reel(page).getByRole("button", { name: COPY.reel.caseStudy })).toHaveCount(0);
+    await expect(words(page).getByRole("button", { name: COPY.reel.visit })).toBeVisible();
+    await expect(words(page).getByRole("button", { name: COPY.reel.caseStudy })).toHaveCount(0);
+    await expect(words(page).locator(".reel-description, .reel-details")).toHaveCount(0); // work not in the crate: its own line only
   } else test.info().annotations.push({ type: "skipped", description: "Visit the site: no slide is a live site outside the crate" });
 
   if (CRATE < 0) {
@@ -101,9 +120,15 @@ test("the notes come off, the screenshot fills the monitor, the words are on the
   }
   await dot(page, CRATE).click();
   await expect(words(page)).toHaveAttribute("data-slide", String(CRATE), { timeout: MOVE_WAIT });
+  await expect(page.getByRole("dialog")).toHaveCount(0); // a dot doesn't open full screen
+  // the laptop reads the project's description and its details line
+  const project = findWork(slides[CRATE].slug!)!;
+  await expect(words(page).locator(".reel-description")).toHaveText(project.description);
+  await expect(words(page).locator(".reel-details")).toHaveText(project.details);
+  expect(await fits(words(page))).toBe(true);
 
   // the button plays the slide its words name
-  await reel(page).getByRole("button", { name: COPY.reel.caseStudy }).click();
+  await words(page).getByRole("button", { name: COPY.reel.caseStudy }).click();
   await expect(page).toHaveURL(new RegExp(`/work/${slides[CRATE].slug}$`), { timeout: MOVE_WAIT });
   await expect(office(page)).toHaveAttribute("data-playing", slides[CRATE].slug!);
   await expect(office(page)).toHaveAttribute("data-notes", "up", { timeout: MOVE_WAIT });
@@ -117,6 +142,80 @@ test("the notes come off, the screenshot fills the monitor, the words are on the
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
   await expect(office(page)).toHaveAttribute("data-notes", "up", { timeout: MOVE_WAIT });
   await expect(button).toBeFocused();
+});
+
+test("a click on the screenshot opens it full screen: uncropped, ← → step, the reel holds still, Esc or Back closes it back to the monitor", async ({ page }) => {
+  test.slow(); // 7 s of the reel's clock (see reelSeconds)
+  await standInOffice(page);
+  const monitorButton = await openMonitor(page);
+  await expect(shotOnMonitor(page)).toBeVisible({ timeout: MOVE_WAIT });
+  const heading = page.getByRole("heading", { name: COPY.reel.title });
+  await expect(heading).toBeFocused({ timeout: MOVE_WAIT });
+
+  // ‹ steps; it doesn't open full screen
+  const before = await slideNow(page);
+  await reel(page).getByRole("button", { name: COPY.reel.prev }).click();
+  await expect(words(page)).not.toHaveAttribute("data-slide", String(before), { timeout: MOVE_WAIT });
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.locator(".office-reel .reel-moving")).toHaveCount(0, { timeout: MOVE_WAIT });
+
+  // The screenshot's centre, away from the zones and the dots.
+  const i = await slideNow(page);
+  const open = (await page.locator(".office-reel .reel-open").boundingBox())!;
+  await page.mouse.click(open.x + open.width / 2, open.y + open.height / 2);
+  await expect(viewer(page, i)).toBeVisible({ timeout: MOVE_WAIT });
+  expect(new URL(page.url()).pathname).toBe("/"); // a local layer, like the panels
+  const img = viewer(page, i).locator("img");
+  await expect(img).toHaveAttribute("src", slides[i].shot.src);
+  await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).complete && (el as HTMLImageElement).naturalWidth > 0)).toBe(true);
+  const vp = page.viewportSize()!;
+  const box = (await img.boundingBox())!;
+  test.info().annotations.push({ type: "measured", description: `full screen: ${box.width.toFixed(1)} x ${box.height.toFixed(1)} in ${vp.width} x ${vp.height}` });
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.y).toBeGreaterThanOrEqual(0);
+  expect(box.x + box.width).toBeLessThanOrEqual(vp.width + 0.5);
+  expect(box.y + box.height).toBeLessThanOrEqual(vp.height + 0.5);
+  expect(Math.max(box.width / vp.width, box.height / vp.height), `${box.width} x ${box.height} in ${vp.width} x ${vp.height}`).toBeGreaterThanOrEqual(0.9);
+  expect(await img.evaluate((el) => getComputedStyle(el).objectFit)).toBe("contain");
+
+  // → steps to the next slide, at once
+  const next = (i + 1) % slides.length;
+  await page.keyboard.press("ArrowRight");
+  await expect(viewer(page, next)).toBeVisible({ timeout: 5_000 });
+  await expect(viewer(page, next).locator("img")).toHaveAttribute("src", slides[next].shot.src);
+
+  // Esc closes just the view: still at the monitor, focus back on it (a click leaves focus nowhere, so: its heading)
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(office(page)).toHaveAttribute("data-director", "focused:hs_monitor");
+  await expect(heading).toBeFocused();
+  await expect(words(page)).toHaveAttribute("data-slide", String(next)); // the monitor followed the view
+
+  // Back closes it too, without leaving the monitor
+  await page.mouse.click(open.x + open.width / 2, open.y + open.height / 2);
+  await expect(viewer(page, next)).toBeVisible({ timeout: MOVE_WAIT });
+  await page.goBack();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(office(page)).toHaveAttribute("data-director", "focused:hs_monitor");
+
+  // From the keyboard, by the expand button; the reel holds still while the view is open (the pointer away from it all)
+  await page.mouse.move(2, 2);
+  const expand = reel(page).getByRole("button", { name: COPY.reel.expand });
+  await expand.focus();
+  await page.keyboard.press("Enter");
+  const held = await slideNow(page);
+  await expect(viewer(page, held)).toBeVisible({ timeout: MOVE_WAIT });
+  await reelSeconds(page, 7);
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(words(page)).toHaveAttribute("data-slide", String(held));
+  await expect(expand).toBeFocused(); // back on what opened it
+  await expect(office(page)).toHaveAttribute("data-director", "focused:hs_monitor");
+
+  // a second Esc leaves the monitor
+  await page.keyboard.press("Escape");
+  await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
+  await expect(monitorButton).toBeFocused();
 });
 
 test("it moves on by itself, and holds while the pointer is on the laptop's words or the monitor's screenshot", async ({ page }) => {
@@ -195,7 +294,7 @@ test.describe("reduced motion", () => {
     await expect(words(page)).toHaveAttribute("data-slide", "1", { timeout: 2_000 });
     await expect(shotOnMonitor(page)).toHaveAttribute("src", slides[1].shot.src);
     await expect(page.locator(".reel-moving")).toHaveCount(0);
-    // Esc from inside the controls print backs out of the monitor (spec 3.5.6), the notes back on the bezel.
+    // Esc from the monitor's controls backs out of the monitor (spec 3.5.6), the notes back on the bezel.
     await expect(reel(page).getByRole("button", { name: COPY.reel.next })).toBeFocused();
     await page.keyboard.press("Escape");
     await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
@@ -213,7 +312,7 @@ for (const [width, height] of [
 ]) {
   test.describe(`portrait ${width}x${height}`, () => {
     test.use({ viewport: { width, height }, reducedMotion: "reduce" });
-    test("the words move to a strip under the monitor, on the screen and big enough to tap, on every slide", async ({ page }) => {
+    test("the words move to a strip under the monitor, on the screen and big enough to tap, on every slide; ‹ › on the monitor are finger-sized and the dots only mark the place", async ({ page }) => {
       test.slow(); // a pass over every slide
       await standInOffice(page);
       await openMonitor(page);
@@ -228,6 +327,18 @@ for (const [width, height] of [
       expect(shot.x).toBeGreaterThanOrEqual(0);
       expect(shot.x + shot.width).toBeLessThanOrEqual(width);
       expect(await printedPx(words(page), ".reel-headline")).toBeGreaterThanOrEqual(12);
+      // On the monitor: ‹ › big enough for a finger, over the screenshot; the dots too small to tap, so only a marker.
+      await expect(reel(page).locator(".reel-dot")).toHaveCount(0);
+      await expect(reel(page).locator(".reel-pip")).toHaveCount(slides.length);
+      await expect(reel(page).getByText(COPY.reel.position(1, slides.length), { exact: true })).toHaveCount(1);
+      for (const name of [COPY.reel.prev, COPY.reel.next]) {
+        const box = (await reel(page).getByRole("button", { name }).boundingBox())!;
+        test.info().annotations.push({ type: "measured", description: `${width}x${height} ${name}: ${box.width.toFixed(1)} x ${box.height.toFixed(1)}` });
+        expect(box.width, name).toBeGreaterThanOrEqual(40);
+        expect(box.height, name).toBeGreaterThanOrEqual(40);
+        expect(box.x, name).toBeGreaterThanOrEqual(shot.x - 1);
+        expect(box.x + box.width, name).toBeLessThanOrEqual(shot.x + shot.width + 1);
+      }
       for (let k = 0; k < slides.length; k++) {
         if (k > 0) await reel(page).getByRole("button", { name: COPY.reel.next }).click();
         await expect(words(page)).toHaveAttribute("data-slide", String(k), { timeout: 5_000 });
@@ -237,10 +348,15 @@ for (const [width, height] of [
         expect(strip.y + strip.height, at).toBeLessThanOrEqual(height);
         expect(strip.x, at).toBeGreaterThanOrEqual(0);
         expect(strip.x + strip.width, at).toBeLessThanOrEqual(width);
-        expect(await fits(words(page)), `${at}: the strip holds its words and controls`).toBe(true);
+        expect(await fits(words(page)), `${at}: the strip holds its words and action`).toBe(true);
+        // the label, the headline, two lines of the description and the action: no details line on the strip
+        await expect(words(page).locator(".reel-description"), at).toHaveCount(slides[k].slug ? 1 : 0);
+        if (slides[k].slug) await expect(words(page).locator(".reel-description"), at).toBeVisible();
+        await expect(words(page).locator(".reel-details"), at).toHaveCount(0);
         const action = slides[k].slug ? [COPY.reel.caseStudy] : slides[k].href ? [COPY.reel.visit] : [];
-        for (const name of [COPY.reel.prev, COPY.reel.next, ...action]) {
-          const box = (await reel(page).getByRole("button", { name }).boundingBox())!;
+        for (const name of action) {
+          const box = (await words(page).getByRole("button", { name }).boundingBox())!;
+          test.info().annotations.push({ type: "measured", description: `${width}x${height} ${at} ${name}: ${box.width.toFixed(1)} x ${box.height.toFixed(1)}` });
           expect(box.width, `${at}: ${name}`).toBeGreaterThanOrEqual(40);
           expect(box.height, `${at}: ${name}`).toBeGreaterThanOrEqual(40);
           expect(box.y + box.height, `${at}: ${name} inside the strip`).toBeLessThanOrEqual(strip.y + strip.height + 1);

@@ -6,7 +6,7 @@ import { COPY } from "@/office/copy";
 import ReelViewer from "./ReelViewer";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/'/g, "&#x27;").replace(/"/g, "&quot;");
-const html = (i: number) => renderToStaticMarkup(createElement(ReelViewer, { index: i, titleId: "v", onStep: () => {}, onClose: () => {} }));
+const html = (i: number) => renderToStaticMarkup(createElement(ReelViewer, { index: i, titleId: "v", returnTo: "r", onStep: () => {}, onClose: () => {} }));
 
 describe("ReelViewer", () => {
   it("is a modal dialog named for the slide, its screenshot uncropped, with ‹ › and close", () => {

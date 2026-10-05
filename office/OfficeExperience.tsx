@@ -18,11 +18,13 @@ import BusinessCard from "./cards/BusinessCard";
 import SleeveBack from "./cards/SleeveBack";
 import Plaque from "./cards/Plaque";
 import ReelScreen from "./cards/ReelScreen";
-import ReelControls from "./cards/ReelControls";
+import ReelWords from "./cards/ReelWords";
+import ReelViewer from "./cards/ReelViewer";
 import Whiteboard, { type BoardPointer } from "./cards/Whiteboard";
 import { endStroke } from "./whiteboard/board";
 import type { ToolId } from "./whiteboard/marker";
 import { useReel } from "./monitor/useReel";
+import { wrap } from "./monitor/reel";
 import { usePortrait } from "./usePortrait";
 import { clampDig } from "./objects/crate";
 import { canPull, digFor, swipeStep } from "./crate/dig";
@@ -177,8 +179,12 @@ export default function OfficeExperience() {
   // The monitor's reel of past work (spec 3.5): runs while the monitor is open, and keeps its place between visits.
   // Asked once, on the client: this page is also rendered on the server, where there is no matchMedia.
   const reduced = useMemo(() => typeof window !== "undefined" && reducedMotion(), []);
-  const reel = useReel(focusedOn === "hs_monitor", slides.length, reduced);
-  const reelPlace = usePortrait() ? "strip" : "laptop";
+  // The reel's full-screen view (spec 3.5 3a) is the monitor's reading layer, as Read more is the others': Esc or Back
+  // closes it to the monitor. The reel holds still while it's open.
+  const viewing = scene.reading && scene.target?.hotspot === "hs_monitor";
+  const reel = useReel(focusedOn === "hs_monitor", slides.length, reduced, viewing);
+  const portraitScreen = usePortrait();
+  const reelPlace = portraitScreen ? "strip" : "laptop";
   const play = useCallback((slug: string) => activate({ hotspot: "hs_crate", item: slug }), [activate]);
   // The reel's action plays the slide its words name: a crate record plays as picking it in the crate does, a page opens in a new tab.
   const reelCurrent = reel.current;
@@ -444,17 +450,26 @@ export default function OfficeExperience() {
             onSleeveOut={setSleeveOut}
             shelf={shelf}
             plaque={plaqueRef}
-            monitorScreen={focusedOn === "hs_monitor" ? { content: <ReelScreen view={reel.view} hold={reel.hold} /> } : null}
-            reelControls={
+            monitorScreen={
               focusedOn === "hs_monitor"
                 ? {
                     titleId: "reel-title",
-                    place: reelPlace,
                     content: (
-                      <ReelControls titleId="reel-title" view={reel.view} hold={reel.hold} onStep={reel.step} onShow={reel.show} onPlay={playReel} place={reelPlace} />
+                      <ReelScreen
+                        titleId="reel-title"
+                        view={reel.view}
+                        hold={reel.hold}
+                        onStep={reel.step}
+                        onShow={reel.show}
+                        onOpen={read}
+                        dots={portraitScreen ? "marker" : "buttons"}
+                      />
                     ),
                   }
                 : null
+            }
+            reelWords={
+              focusedOn === "hs_monitor" ? { place: reelPlace, content: <ReelWords view={reel.view} hold={reel.hold} onPlay={playReel} place={reelPlace} /> } : null
             }
             whiteboard={{
               print:
@@ -599,6 +614,17 @@ export default function OfficeExperience() {
       {/* stays under the panel while reading, so closing it returns to the plaque and its Read more */}
       {focusedOn === "hs_shelf" && shelfIndex >= 0 && outIndex === shelfIndex && (
         <Plaque service={services[shelfIndex]} titleId="plaque-title" cardRef={plaqueRef} onReadMore={read} />
+      )}
+
+      {/* over the whole window (never inside the monitor's print, which would confine it); ← → switch at once, mid-slide too */}
+      {viewing && (
+        <ReelViewer
+          index={reel.view.words}
+          titleId="reel-viewer-title"
+          returnTo="reel-title"
+          onStep={(d) => reel.show(wrap(reel.view.words + d, slides.length))}
+          onClose={back}
+        />
       )}
 
       {scene.reading && scene.target?.hotspot === "hs_drawer" && (

@@ -42,7 +42,7 @@ import { PLATTER_NODE, STAND_NODE } from "./idle/turntable";
 import CardFace from "./cards/CardFace";
 import { SLEEVE_WIDTH_PX } from "./cards/SleeveBack";
 import { SCREEN_WIDTH_PX } from "./cards/ReelScreen";
-import { LAPTOP_WIDTH_PX, STRIP_GAP_PX, STRIP_HEIGHT_PX, STRIP_WIDTH_PX } from "./cards/ReelControls";
+import { LAPTOP_WIDTH_PX, STRIP_GAP_PX, STRIP_HEIGHT_PX, STRIP_WIDTH_PX } from "./cards/ReelWords";
 import { STRIP_PX, TOOLS, WHITEBOARD_WIDTH_PX, type BoardPointer } from "./cards/Whiteboard";
 import { screenFaceFor } from "./cards/face";
 import { boardPoint, findTools, handPlacement, ToolMotion, type Face, type ToolId, type ToolNodes } from "./whiteboard/marker";
@@ -75,10 +75,10 @@ export type OfficeCanvasProps = {
   shelf: RefObject<{ presented: number | null }>;
   /** The plaque card the canvas keeps beside the picked ornament (CSS docks it on narrow screens). */
   plaque: RefObject<HTMLElement | null>;
-  /** What's printed on the monitor's screen while it's open, or null. */
-  monitorScreen: { content: ReactNode } | null;
-  /** The reel's words and controls (spec 3.5): on the laptop, or on portrait screens on a strip under the monitor's screen. */
-  reelControls: { titleId: string; content: ReactNode; place: "laptop" | "strip" } | null;
+  /** What's printed on the monitor's screen while it's open (the reel and its carousel, spec 3.5), or null. Focus moves to its title. */
+  monitorScreen: { titleId: string; content: ReactNode } | null;
+  /** The reel's words (spec 3.5): on the laptop, or on portrait screens on a strip under the monitor's screen. */
+  reelWords: { content: ReactNode; place: "laptop" | "strip" } | null;
   /**
    * The whiteboard: what's printed on it while it's open (or null), and, read every frame, the tool in hand (null when
    * the board isn't open) and where the pointer is on the board.
@@ -249,7 +249,7 @@ function Street({ progress, pan, host, director, onProgressCross, onSettled, inf
 
 type OfficeProps = Pick<
   OfficeCanvasProps,
-  "host" | "director" | "hover" | "overlay" | "drawerCard" | "crate" | "sleeveBack" | "shelf" | "plaque" | "monitorScreen" | "reelControls"
+  "host" | "director" | "hover" | "overlay" | "drawerCard" | "crate" | "sleeveBack" | "shelf" | "plaque" | "monitorScreen" | "reelWords"
   | "whiteboard" | "onHover" | "onActivate" | "onDrawerOpen" | "onSleeveOut" | "onPresented" | "onBoardHeight"
 > & {
   info: RefObject<OfficeInfo | null>;
@@ -257,7 +257,7 @@ type OfficeProps = Pick<
 
 /** The office model: hover, click, highlight, object motion, where the label and markers go, and the business card's print. */
 function Office({
-  host, director, hover, overlay, drawerCard, crate, sleeveBack, shelf, plaque, monitorScreen, reelControls, whiteboard,
+  host, director, hover, overlay, drawerCard, crate, sleeveBack, shelf, plaque, monitorScreen, reelWords, whiteboard,
   onHover, onActivate, onDrawerOpen, onSleeveOut, onPresented, onBoardHeight, info,
 }: OfficeProps) {
   const { gltf: office, handle } = useCleanEdges(manifest.office.url, highlightKey);
@@ -588,19 +588,19 @@ function Office({
         </CardFace>
       )}
       {monitorScreen && screen && (
-        // titleId is only a placeholder: focus is off, and the reel's heading (and its region's name) is with its controls
-        <CardFace surface={screen} place="screen" widthPx={SCREEN_WIDTH_PX} hotspot="hs_monitor" titleId="reel-shot" focus={false}>
+        <CardFace surface={screen} place="screen" widthPx={SCREEN_WIDTH_PX} hotspot="hs_monitor" titleId={monitorScreen.titleId}>
           {monitorScreen.content}
         </CardFace>
       )}
-      {reelControls?.place === "laptop" && laptop && (
-        <CardFace surface={laptop} place="screen" widthPx={LAPTOP_WIDTH_PX} hotspot="hs_monitor" titleId={reelControls.titleId}>
-          {reelControls.content}
+      {/* titleId is only a placeholder: focus is off, and the reel's heading (and its region's name) is on the monitor, with the carousel */}
+      {reelWords?.place === "laptop" && laptop && (
+        <CardFace surface={laptop} place="screen" widthPx={LAPTOP_WIDTH_PX} hotspot="hs_monitor" titleId="reel-words" focus={false}>
+          {reelWords.content}
         </CardFace>
       )}
-      {reelControls?.place === "strip" && screen && (
-        <CardFace surface={screen} place="screen" widthPx={STRIP_WIDTH_PX} below={{ heightPx: STRIP_HEIGHT_PX, gapPx: STRIP_GAP_PX }} hotspot="hs_monitor" titleId={reelControls.titleId}>
-          {reelControls.content}
+      {reelWords?.place === "strip" && screen && (
+        <CardFace surface={screen} place="screen" widthPx={STRIP_WIDTH_PX} below={{ heightPx: STRIP_HEIGHT_PX, gapPx: STRIP_GAP_PX }} hotspot="hs_monitor" titleId="reel-words" focus={false}>
+          {reelWords.content}
         </CardFace>
       )}
       {whiteboard.print && surface && (
