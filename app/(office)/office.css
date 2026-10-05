@@ -418,7 +418,7 @@ html.office-locked {
 /* The plaque beside a picked ornament: a focus target for the reader, not a control. */
 .office-card .office-card-title:focus { outline: none; }
 
-/* The monitor's print fills its screen edge to edge (.office-reel lays it out); the reel's words are .reel-words, on the laptop or a strip. */
+/* The monitor's print fills its screen edge to edge (.office-reel lays it out, with the carousel over it); the reel's words are .reel-words, on the laptop or a strip. */
 .office-screen { padding: 0; }
 
 /* A service's Read more ends with the two ways to work. */
@@ -440,6 +440,22 @@ html.office-locked {
 .reel-shot > img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .reel-moving { transform: translateX(calc(var(--at, 0) * 100%)); box-shadow: -10px 0 24px rgba(0, 0, 0, calc(0.55 * (1 - var(--at, 0)))); }
 .reel-preload { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+/* The carousel over the print (spec 3.5): laid out at 1280 x 720, so shown at ~0.6 on a 1440-wide desktop and ~0.28 on a
+   390-wide phone. ‹ and › are tall zones at the edges, faint until hovered or focused on a mouse, always shown on touch. */
+.reel-open { position: absolute; inset: 0; cursor: zoom-in; }
+.reel-zone { position: absolute; top: 0; bottom: 96px; z-index: 2; width: 16%; padding: 0; border: 0; color: var(--office-fg); font: 140px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; opacity: 0; transition: opacity 0.2s; }
+.reel-zone--prev { left: 0; background: linear-gradient(to right, rgba(11, 11, 11, 0.55), transparent); }
+.reel-zone--next { right: 0; background: linear-gradient(to left, rgba(11, 11, 11, 0.55), transparent); }
+.office-reel:hover .reel-zone, .reel-zone:focus-visible { opacity: 1; }
+.reel-expand { position: absolute; top: 18px; right: 18px; z-index: 2; width: 72px; height: 72px; border: 1px solid rgba(232, 232, 232, 0.6); background: rgba(11, 11, 11, 0.6); color: var(--office-fg); font: 40px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; opacity: 0; transition: opacity 0.2s; }
+.office-reel:hover .reel-expand, .reel-expand:focus-visible { opacity: 1; }
+.reel-dots { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 22px; min-height: 96px; padding: 0 16%; box-sizing: border-box; background: linear-gradient(to top, rgba(11, 11, 11, 0.6), transparent); }
+.reel-dot { width: 26px; height: 26px; padding: 0; border: 2px solid var(--office-fg); border-radius: 50%; background: none; cursor: pointer; }
+.reel-dot[aria-current="true"] { background: var(--accent); border-color: var(--accent); }
+.reel-pip { width: 30px; height: 30px; border: 3px solid var(--office-fg); border-radius: 50%; }
+.reel-pip[data-current] { background: var(--accent); border-color: var(--accent); }
+@media (hover: none) { .reel-zone, .reel-expand { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .reel-zone, .reel-expand { transition: none; } }
 .reel-words { box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; height: 100%; padding: 22px 26px 18px; font-size: 22px; }
 .reel-label { display: flex; align-items: center; gap: 10px; margin: 0; font: 16px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; }
 .reel-label::before { content: ""; flex: none; width: 34px; height: 8px; background: radial-gradient(circle, rgba(232, 232, 232, 0.7) 3px, transparent 3.5px) 0 0 / 12px 8px repeat-x; }

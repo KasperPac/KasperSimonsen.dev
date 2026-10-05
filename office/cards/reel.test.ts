@@ -12,20 +12,22 @@ const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/'/g, "&#x27;").repl
 const hold = { onPointerEnter: () => {}, onPointerLeave: () => {}, onFocus: () => {}, onBlur: () => {} };
 
 const view = (monitor: number, words = monitor, moving: { slide: number; at: number } | null = null) => ({ monitor, moving, words });
-const monitor = (v: ReturnType<typeof view>) => renderToStaticMarkup(createElement(ReelScreen, { view: v, hold }));
+const monitor = (v: ReturnType<typeof view>, dots: "buttons" | "marker" = "buttons") =>
+  renderToStaticMarkup(createElement(ReelScreen, { titleId: "r", view: v, hold, onStep: () => {}, onShow: () => {}, onOpen: () => {}, dots }));
+const monitorOf = (i: number, dots: "buttons" | "marker" = "buttons") => monitor(view(i), dots);
 
 const n = slides.length;
 /** A slide in the middle of the reel when there is one, so its neighbours either side are other slides. */
 const mid = Math.min(2, n - 1);
 
 describe("ReelScreen", () => {
-  it("is the screenshot edge to edge, its alt read with its label, and no words or controls", () => {
+  it("is the screenshot edge to edge, its alt read with its label, and none of the slide's words", () => {
     const out = monitor(view(mid));
     const s = slides[mid];
     expect(out).toContain(`src="${s.shot.src}"`);
     expect(out).toContain(`alt="${esc(`${s.label}: ${s.shot.alt}`)}"`);
-    expect(out).not.toContain("<button");
     expect(out).not.toContain("reel-bar");
+    expect(out).not.toContain("reel-words");
     expect(out).toContain("data-reel");
   });
   it("has the next and the previous slides' screenshots in the page, hidden, so they're fetched before › or ‹ shows them", (ctx) => {
@@ -42,6 +44,22 @@ describe("ReelScreen", () => {
     const out = monitor(view(0, 0, { slide: 1 % n, at: 0.5 }));
     expect(out).toMatch(/class="reel-shot reel-moving"[^>]*aria-hidden="true"/);
     expect(out).toContain(`src="${slides[1 % n].shot.src}"`);
+  });
+});
+
+describe("ReelScreen's carousel", () => {
+  it("carries the hidden heading, ‹ ›, a dot button per slide and the expand button", () => {
+    const out = monitorOf(0);
+    expect(out).toMatch(/<h2[^>]*id="r"[^>]*class="visually-hidden"/);
+    expect(out).toContain(`aria-label="${esc(COPY.reel.prev)}"`);
+    expect(out).toContain(`aria-label="${esc(COPY.reel.next)}"`);
+    expect(out.match(/class="reel-dot"/g)).toHaveLength(slides.length);
+    expect(out).toContain(`aria-label="${esc(COPY.reel.expand)}"`);
+  });
+  it("on portrait screens the dots only mark the position, read as Slide n of N", () => {
+    const out = monitorOf(1, "marker");
+    expect(out).not.toContain('class="reel-dot"');
+    expect(out).toContain(esc(COPY.reel.position(2, slides.length)));
   });
 });
 

@@ -70,6 +70,8 @@ export const COPY = {
     prev: "Previous",
     next: "Next",
     show: (name: string) => `Show ${name}`,
+    /** The monitor's button for the full-screen view. DRAFT. */
+    expand: "See it full screen",
     /** The strip's position, for screen readers (it shows `3 / 7`). DRAFT. */
     position: (n: number, total: number) => `Slide ${n} of ${total}`,
   },
