@@ -138,29 +138,40 @@ Amended 2026-10-05. The age-check joke built in M3 is removed: Kasper found it r
    order is Pac Hub, Manuva (site, bill of materials, components), Silio, Marianne's Hair, then the Pac Technologies
    site. Pac Hub's screenshot is blurred where it shows a customer, a job or people's names; Marianne's Hair's phone
    number is blurred.
-3. **The laptop** beside the monitor carries the reel's words and controls, as real buttons: the slide's label (mono,
-   like a title bar), its one-line headline, its action, and ‹, a dot per slide, ›. The action is **See the case study**
-   for a crate project; **Visit the site** (a new tab) for work not yet in the crate that is live; nothing for a site not
-   live yet (Marianne's Hair, until it has a record or a domain). Every ~5 s (or on ›) the next screenshot slides in over
-   the monitor from the right, the laptop's side (~0.7 s, eased), and the laptop's words change to it as it lands. ‹
-   plays it backwards: the screenshot slides out to the right and the previous one is underneath. The pointer that
-   dragged windows across, and the laptop's preview of the next slide, are gone.
-4. **Pausing:** the reel holds still while the pointer is over the monitor or the laptop, or keyboard focus is in the
-   laptop's controls, and never moves on while the visitor is reading.
+3. **The laptop** beside the monitor carries the slide's words: its label (mono, like a title bar), its one-line
+   headline, the project's short description, a line of details (years · role · stack) and its action. The action is
+   **See the case study** for a crate project; **Visit the site** (a new tab) for work not yet in the crate that is
+   live; nothing for a site not live yet. Work not in the crate shows its own line and no description or details.
+   Every ~5 s (or on ›) the next screenshot slides in over the monitor from the right, the laptop's side (~0.7 s,
+   eased), and the laptop's words change to it as it lands. ‹ plays it backwards: the screenshot slides out to the
+   right and the previous one is underneath. Amended 2026-10-06 (Kasper): **the carousel's controls are on the monitor**,
+   over the screenshot: ‹ and › as tall zones at its left and right edges (faint until hovered or focused on a mouse,
+   always shown on touch) and a dot per slide along its bottom edge. On phones the dots only show where the reel is
+   (too small to tap); ‹ › are sized for fingers.
+3a. **Sharp and full screen** (amended 2026-10-06, Kasper: the screenshot looked soft and compressed). The monitor's
+   print is laid out at twice its old size so the browser shrinks it onto the screen rather than stretching it, and
+   the screenshots are 1920 x 1080 (at least 1280 wide) at a higher quality. Clicking the screenshot (or a small
+   expand button in its corner, for the keyboard) opens it **full screen**: over the whole browser window, on black,
+   uncropped at its own size, with its label, ‹ ›, and × to close. Esc or × closes it and focus returns to the
+   monitor; ← → step. The reel holds still while it's open. Under reduced motion it opens and steps without fades.
+4. **Pausing:** the reel holds still while the pointer is over the monitor or the laptop, keyboard focus is in the
+   reel's controls, or the full-screen view is open, and never moves on while the visitor is reading.
 5. **See the case study** plays that project's record exactly as picking it in the crate does: the camera goes to the
    record player and the URL becomes `/work/<slug>`. Back returns to the monitor; Back again to the standing spot.
 6. **Leaving** (Back, Esc, or See the case study): the notes lift off the desk and hop back to their places on the bezel,
    each reversing its own fall, finishing as the camera arrives where it's going. Leaving mid-fall, each note turns round
    from wherever it is.
-7. **Phones:** the camera frames the monitor across the width. The laptop is mostly out of shot, so its words and
-   controls are printed on a strip just under the monitor instead: a print in the screen's plane, below the bezel and in
-   front of the stand, sized for fingers (every button at least 40 x 40 CSS px on screen). Only one of the two carries
-   the controls at a time (the strip on portrait screens, the laptop otherwise), so the keyboard and screen readers meet
-   them once. The next screenshot still slides in from the right-hand edge. The notes fall as on desktop.
+7. **Phones:** the camera frames the monitor across the width, with ‹ › and the position dots over the screenshot as
+   on desktop. The laptop is mostly out of shot, so its words are printed on a strip just under the monitor instead:
+   a print in the screen's plane, below the bezel and in front of the stand, with the label, the headline, two lines
+   of the description and the action, sized for fingers (every button at least 40 x 40 CSS px on screen). Only one of
+   the two carries the words at a time (the strip on portrait screens, the laptop otherwise), so the keyboard and
+   screen readers meet them once.
 8. **Reduced motion:** no fall, no slide, no auto-advance. The notes are on the desk while the monitor is open and back
    on the bezel otherwise; ‹ › switch the screenshot and the words at once.
-9. **Accessibility:** the visually hidden heading that takes focus as the monitor opens is with the laptop's controls;
-   each screenshot keeps its alt text, read with its label.
+9. **Accessibility:** the visually hidden heading that takes focus as the monitor opens is with the reel's controls on
+   the monitor (amended 2026-10-06); each screenshot keeps its alt text, read with its label; the position is read as
+   "Slide n of N"; the full-screen view is a dialog named for the slide.
 10. **Model:** the monitor's screen (and its bezel) is 16:9, keeping its width; the stand and the sticky notes' bezel
     spots move to suit. The focus cameras frame the monitor and the laptop on desktop, and the monitor across the width
     with room for the strip under it on phones.
