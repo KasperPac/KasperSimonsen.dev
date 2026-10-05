@@ -95,7 +95,7 @@ export const currently: Project[] = [
     githubRepo: "Mariannes-Hair", // src: README "Deployment" (github.com/KasperPac/Mariannes-Hair, private; owner differs from lib/github's GITHUB_USERNAME)
     title: "ONE PLACE TO CHANGE A PRICE",
     displayName: "Marianne's Hair",
-    logo: "/mariannes-hair-mark.svg", // copy of Mariannes-Hair/public/favicon.svg: the gold mark on navy
+    logo: "/mariannes-hair-mark.svg", // a white, mark-only SVG (no navy square), from Mariannes-Hair/public/favicon.svg
     role: "Sole engineer", // src: git shortlog, one author. [inferred] the mark itself comes from the designer's master (commit MHAIR-48), not from this repo's author
     stack: [
       "Astro 7, server-rendered on Vercel with CDN caching", // src: package.json; astro.config.ts; src/pages/index.astro (Cache-Control)

@@ -80,7 +80,10 @@ and come in close once the sleeve has turned round. The crate's hint says swipe 
 2. **Flip:** the pointer flicks through the crate (amended after Kasper's M2 review; the wheel no longer flicks, and
    nothing lifts out): how far back it is across the crate's opening picks the front record, and the records in front
    of that one tip forward on their bottom edges over the crate's low front, so its whole cover shows. The pointer has
-   to go a little past each record's band before the next comes up, so it never flickers. Arrow keys and swipes flick
+   to go a little past each record's band before the next comes up, so it never flickers. *Amended 2026-10-05:* the
+   record whose top edge is under the pointer comes up (no bands to go past); off the records, the crate's front means
+   the first project and its back the last. A click, tap or Enter plays the front record, never the one under the
+   pointer at that moment. Arrow keys and swipes flick
    one at a time; a screen reader hears each record's name. Only project records have a vinyl, and each project
    sleeve reads as an LP: the vinyl's edge peeks out of the
    top, and the project's logo is centred as cover art in white line geometry inside a thin border (the Pac Tech

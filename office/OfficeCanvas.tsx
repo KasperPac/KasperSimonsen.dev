@@ -371,7 +371,7 @@ function Office({
     return () => proxies.forEach((p) => p.removeFromParent());
   }, [office, director]);
 
-  // Browsing the crate, the pointer's depth across its opening picks the front record (Kasper: flick on mouseover).
+  // Browsing the crate, the record under the pointer comes to the front (Kasper: flick on mouseover).
   const digPlane = useRef<Mesh | null>(null);
   useEffect(() => {
     const crateRoot = office.scene.getObjectByName("hs_crate");
@@ -413,6 +413,9 @@ function Office({
   }, [handle]);
 
   useFrame(({ camera, size, clock }, dt) => {
+    // This frame's camera is placed already (the walk-in has just done it); its matrices only follow at the render, so
+    // bring them up to date before anything below projects through it (the plaque, the label, the dots).
+    camera.updateMatrixWorld();
     const d = director.current;
     const focused = d.kind === "focusing" || d.kind === "focused" ? d.target : null;
     motion.update(nodes, { open: focused?.hotspot ?? null, hovered: hover.current?.hotspot ?? null, reduced }, dt, clock.elapsedTime);
@@ -502,7 +505,6 @@ function Office({
     }
 
     // Project with this frame's camera: the walk-in has just placed it, and its matrices only follow at the render.
-    camera.updateMatrixWorld();
     const project = (p: Vector3) => {
       v.copy(p).project(camera);
       return v.z > 1 ? { x: Number.NaN, y: Number.NaN } : { x: ((v.x + 1) / 2) * size.width, y: ((1 - v.y) / 2) * size.height };
@@ -534,14 +536,14 @@ function Office({
     return d.kind === "idle" || d.kind === "focused";
   };
   const onCrate = (e: ThreeEvent<PointerEvent | MouseEvent>) => e.intersections.some((i) => hitFor(i.object, null)?.hotspot === "hs_crate");
-  /** Browsing the crate: the front record the pointer asks for (by its depth across the opening), else the current one. */
+  /** Browsing the crate: the front record the pointer asks for (the record under it), else the current one. Only for hover; a click plays the front record (see onClick). */
   const browsedHit = (e: ThreeEvent<PointerEvent | MouseEvent>): Hit | null => {
     const plane = digPlane.current;
     const across = plane && e.intersections.find((i) => i.object.name === DIG_PLANE);
     // On a record, that one: the next one's top over the front one's as it goes back, a flicked one as it comes
-    // forward, and the front one anywhere on its cover, so moving down to click it, or tapping it, keeps it (Kasper: "it
-    // selects Manuva"). Off them, how deep it crosses the opening. The records, not shares of the crate's depth, so
-    // every one comes up in turn however many projects there are.
+    // forward, and the front one anywhere on its cover, so moving down to click it keeps it (Kasper: "it selects
+    // Manuva"). Off them, how deep it crosses the opening (the first project at its front, the last at its back).
+    // The records, not shares of the crate's depth, so every one comes up in turn however many projects there are.
     const z = plane?.parent && across ? plane.parent.worldToLocal(across.point.clone()).z : null;
     const on = recordUnder(e.intersections, crateNodes.records);
     const dig = digFromPointer(on, z, plane?.userData.tops ?? [], work.length, crate.current.dig);
@@ -562,8 +564,11 @@ function Office({
   };
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     if (!interactive()) return;
-    // Browsing the crate, a click anywhere on it plays the front record.
-    const hit = crate.current.browsing ? browsedHit(e) : pickHit(e.intersections.map((i) => i.object), focusedHotspot(director.current));
+    // Browsing the crate, a click, tap or second click anywhere on it plays the front record (spec 3.2.3), the one shown,
+    // never whichever record happens to be under the pointer at that moment (a leaning one, or one peeking over the front).
+    const hit = crate.current.browsing
+      ? browsedHit(e) && { hotspot: "hs_crate" as const, item: work[crate.current.dig]?.slug ?? null }
+      : pickHit(e.intersections.map((i) => i.object), focusedHotspot(director.current));
     if (!hit) return;
     e.stopPropagation();
     onActivate(hit);

@@ -89,13 +89,11 @@ test("sweeping the pointer back across the crate flicks through the records in o
     return { x: Number(m[1]), y: Number(m[2]) };
   });
   const dig = async () => Number(await office(page).getAttribute("data-dig"));
-  // software WebGL can hold React's update behind a slow frame: wait for two frames to pass before reading
-  const settle = () => page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(null)))));
   const sweep = async (from: number, to: number) => {
     const seen: number[] = [];
     for (let dy = from; from > to ? dy >= to : dy <= to; dy += from > to ? -12 : 12) {
       await page.mouse.move(at.x, at.y + dy);
-      await settle();
+      await settle(page);
       seen.push(await dig());
     }
     return seen;
@@ -108,11 +106,11 @@ test("sweeping the pointer back across the crate flicks through the records in o
   expect(forward[forward.length - 1]).toBe(0);
   // a pointer resting on the crate, trembling a pixel, holds its record
   await page.mouse.move(at.x, at.y);
-  await settle();
+  await settle(page);
   const held = await dig();
   for (const dy of [1, -1, 1, -1, 0]) {
     await page.mouse.move(at.x, at.y + dy);
-    await settle();
+    await settle(page);
     expect(await dig()).toBe(held);
   }
 });
@@ -195,6 +193,9 @@ const crateTop = (page: Page) =>
     return { x: Number(m[1]), y: Number(m[2]) };
   });
 
+/** Waits for two frames to pass: software WebGL can hold React's update behind a slow frame, so wait before reading. */
+const settle = (page: Page) => page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(null)))));
+
 test.describe("picking the record you mean", () => {
   test.describe("by touch", () => {
     test.use({ viewport: { width: 390, height: 664 }, hasTouch: true, isMobile: true });
@@ -209,6 +210,7 @@ test.describe("picking the record you mean", () => {
   });
 
   test("bringing a record forward and moving down onto its cover to click it plays that record", async ({ page }) => {
+    test.skip(work.length < 3, "needs a middle record");
     test.setTimeout(240_000); // a pointer move at a time, each waiting for frames under software WebGL
     await standInOffice(page);
     await openCrate(page);
@@ -216,12 +218,11 @@ test.describe("picking the record you mean", () => {
     // one of the middle records, so the back one coming up by mistake (or the front one staying) can't pass for it
     const target = Math.ceil((work.length - 1) / 2);
     const at = await crateTop(page);
-    const settle = () => page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(null)))));
     // back across the crate from in front of it, as a visitor flicks, until that record is at the front
     let y = at.y + 200;
     for (; y >= at.y - 200; y -= 6) {
       await page.mouse.move(at.x, y);
-      await settle();
+      await settle(page);
       if (Number(await office(page).getAttribute("data-dig")) >= target) break;
     }
     await expect(office(page)).toHaveAttribute("data-dig", String(target));
@@ -229,5 +230,30 @@ test.describe("picking the record you mean", () => {
     await expect(office(page)).toHaveAttribute("data-dig", String(target));
     await page.mouse.click(at.x, y + 40);
     await expect(office(page)).toHaveAttribute("data-playing", work[target].slug, { timeout: MOVE_WAIT });
+  });
+
+  test("a click on a record peeking over the front one plays the front record, not the one clicked", async ({ page }) => {
+    test.setTimeout(240_000);
+    test.skip(work.length < 3, "needs a middle record");
+    await standInOffice(page);
+    await openCrate(page);
+    await expect(office(page)).toHaveAttribute("data-camera", "focus", { timeout: MOVE_WAIT });
+    const at = await crateTop(page);
+    // back across the crate from in front of it until the second record's top edge is under the pointer (it comes up)
+    let y = at.y + 200;
+    for (; y >= at.y - 200; y -= 6) {
+      await page.mouse.move(at.x, y);
+      await settle(page);
+      if (Number(await office(page).getAttribute("data-dig")) >= 1) break;
+    }
+    await expect(office(page)).toHaveAttribute("data-dig", "1");
+    // the keyboard puts the first record at the front again, leaving the pointer on the second one's top edge peeking over it
+    await page.keyboard.press("ArrowUp");
+    await expect(office(page)).toHaveAttribute("data-dig", "0");
+    await page.waitForTimeout(1500); // the records finish moving under the resting pointer
+    // press and release in place (no move to re-pick by hover): the record shown at the front plays, not the one under the pointer
+    await page.mouse.down();
+    await page.mouse.up();
+    await expect(office(page)).toHaveAttribute("data-playing", work[0].slug, { timeout: MOVE_WAIT });
   });
 });

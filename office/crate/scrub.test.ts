@@ -23,6 +23,18 @@ describe("digFromPointer", () => {
     expect(digFromPointer(null, 0.03, TOPS, 5, 2)).toBe(2); // between them: as it was
     expect(digFromPointer(null, null, TOPS, 5, 2)).toBe(2); // not over the opening
   });
+  it("reaches every project when there are as many as nine, the last behind the last top edge", () => {
+    const tops = [0.16, 0.13, 0.1, 0.07, 0.04, 0.01, -0.02, -0.05, -0.08];
+    expect(digFromPointer(null, -0.1, tops, tops.length, 0)).toBe(8);
+    expect(digFromPointer(null, 0.2, tops, tops.length, 5)).toBe(0);
+    expect(digFromPointer(8, 0, tops, tops.length, 0)).toBe(8);
+    expect(digFromPointer(12, 0, tops, tops.length, 0)).toBe(8); // blank sleeves behind the ninth
+  });
+  it("takes a blank sleeve behind three projects as the last of them", () => {
+    const tops = [0.08, 0.05, 0.02];
+    expect(digFromPointer(6, -0.05, tops, 3, 0)).toBe(2);
+    expect(digFromPointer(3, 0, tops, 3, 1)).toBe(2);
+  });
   it("has nothing to choose with one project", () => expect(digFromPointer(3, -0.1, TOPS, 1, 0)).toBe(0));
 });
 
