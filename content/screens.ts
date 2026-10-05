@@ -5,7 +5,7 @@
  */
 export type Slide = { label: string; shot: { src: string; alt: string }; slug?: string; href?: string; line?: string };
 
-/** Paths are under /public. Pac Hub's screenshot is blurred (customer, job and people), and must stay that way. */
+/** Paths are under /public. Pac Hub's screenshot is blurred (customer, job and people), and Marianne's Hair's phone number; both must stay that way. */
 export const slides: Slide[] = [
   {
     slug: "pac-forge",
