@@ -1,8 +1,8 @@
 import { describe, it, expect } from "vitest";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { work } from "@/content/work";
-import { screenFor } from "@/content/screens";
+import { findWork } from "@/content/work";
+import { slides } from "@/content/screens";
 import { COPY } from "@/office/copy";
 import ReelScreen from "./ReelScreen";
 import LaptopScreen from "./LaptopScreen";
@@ -14,30 +14,32 @@ const screen = (view: { monitor: number; laptop: number; moving: { slide: number
   renderToStaticMarkup(createElement(ReelScreen, { titleId: "r", view, hold, onStep: () => {}, onShow: () => {}, onPlay: () => {} }));
 
 describe("ReelScreen", () => {
-  const withShot = work.findIndex((w) => screenFor(w.slug).shot);
-  const withLogo = work.findIndex((w) => !screenFor(w.slug).shot);
+  const hrefAt = slides.findIndex((s) => s.href);
 
-  it("shows the project on the monitor as a window: name, screenshot, headline, See the case study", () => {
-    const out = screen({ monitor: withShot, laptop: 0, moving: null });
-    const w = work[withShot];
-    for (const text of [w.name, w.headline, COPY.reel.caseStudy, COPY.reel.title]) expect(out).toContain(esc(text));
-    expect(out).toContain(`src="${screenFor(w.slug).shot!.src}"`);
-    expect(out).toContain(`alt="${esc(screenFor(w.slug).shot!.alt)}"`);
-    expect(out).toContain(`data-slide="${withShot}"`);
+  it("shows the slide on the monitor as a window: label on the title bar, screenshot, the project's headline, See the case study", () => {
+    const out = screen({ monitor: 2, laptop: 3, moving: null });
+    const s = slides[2];
+    for (const text of [s.label, findWork(s.slug!)!.headline, COPY.reel.caseStudy, COPY.reel.title]) expect(out).toContain(esc(text));
+    expect(out).toMatch(new RegExp(`<span class="reel-name">${esc(s.label)}</span>`));
+    expect(out).toContain(`src="${s.shot.src}"`);
+    expect(out).toContain(`alt="${esc(s.shot.alt)}"`);
+    expect(out).toContain('data-slide="2"');
     expect(out).toMatch(/<h2[^>]*id="r"/);
+    expect(out).not.toContain(COPY.reel.visit);
   });
-  it("a project without a screenshot gets a card with its logo and name, not its headline (the strip has that)", () => {
-    const out = screen({ monitor: withLogo, laptop: 0, moving: null });
-    const card = out.match(/<div class="reel-card">.*?<\/div>/)![0];
-    expect(card).toContain(`src="${screenFor(work[withLogo].slug).logo}"`);
-    expect(card).toContain(`<p aria-hidden="true">${esc(work[withLogo].name)}</p>`);
-    expect(card).not.toContain(esc(work[withLogo].headline));
+  it("the slide that opens a page says Visit the site, with a line of its own for a strip", () => {
+    const out = screen({ monitor: hrefAt, laptop: 0, moving: null });
+    expect(out).toContain(esc(COPY.reel.visit));
+    expect(out).toContain(esc(COPY.reel.site));
+    expect(out).not.toContain(esc(COPY.reel.caseStudy));
+    expect(out).toContain(`src="${slides[hrefAt].shot.src}"`);
   });
-  it("has ‹ › and a dot per project", () => {
+  it("has ‹ › and a dot per slide, each named for its slide", () => {
     const out = screen({ monitor: 0, laptop: 1, moving: null });
     expect(out).toContain(`aria-label="${esc(COPY.reel.prev)}"`);
     expect(out).toContain(`aria-label="${esc(COPY.reel.next)}"`);
-    expect(out.match(/class="reel-dot"/g)).toHaveLength(work.length);
+    expect(out.match(/class="reel-dot"/g)).toHaveLength(slides.length);
+    for (const s of slides) expect(out).toContain(`aria-label="${esc(COPY.reel.show(s.label))}"`);
     expect(out).toContain('aria-current="true"');
   });
   it("draws a window being dragged in, with the pointer on its title bar, hidden from screen readers", () => {
@@ -48,9 +50,10 @@ describe("ReelScreen", () => {
 });
 
 describe("LaptopScreen", () => {
-  it("shows the next project, all of it hidden from screen readers", () => {
+  it("shows the next slide, all of it hidden from screen readers", () => {
     const out = renderToStaticMarkup(createElement(LaptopScreen, { view: { monitor: 0, laptop: 1, moving: null } }));
-    expect(out).toContain(esc(work[1].name));
+    expect(out).toContain(esc(slides[1].label));
+    expect(out).toContain(`src="${slides[1].shot.src}"`);
     // React hoists the screenshot's preload <link> ahead of the markup
     expect(out).toMatch(/^(?:<link[^>]*>)*<div[^>]*aria-hidden="true"/);
     expect(out).toContain("data-reel");

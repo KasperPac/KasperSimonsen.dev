@@ -53,6 +53,9 @@ export const COPY = {
   reel: {
     title: "Some things I've built",
     caseStudy: "See the case study",
+    visit: "Visit the site",
+    /** The strip's line for a slide with no crate record (the Pac Technologies site). */
+    site: "Where Pac Technologies starts: the site I built for it.",
     prev: "Previous project",
     next: "Next project",
     show: (name: string) => `Show ${name}`,

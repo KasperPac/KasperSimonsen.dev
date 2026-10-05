@@ -25,6 +25,7 @@ import { canPull, digFor, swipeStep } from "./crate/dig";
 import { tourAt } from "./hints/tour";
 import { GLINT_SECONDS, glintGap, nextGlint } from "./hints/glint";
 import { findWork, work } from "@/content/work";
+import { slides } from "@/content/screens";
 import { findService, services } from "@/content/services";
 import type { Topic } from "@/content/contact";
 import Panel from "@/panels/Panel";
@@ -172,11 +173,16 @@ export default function OfficeExperience() {
   // The monitor's reel of past work (spec 3.5): runs while the monitor is open, and keeps its place between visits.
   // Asked once, on the client: this page is also rendered on the server, where there is no matchMedia.
   const reduced = useMemo(() => typeof window !== "undefined" && reducedMotion(), []);
-  const reel = useReel(focusedOn === "hs_monitor", work.length, reduced);
+  const reel = useReel(focusedOn === "hs_monitor", slides.length, reduced);
   const play = useCallback((slug: string) => activate({ hotspot: "hs_crate", item: slug }), [activate]);
-  // The reel's own button plays what's mostly on the monitor now, which mid-drag isn't the slide ReelScreen last rendered.
+  // The reel's own button acts on the slide that's mostly on the monitor now, which mid-drag isn't the one ReelScreen last
+  // rendered: a crate record plays as picking it in the crate does, a page opens in a new tab.
   const reelCurrent = reel.current;
-  const playReel = useCallback(() => play(reelCurrent()), [play, reelCurrent]);
+  const playReel = useCallback(() => {
+    const slide = slides[reelCurrent()];
+    if (slide.slug) play(slide.slug);
+    else if (slide.href) window.open(slide.href, "_blank", "noopener,noreferrer");
+  }, [play, reelCurrent]);
   const showCard = focusedOn === "hs_drawer" && drawerOpen;
 
   // The crate (spec 3.2): flick through the records, pull the front one out, read it on its back and in the panel.

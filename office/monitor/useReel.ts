@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FocusEvent } from "react";
-import { work } from "@/content/work";
 import { atToWrite, initialReel, showSlide, slideInView, stepReel, tickReel, viewOf, type ReelView } from "./reel";
 
 export type HoldProps = {
@@ -94,7 +93,7 @@ export function useReel(active: boolean, count: number, reduced: boolean) {
     }),
     [],
   );
-  /** The slug "See the case study" plays: the project the visitor mostly sees, read now (the view in props is stale mid-drag). */
-  const current = useCallback(() => work[slideInView(viewOf(state.current, count))].slug, [count]);
+  /** The index of the slide the visitor mostly sees, read now (the view in props is stale mid-drag): the one the button plays. */
+  const current = useCallback(() => slideInView(viewOf(state.current, count)), [count]);
   return { view, step, show, hold, current };
 }

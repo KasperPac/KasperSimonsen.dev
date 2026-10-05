@@ -1,5 +1,5 @@
 import { test, expect, type Locator, type Page } from "@playwright/test";
-import { work } from "../content/work";
+import { slides } from "../content/screens";
 import { COPY } from "../office/copy";
 
 /** See office-crate.spec.ts: software WebGL can stall for seconds at a time late in a run. */
@@ -60,7 +60,7 @@ test("the notes come off, the reel steps on by hand, and See the case study play
   await expect(office(page)).toHaveAttribute("data-notes", "down", { timeout: MOVE_WAIT });
   await expect(reel(page).getByRole("heading", { name: COPY.reel.title })).toBeFocused();
   await expect(page.locator(".office-reel[data-slide]")).toHaveAttribute("data-slide", "0");
-  await expect(laptop(page)).toContainText(work[1].name); // the next one waits on the laptop
+  await expect(laptop(page)).toContainText(slides[1].label); // the next one waits on the laptop
   // The laptop's print is decoration: hidden from screen readers, and not a region.
   const laptopPrint = page.locator(".office-screen").filter({ has: laptop(page) });
   await expect(laptopPrint).toHaveAttribute("aria-hidden", "true");
@@ -70,9 +70,18 @@ test("the notes come off, the reel steps on by hand, and See the case study play
   await expect(page.locator(".office-reel[data-slide]")).toHaveAttribute("data-slide", "1", { timeout: MOVE_WAIT });
   expect(new URL(page.url()).pathname).toBe("/"); // the reel is local
 
+  // The last slide has no record in the crate yet: its button opens the site (not clicked here, it opens another tab).
+  const last = slides[slides.length - 1];
+  await reel(page).getByRole("button", { name: COPY.reel.show(last.label) }).click();
+  await expect(page.locator(".office-reel[data-slide]")).toHaveAttribute("data-slide", String(slides.length - 1));
+  await expect(reel(page).getByRole("button", { name: COPY.reel.visit })).toBeVisible();
+  await expect(reel(page).getByRole("button", { name: COPY.reel.caseStudy })).toHaveCount(0);
+  await reel(page).getByRole("button", { name: COPY.reel.show(slides[1].label) }).click();
+  await expect(page.locator(".office-reel[data-slide]")).toHaveAttribute("data-slide", "1");
+
   await reel(page).getByRole("button", { name: COPY.reel.caseStudy }).click();
-  await expect(page).toHaveURL(new RegExp(`/work/${work[1].slug}$`));
-  await expect(office(page)).toHaveAttribute("data-playing", work[1].slug);
+  await expect(page).toHaveURL(new RegExp(`/work/${slides[1].slug}$`));
+  await expect(office(page)).toHaveAttribute("data-playing", slides[1].slug!);
   await expect(office(page)).toHaveAttribute("data-notes", "up", { timeout: MOVE_WAIT });
 
   await page.goBack();
@@ -80,7 +89,7 @@ test("the notes come off, the reel steps on by hand, and See the case study play
   await expect(office(page)).toHaveAttribute("data-director", "focused:hs_monitor", { timeout: MOVE_WAIT });
   await expect(office(page)).toHaveAttribute("data-notes", "down", { timeout: MOVE_WAIT });
   await expect(reel(page).getByRole("heading", { name: COPY.reel.title })).toBeFocused();
-  await expect(page.locator(".office-reel[data-slide]")).toHaveAttribute("data-slide", "1"); // the same project
+  await expect(page.locator(".office-reel[data-slide]")).toHaveAttribute("data-slide", "1"); // the same slide
 
   await page.keyboard.press("Escape");
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
@@ -136,7 +145,7 @@ test("‹ drags the monitor's slide back to the laptop, and the window never fla
       }),
   );
   await reel(page).getByRole("button", { name: COPY.reel.prev }).click();
-  await expect(page.locator(".office-reel[data-slide]")).toHaveAttribute("data-slide", String(work.length - 1), { timeout: MOVE_WAIT });
+  await expect(page.locator(".office-reel[data-slide]")).toHaveAttribute("data-slide", String(slides.length - 1), { timeout: MOVE_WAIT });
   const { seen, flashed } = await watched;
   expect(seen.length).toBeGreaterThan(1);
   expect(flashed, `--at while the window was mounted: ${seen.join(", ")}`).toBe(false);

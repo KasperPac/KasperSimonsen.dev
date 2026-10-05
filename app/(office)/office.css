@@ -443,9 +443,6 @@ html.office-locked {
 .reel-pointer { flex: none; width: 18px; height: 18px; margin-left: auto; fill: var(--office-fg); stroke: var(--office-bg); stroke-width: 1.5; }
 .reel-body { position: relative; flex: 1; min-height: 0; }
 .reel-body > img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: top center; opacity: 0.85; }
-.reel-card { height: 100%; display: grid; place-content: center; justify-items: center; gap: 6px; padding: 12px; text-align: center; }
-.reel-card img { width: 46%; height: auto; }
-.reel-card p { margin: 0; }
 .reel-moving { position: absolute; inset: 0; }
 .reel-moving--monitor { transform: translateX(calc(var(--at, 0) * 100%)); }
 .reel-moving--laptop { transform: translateX(calc((var(--at, 1) - 1) * 100%)); }
@@ -467,9 +464,6 @@ html.office-locked {
   .reel-headline { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; white-space: normal; line-height: 1.2; }
   .office-reel .office-card-cta { box-sizing: border-box; width: 350px; height: 120px; padding: 0 16px; font-size: 32px; white-space: normal; }
   .reel-controls { box-sizing: border-box; height: 34px; padding: 0; }
-  /* The window is shorter here. */
-  .reel-card { gap: 4px; padding: 6px; }
-  .reel-card img { width: 40%; }
   .reel-controls .reel-dot { width: 14px; height: 14px; }
   .reel-controls button:not(.reel-dot) {
     position: absolute;

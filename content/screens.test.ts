@@ -1,33 +1,36 @@
 import { describe, it, expect } from "vitest";
 import { existsSync } from "node:fs";
 import { join } from "node:path";
-import { work } from "./work";
-import { screenFor } from "./screens";
+import { findWork, work } from "./work";
+import { slides } from "./screens";
 
 const inPublic = (src: string) => existsSync(join(process.cwd(), "public", src));
 
-describe("screens", () => {
-  it("gives every crate project a screenshot or a logo for its card", () => {
-    for (const w of work) {
-      const s = screenFor(w.slug);
-      expect(s.shot || s.logo, w.slug).toBeTruthy();
+describe("slides", () => {
+  it("points only at screenshots that exist, each described", () => {
+    for (const s of slides) {
+      expect(inPublic(s.shot.src), s.shot.src).toBe(true);
+      expect(s.shot.alt.length, s.shot.src).toBeGreaterThan(10);
     }
   });
-  it("points only at files that exist, each screenshot described", () => {
-    for (const w of work) {
-      const s = screenFor(w.slug);
-      if (s.shot) {
-        expect(inPublic(s.shot.src), s.shot.src).toBe(true);
-        expect(s.shot.alt.length).toBeGreaterThan(10);
-      }
-      if (s.logo) expect(inPublic(s.logo), s.logo).toBe(true);
-    }
+  it("plays a crate record or opens a page, never both and never neither", () => {
+    for (const s of slides) expect(!!s.slug !== !!s.href, s.label).toBe(true);
   });
-  it("shows Manuva's and Silio's real screens, and Pac-Hub's logo until Kasper sends screenshots", () => {
-    expect(screenFor("manuva").shot?.src).toBe("/v2/manuva-live.jpg");
-    expect(screenFor("silio").shot?.src).toBe("/silio-dashboard.png");
-    expect(screenFor("pac-forge").shot).toBeUndefined();
-    expect(screenFor("pac-forge").logo).toBe("/PacTechnologiesEdit_White.png");
+  it("plays only records that are in the crate, and every crate project has a slide", () => {
+    for (const s of slides) if (s.slug) expect(findWork(s.slug), s.slug).toBeDefined();
+    for (const w of work) expect(slides.some((s) => s.slug === w.slug), w.slug).toBe(true);
   });
-  it("has nothing for an unknown slug", () => expect(screenFor("nope")).toEqual({}));
+  it("opens the Pac Technologies site in a new tab from the last slide", () => {
+    expect(slides.at(-1)?.href).toBe("https://www.pac-technologies.com.au");
+  });
+  it("runs Pac Hub, Manuva (site, then the app twice), Silio, then the Pac Technologies site", () => {
+    expect(slides.map((s) => [s.slug ?? "href", s.label, s.shot.src])).toEqual([
+      ["pac-forge", "Pac Hub", "/reel/pac-hub.jpg"],
+      ["manuva", "Manuva · site", "/reel/manuva-site.jpg"],
+      ["manuva", "Manuva · app", "/reel/manuva-app-bom.jpg"],
+      ["manuva", "Manuva · app", "/reel/manuva-app-components.jpg"],
+      ["silio", "Silio", "/reel/silio-dashboard.jpg"],
+      ["href", "Pac Technologies · site", "/reel/pac-tech-site.jpg"],
+    ]);
+  });
 });
