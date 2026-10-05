@@ -8,7 +8,7 @@ export const DENSITY = 2;
  * The board's one canvas, for the whole visit (whiteboard spec 3.3): the 3D board shows it as a texture, from across the
  * room too, and the print lays it under the pointer to draw on while the board is open. It outlives the print, so it's
  * module state, made the first time it's asked for in the browser. Strokes are drawn into it as they're made; the
- * whole drawing is replayed from the store (board.ts) only when its size changes, when web fonts load, and on a wipe.
+ * whole drawing is replayed from the store (board.ts) only when its size changes, when its font loads, and on a wipe.
  */
 let canvas: HTMLCanvasElement | null = null;
 let size = { widthPx: 0, heightPx: 0 };
@@ -22,8 +22,12 @@ export function boardCanvas(): HTMLCanvasElement | null {
   if (canvas || typeof document === "undefined") return canvas;
   canvas = document.createElement("canvas");
   canvas.className = "whiteboard-canvas";
-  // the writing leaves the fallback face once the site's font has loaded
-  document.fonts?.ready.then(redrawBoard);
+  // Ask for the face the writing is drawn in (weight 600, the page's font) and redraw once it's in: a canvas's own
+  // fillText doesn't wait for a font, and nothing else on the page may have asked for that weight yet.
+  document.fonts
+    ?.load(`600 64px ${font()}`)
+    .then(() => redrawBoard())
+    .catch(() => {});
   return canvas;
 }
 

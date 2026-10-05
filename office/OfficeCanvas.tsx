@@ -4,7 +4,6 @@ import { Suspense, useEffect, useMemo, useRef, type ReactNode, type RefObject } 
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
 import {
-  Box3,
   CanvasTexture,
   Euler,
   Mesh,
@@ -29,7 +28,7 @@ import { basePose, focusPose, playerPose } from "./camera/basePose";
 import { CameraRig, FOCUS_MOVES, PLAYER_MOVE } from "./camera/rig";
 import { cameraKey } from "./camera/key";
 import { ALL_HOTSPOTS, FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, hitFor, pickHit, type Hit, type HotspotName } from "./hotspots/registry";
-import { addHitProxies } from "./hotspots/proxies";
+import { addHitProxies, NO_BOUNDS, outlineBox } from "./hotspots/proxies";
 import { focusedHotspot, IDLE_AT, LEAVE_AT, type DirectorState } from "./director/director";
 import { CARD_NODE, findMotionNodes, ObjectMotion, SCREEN_NODE } from "./objects/motion";
 import { CrateMotion, findCrateNodes, type PlayerPoses } from "./objects/crate";
@@ -348,7 +347,11 @@ function Office({
     mesh.name = "hs_whiteboard__ink";
     mesh.userData.cleanEdges = true; // never outlined
     mesh.raycast = () => {}; // the board's own parts take the pointer
-    return { mesh, texture, material, size: { widthPx: 0, heightPx: 0 }, version: -1 };
+    mesh.userData[NO_BOUNDS] = true; // nor does it grow the board's hit proxy or move its label
+    // over the drawing area before it's ever in the scene (the frame loop moves it if the canvas is resized)
+    const size = boardSize();
+    placeInk(mesh, boardFace, size);
+    return { mesh, texture, material, size, version: -1 };
   }, [surface, boardFace]);
   useEffect(() => {
     if (!ink || !surface) return;
@@ -391,7 +394,7 @@ function Office({
       if (land) focus[h] = { land, portrait: pose(`${FOCUS_CAMERA[h]}_portrait`) };
       const node = office.scene.getObjectByName(h);
       if (node) {
-        const box = new Box3().setFromObject(node);
+        const box = outlineBox(node); // the board's ink is no part of its outline
         anchors[h] = new Vector3((box.min.x + box.max.x) / 2, box.max.y, (box.min.z + box.max.z) / 2);
       }
     }
