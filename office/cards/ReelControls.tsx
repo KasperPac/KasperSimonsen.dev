@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { findWork } from "@/content/work";
 import { slides, type Slide } from "@/content/screens";
 import { COPY } from "@/office/copy";
@@ -26,8 +27,9 @@ export function headlineFor(slide: Slide): string {
 
 /**
  * The reel's words and controls (spec 3.5): the slide's label, its headline, its action and ‹ › — on the laptop, or on a
- * strip under the monitor on portrait screens. The laptop has a dot per slide; the strip, sized for fingers, has a
- * read-out of where it is instead (a dot per slide couldn't be tapped once there are more than a few).
+ * strip under the monitor on portrait screens. The laptop has a dot per slide, in a row of their own that wraps between
+ * ‹ and › as slides are added; the strip, sized for fingers, has a read-out of where it is instead (a dot per slide
+ * couldn't be tapped once there are more than a few). The label stays on one line, cut short with an ellipsis if it's long.
  */
 export default function ReelControls({
   titleId,
@@ -46,6 +48,8 @@ export default function ReelControls({
   onPlay: () => void;
   place: "laptop" | "strip";
 }) {
+  // A print taken away under the pointer (the screen turned, the monitor left) never sees it leave: let go of its hold.
+  useEffect(() => () => hold.onPointerLeave(), [hold]);
   const i = view.words;
   const slide = slides[i];
   return (
@@ -53,7 +57,9 @@ export default function ReelControls({
       <h2 id={titleId} className="visually-hidden" tabIndex={-1}>
         {COPY.reel.title}
       </h2>
-      <p className="reel-label">{slide.label}</p>
+      <p className="reel-label">
+        <span>{slide.label}</span>
+      </p>
       <p className="reel-headline">{headlineFor(slide)}</p>
       {(slide.slug || slide.href) && (
         <button type="button" className="office-card-cta" onClick={onPlay}>
@@ -65,12 +71,15 @@ export default function ReelControls({
           ‹
         </button>
         {place === "laptop" ? (
-          slides.map((s, k) => (
-            <button key={k} type="button" className="reel-dot" aria-label={COPY.reel.show(s.label)} aria-current={k === i} onClick={() => onShow(k)} />
-          ))
+          <div className="reel-dots">
+            {slides.map((s, k) => (
+              <button key={k} type="button" className="reel-dot" aria-label={COPY.reel.show(s.label)} aria-current={k === i} onClick={() => onShow(k)} />
+            ))}
+          </div>
         ) : (
-          <span className="reel-count" aria-hidden="true">
-            {`${i + 1} / ${slides.length}`}
+          <span className="reel-count">
+            <span aria-hidden="true">{`${i + 1} / ${slides.length}`}</span>
+            <span className="visually-hidden">{COPY.reel.position(i + 1, slides.length)}</span>
           </span>
         )}
         <button type="button" className="reel-step" aria-label={COPY.reel.next} onClick={() => onStep(1)}>

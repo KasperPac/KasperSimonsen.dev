@@ -24,7 +24,6 @@ export default function CardFace({
   titleId,
   focus = true,
   below,
-  hidden = false,
   children,
 }: {
   surface: Mesh;
@@ -36,8 +35,6 @@ export default function CardFace({
   focus?: boolean;
   /** With `place="screen"`: hang the print under the screen (its height, and the gap below the screen's bottom edge, in px) instead of on it. */
   below?: { heightPx: number; gapPx: number };
-  /** Hide the print from screen readers (a decorative one). */
-  hidden?: boolean;
   children: ReactNode;
 }) {
   const face = useMemo(() => {
@@ -68,7 +65,6 @@ export default function CardFace({
         ref={section}
         className={place === "back" ? "office-card-face office-sleeve-back" : place === "screen" ? "office-card-face office-screen" : "office-card-face"}
         aria-labelledby={focus ? titleId : undefined}
-        aria-hidden={hidden || undefined}
         style={{ width: widthPx, height: face.heightPx, "--accent": theme.accents[hotspot] } as CSSProperties}
       >
         {children}

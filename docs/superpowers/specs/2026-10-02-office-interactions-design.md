@@ -187,7 +187,8 @@ until the standalone restyle (old phase 5). `/services/<slug>` is new, in the of
   - drawer ~0.5 s;
   - ornament ~0.6 s;
   - sticky notes falling off the monitor ~0.9 s in all (staggered ~0.1 s), and back the same way;
-  - a slide dragged from the laptop onto the monitor ~0.7 s, every ~5 s while nothing holds it;
+  - the next screenshot sliding in over the monitor from the right (the laptop's side) ~0.7 s, every ~5 s while nothing
+    holds it, and ‹ playing it backwards;
   - teases ≤ 0.3 s;
   - camera moves as now (`FOCUS_SECONDS`).
 - **Movers:** picking a record or an ornament moves the object to the camera, not the camera again.

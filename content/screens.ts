@@ -1,7 +1,8 @@
 /**
- * One slide of the monitor's reel (interactions spec 3.5): a screenshot in a little window, its label on the title bar.
- * A slide plays a crate project's record (`slug`, whose headline is the strip's line). Work with no record yet has its
- * own `line`, and opens its site (`href`) or, not live yet, has no button at all.
+ * One slide of the monitor's reel (interactions spec 3.5): a screenshot filling the monitor edge to edge (16:10, 1280 x
+ * 800), with its label and a line printed beside it, on the laptop or on the strip under the monitor. A slide plays a
+ * crate project's record (`slug`, whose headline is its line). Work with no record yet has its own `line`, and opens its
+ * site (`href`) or, not live yet, has no button at all. Adding a project is a slide here and its screenshot in public/reel.
  */
 export type Slide = { label: string; shot: { src: string; alt: string }; slug?: string; href?: string; line?: string };
 

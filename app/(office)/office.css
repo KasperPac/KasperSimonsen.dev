@@ -443,22 +443,29 @@ html.office-locked {
 .reel-words { box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; height: 100%; padding: 22px 26px 18px; font-size: 22px; }
 .reel-label { display: flex; align-items: center; gap: 10px; margin: 0; font: 16px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; }
 .reel-label::before { content: ""; flex: none; width: 34px; height: 8px; background: radial-gradient(circle, rgba(232, 232, 232, 0.7) 3px, transparent 3.5px) 0 0 / 12px 8px repeat-x; }
+/* One line, however long the label: a wrapped one would push ‹ › off the strip. The padding (taken back by the margin)
+   keeps descenders out of the clip without making the line taller. */
+.reel-label > span { min-width: 0; overflow: hidden; padding: 0.15em 0; margin: -0.15em 0; text-overflow: ellipsis; white-space: nowrap; }
 .reel-headline { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; margin: 0; overflow: hidden; line-height: 1.25; color: rgba(232, 232, 232, 0.85); }
 .reel-words .office-card-cta { position: static; align-self: flex-start; padding: 10px 16px; font-size: 17px; white-space: nowrap; }
 .reel-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: auto; }
 .reel-controls button { padding: 2px 6px; background: none; border: 0; color: var(--office-fg); font: 24px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; }
+/* The laptop's dots: a row of their own between ‹ and ›, wrapping onto more rows as slides are added. */
+.reel-dots { display: flex; flex: 1; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; }
 .reel-controls .reel-dot { width: 10px; height: 10px; padding: 0; border: 1px solid var(--office-fg); border-radius: 50%; }
 .reel-controls .reel-dot[aria-current="true"] { background: var(--accent); border-color: var(--accent); }
 .reel-count { font: 26px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; }
 /* On the laptop (~0.59 on a 1440 x 900 screen): the words fill its screen, label and headline reading at ~16 and ~22 px.
-   The print is 640 x ~432: label, three headline lines, the action and the controls fit with the dots on one row. */
+   The print is 640 x ~432: label, three headline lines, the action and the controls fit with room to spare. ‹ and ›
+   bracket the dots, which wrap at ~14 a row (36 px each in ~500 px): each further row of dots takes 36 px of that room. */
 .reel-words--laptop { gap: 14px; padding: 26px 30px 20px; font-size: 38px; }
 .reel-words--laptop > * { flex: none; }
 .reel-words--laptop .reel-label { gap: 14px; font-size: 27px; }
 .reel-words--laptop .reel-label::before { width: 52px; height: 12px; background-size: 18px 12px; background-image: radial-gradient(circle, rgba(232, 232, 232, 0.7) 4.5px, transparent 5px); }
 .reel-words--laptop .reel-headline { line-height: 1.2; }
 .reel-words--laptop .office-card-cta { padding: 16px 24px; font-size: 27px; }
-.reel-words--laptop .reel-controls { gap: 16px; }
+.reel-words--laptop .reel-controls { flex-wrap: nowrap; gap: 16px; }
+.reel-words--laptop .reel-dots { gap: 16px; }
 .reel-words--laptop .reel-step { padding: 0 8px; font-size: 44px; }
 .reel-words--laptop .reel-dot { width: 20px; height: 20px; }
 

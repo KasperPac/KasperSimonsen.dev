@@ -16,14 +16,23 @@ function Shot({ slide, sliding = false }: { slide: Slide; sliding?: boolean }) {
   );
 }
 
+/** The screenshots either side of slide `i` (next, then previous), each once and never the one showing. */
+function neighbours(i: number): string[] {
+  const n = slides.length;
+  const showing = slides[i].shot.src;
+  return [...new Set([slides[(i + 1) % n].shot.src, slides[(i - 1 + n) % n].shot.src])].filter((src) => src !== showing);
+}
+
 /** What's printed on the monitor (spec 3.5): the slide's screenshot edge to edge, and the next one sliding in over it. */
 export default function ReelScreen({ view, hold }: { view: ReelView; hold: HoldProps }) {
   return (
     <div className="office-reel" data-reel data-monitor={view.monitor} {...hold}>
       <Shot slide={slides[view.monitor]} />
       {view.moving && <Shot slide={slides[view.moving.slide]} sliding />}
-      {/* the next screenshot, fetched before it slides in */}
-      <img className="reel-preload" src={slides[(view.monitor + 1) % slides.length].shot.src} alt="" aria-hidden="true" draggable={false} />
+      {/* the next screenshot, fetched before it slides in, and the previous one, which ‹ uncovers */}
+      {neighbours(view.monitor).map((src) => (
+        <img key={src} className="reel-preload" src={src} alt="" aria-hidden="true" draggable={false} />
+      ))}
     </div>
   );
 }

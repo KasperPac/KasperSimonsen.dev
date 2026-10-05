@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { Object3D, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { applyPose, blendPose, copyPose, DESIGN_ASPECT, easeInOutCubic, makePose, MAX_FOV, readPose, smoothstep, widenForAspect, type Pose } from "./pose";
-import { basePose, FOCUS_PORTRAIT_ASPECT, focusPose, playerPose, PORTRAIT_ASPECT, PORTRAIT_FROM, PORTRAIT_MAX_FOV } from "./basePose";
+import { basePose, FOCUS_PORTRAIT_ASPECT, focusPose, MONITOR_MIN_HEIGHT, playerPose, PORTRAIT_ASPECT, PORTRAIT_FROM, PORTRAIT_MAX_FOV } from "./basePose";
 import { CameraRig, FOCUS_MOVES, FOCUS_SECONDS, PLAYER_MOVE } from "./rig";
 import { applyPan } from "./pan";
 
@@ -129,6 +129,15 @@ describe("focusPose", () => {
     expect(short).toBeLessThan(60);
     const across = (fov: number, aspect: number) => Math.tan((fov * Math.PI) / 360) * aspect;
     expect(across(short, 0.6)).toBeCloseTo(across(60, FOCUS_PORTRAIT_ASPECT));
+  });
+  it("with a minimum height, sees at least that much of the authored frame on squarer portrait screens, and is unchanged on phones", () => {
+    const tall = (fov: number) => Math.tan((fov * Math.PI) / 360);
+    for (const aspect of [0.6, 0.75, 0.9, 0.999]) {
+      const fov = focusPose(pose(1, 40), pose(2, 60), aspect, makePose(), MONITOR_MIN_HEIGHT).fov;
+      expect(tall(fov) / tall(60), String(aspect)).toBeGreaterThanOrEqual(MONITOR_MIN_HEIGHT - 1e-9);
+    }
+    for (const aspect of [FOCUS_PORTRAIT_ASPECT, 390 / 664])
+      expect(focusPose(pose(1, 40), pose(2, 60), aspect, makePose(), MONITOR_MIN_HEIGHT).fov).toBeCloseTo(focusPose(pose(1, 40), pose(2, 60), aspect, makePose()).fov);
   });
   it("widens the landscape camera when there is no portrait one", () =>
     expect(focusPose(pose(1, 40), null, 0.5, makePose()).fov).toBeCloseTo(widenForAspect(40, 0.5)));

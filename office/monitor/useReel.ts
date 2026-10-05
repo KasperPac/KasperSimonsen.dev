@@ -23,7 +23,7 @@ const viewKey = (v: ReelView) => `${v.monitor}:${v.moving?.slide ?? ""}:${v.word
 /**
  * Runs the monitor's reel while `active` (spec 3.5). React re-renders only when a slide changes; a sliding screenshot's
  * position goes to `--at` on every `[data-reel]` print each frame. Frames longer than 0.1 s count as 0.1 s, so a stall or
- * a background tab never skips a drag (and a frame stamped before `last` counts as 0). The slide is kept between visits.
+ * a background tab never skips a slide (and a frame stamped before `last` counts as 0). The slide is kept between visits.
  */
 export function useReel(active: boolean, count: number, reduced: boolean) {
   const state = useRef(initialReel());
@@ -35,13 +35,13 @@ export function useReel(active: boolean, count: number, reduced: boolean) {
 
   const publish = useCallback(() => {
     const v = viewOf(state.current, count);
-    // `--at` is written only mid-drag: the DOM keeps the old view for a frame after a drag lands, so the last in-drag value
-    // must stay until React removes the moving window (zeroing it would flash that window over the monitor).
+    // `--at` is written only mid-slide: the DOM keeps the old view for a frame after a slide lands, so the last mid-slide
+    // value must stay until React removes the sliding screenshot (zeroing it would flash that screenshot over the monitor).
     const at = atToWrite(v, written.current);
     if (at !== null) {
       written.current = at;
       document.querySelectorAll<HTMLElement>("[data-reel]").forEach((el) => el.style.setProperty("--at", String(at)));
-    } else if (!v.moving) written.current = null; // the next drag writes its first value whatever was written before
+    } else if (!v.moving) written.current = null; // the next slide writes its first value whatever was written before
     const key = viewKey(v);
     if (key !== shown.current) {
       shown.current = key;
