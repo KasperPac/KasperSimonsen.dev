@@ -418,7 +418,7 @@ html.office-locked {
 /* The plaque beside a picked ornament: a focus target for the reader, not a control. */
 .office-card .office-card-title:focus { outline: none; }
 
-/* The monitor's and the laptop's prints fill their screens edge to edge; .office-reel lays them out. */
+/* The monitor's print fills its screen edge to edge (.office-reel lays it out); the reel's words are .reel-words, on the laptop or a strip. */
 .office-screen { padding: 0; }
 
 /* A service's Read more ends with the two ways to work. */
@@ -438,7 +438,8 @@ html.office-locked {
 .office-reel { position: relative; height: 100%; overflow: hidden; background: var(--office-bg); }
 .reel-shot { position: absolute; inset: 0; background: var(--office-bg); }
 .reel-shot > img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.reel-moving { transform: translateX(calc(var(--at, 0) * 100%)); box-shadow: -10px 0 24px rgba(0, 0, 0, 0.55); }
+.reel-moving { transform: translateX(calc(var(--at, 0) * 100%)); box-shadow: -10px 0 24px rgba(0, 0, 0, calc(0.55 * (1 - var(--at, 0)))); }
+.reel-preload { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
 .reel-words { box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; height: 100%; padding: 22px 26px 18px; font-size: 22px; }
 .reel-label { display: flex; align-items: center; gap: 10px; margin: 0; font: 16px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; }
 .reel-label::before { content: ""; flex: none; width: 34px; height: 8px; background: radial-gradient(circle, rgba(232, 232, 232, 0.7) 3px, transparent 3.5px) 0 0 / 12px 8px repeat-x; }
@@ -452,6 +453,8 @@ html.office-locked {
 /* The strip under the monitor (portrait screens): seen at about half size on a phone, so everything is made to be
    tapped: ‹ › 84 px square, the action 84 px tall, which at ~0.56 come out over 40 px on screen. */
 .reel-words--strip { gap: 10px; padding: 16px 18px; font-size: 28px; border: 1px solid rgba(232, 232, 232, 0.6); background: var(--office-bg); }
+/* nothing in the strip may be squeezed: the print is sized to hold all of it (STRIP_HEIGHT_PX), headline at its two lines */
+.reel-words--strip > * { flex: none; }
 .reel-words--strip .reel-label { font-size: 22px; }
 .reel-words--strip .reel-headline { -webkit-line-clamp: 2; }
 .reel-words--strip .office-card-cta { min-height: 84px; padding: 0 22px; font-size: 28px; }

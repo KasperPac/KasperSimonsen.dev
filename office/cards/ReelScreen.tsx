@@ -22,6 +22,8 @@ export default function ReelScreen({ view, hold }: { view: ReelView; hold: HoldP
     <div className="office-reel" data-reel data-monitor={view.monitor} {...hold}>
       <Shot slide={slides[view.monitor]} />
       {view.moving && <Shot slide={slides[view.moving.slide]} sliding />}
+      {/* the next screenshot, fetched before it slides in */}
+      <img className="reel-preload" src={slides[(view.monitor + 1) % slides.length].shot.src} alt="" aria-hidden="true" draggable={false} />
     </div>
   );
 }

@@ -26,6 +26,12 @@ describe("ReelScreen", () => {
     expect(out).not.toContain("reel-bar");
     expect(out).toContain("data-reel");
   });
+  it("has the next slide's screenshot in the page, hidden, so it's fetched before it slides in", () => {
+    const out = monitor(view(2));
+    expect(out).toMatch(new RegExp(`<img[^>]*class="reel-preload"[^>]*src="${slides[3 % slides.length].shot.src}"|<img[^>]*src="${slides[3 % slides.length].shot.src}"[^>]*class="reel-preload"`));
+    expect(out).toMatch(/class="reel-preload"[^>]*aria-hidden="true"|aria-hidden="true"[^>]*class="reel-preload"/);
+    expect(monitor(view(slides.length - 1))).toContain(`src="${slides[0].shot.src}"`);
+  });
   it("draws the screenshot sliding in over it, hidden from screen readers", () => {
     const out = monitor(view(0, 0, { slide: 1, at: 0.5 }));
     expect(out).toMatch(/class="reel-shot reel-moving"[^>]*aria-hidden="true"/);
