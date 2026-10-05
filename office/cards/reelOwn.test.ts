@@ -18,31 +18,35 @@ const slides: Slide[] = [
 
 vi.mock("@/content/screens", () => ({ slides }));
 // vi.mock is hoisted above the const; the factory runs on first import, after it's defined (dynamic imports below).
-const { default: ReelControls, headlineFor } = await import("./ReelControls");
+const { default: ReelWords, headlineFor } = await import("./ReelWords");
 
 const hold = { onPointerEnter: () => {}, onPointerLeave: () => {}, onFocus: () => {}, onBlur: () => {} };
 const controls = (i: number) =>
-  renderToStaticMarkup(
-    createElement(ReelControls, { titleId: "r", view: { monitor: i, moving: null, words: i }, hold, onStep: () => {}, onShow: () => {}, onPlay: () => {}, place: "laptop" }),
-  );
+  renderToStaticMarkup(createElement(ReelWords, { view: { monitor: i, moving: null, words: i }, hold, onPlay: () => {}, place: "laptop" }));
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/'/g, "&#x27;").replace(/"/g, "&quot;");
 
-describe("ReelControls for work outside the crate", () => {
+describe("ReelWords for work outside the crate", () => {
   it("a crate slide gives its record's headline and See the case study", () => {
     const out = controls(0);
     expect(out).toContain(esc(findWork("manuva")!.headline));
+    expect(out).toContain(esc(findWork("manuva")!.description));
+    expect(out).toContain(esc(findWork("manuva")!.details));
     expect(out).toContain(`>${esc(COPY.reel.caseStudy)}<`);
     expect(out).not.toContain(`>${esc(COPY.reel.visit)}<`);
   });
   it("a live page not in the crate gives its own line and Visit the site", () => {
     const out = controls(1);
     expect(out).toContain("A page of its own.");
+    expect(out).not.toContain("reel-description");
+    expect(out).not.toContain("reel-details");
     expect(out).toContain(`>${esc(COPY.reel.visit)}<`);
     expect(out).not.toContain(`>${esc(COPY.reel.caseStudy)}<`);
   });
   it("a site not live yet gives its own line and no button at all", () => {
     const out = controls(2);
     expect(out).toContain("Nearly ready to open.");
+    expect(out).not.toContain("reel-description");
+    expect(out).not.toContain("reel-details");
     expect(out).not.toContain("office-card-cta");
   });
   it("headlineFor: the record's headline for a crate slide, the slide's own line otherwise", () => {

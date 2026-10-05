@@ -40,6 +40,9 @@ describe("slides", () => {
       expect(s.shot.alt.length, s.shot.src).toBeGreaterThan(10);
     }
   });
+  it("prints sharp: every screenshot is at least 1280 px wide", () => {
+    for (const s of slides) expect(imageSize(s.shot.src)[0], s.shot.src).toBeGreaterThanOrEqual(1280);
+  });
   it("fills the monitor's 16:9 screen: every screenshot is 16:9 (1280 x 720), but for the known others", () => {
     for (const s of slides) {
       const [w, h] = imageSize(s.shot.src);

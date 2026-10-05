@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import { currently, previously } from "@/app/(main)/work/data";
 import { findWork, work } from "./work";
 import { findService, services, engagementModels } from "./services";
 import { CONTACT_EMAIL, CONTACT_LINKS, CONTACT_NAME, subjectForTopic, isTopic } from "./contact";
@@ -31,6 +32,15 @@ describe("work", () => {
       expect(w.name).not.toBe("");
       expect(w.headline).not.toBe("");
       expect(w.intro.length).toBeGreaterThan(0);
+    }
+  });
+  it("gives every item a description, and details: its years, role and stack summary, joined by a dot", () => {
+    for (const p of [...currently, ...previously]) {
+      const w = findWork(p.slug)!;
+      expect(w.description, p.slug).not.toBe("");
+      expect(w.description, p.slug).toBe(p.description);
+      expect(w.details, p.slug).toBe([p.yearRange, p.role, p.stackSummary].filter(Boolean).join(" · "));
+      expect(w.details, p.slug).not.toMatch(/^ · | · $| ·  · /);
     }
   });
   it("has unique slugs", () => expect(new Set(work.map((w) => w.slug)).size).toBe(work.length));

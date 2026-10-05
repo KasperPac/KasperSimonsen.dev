@@ -433,7 +433,7 @@ html.office-locked {
 .standalone-enter { display: inline-block; margin-bottom: 32px; color: var(--office-fg); font: 11px/1.2 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; }
 
 /* The monitor's reel (spec 3.5): the screenshot edge to edge on the monitor, the next one sliding in over it from the
-   right, placed by --at (1 = off the right edge, 0 = covering the monitor). Its words and controls are on the laptop, or
+   right, placed by --at (1 = off the right edge, 0 = covering the monitor). Its words are on the laptop, or
    on portrait screens on a strip under the monitor. */
 .office-reel { position: relative; height: 100%; overflow: hidden; background: var(--office-bg); }
 .reel-shot { position: absolute; inset: 0; background: var(--office-bg); }
@@ -443,42 +443,35 @@ html.office-locked {
 .reel-words { box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; height: 100%; padding: 22px 26px 18px; font-size: 22px; }
 .reel-label { display: flex; align-items: center; gap: 10px; margin: 0; font: 16px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; }
 .reel-label::before { content: ""; flex: none; width: 34px; height: 8px; background: radial-gradient(circle, rgba(232, 232, 232, 0.7) 3px, transparent 3.5px) 0 0 / 12px 8px repeat-x; }
-/* One line, however long the label: a wrapped one would push ‹ › off the strip. The padding (taken back by the margin)
+/* One line, however long the label: a wrapped one would push the headline down. The padding (taken back by the margin)
    keeps descenders out of the clip without making the line taller. */
 .reel-label > span { min-width: 0; overflow: hidden; padding: 0.15em 0; margin: -0.15em 0; text-overflow: ellipsis; white-space: nowrap; }
 .reel-headline { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; margin: 0; overflow: hidden; line-height: 1.25; color: rgba(232, 232, 232, 0.85); }
-.reel-words .office-card-cta { position: static; align-self: flex-start; padding: 10px 16px; font-size: 17px; white-space: nowrap; }
-.reel-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: auto; }
-.reel-controls button { padding: 2px 6px; background: none; border: 0; color: var(--office-fg); font: 24px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; }
-/* The laptop's dots: a row of their own between ‹ and ›, wrapping onto more rows as slides are added. */
-.reel-dots { display: flex; flex: 1; flex-wrap: wrap; align-items: center; gap: 10px; min-width: 0; }
-.reel-controls .reel-dot { width: 10px; height: 10px; padding: 0; border: 1px solid var(--office-fg); border-radius: 50%; }
-.reel-controls .reel-dot[aria-current="true"] { background: var(--accent); border-color: var(--accent); }
-.reel-count { font: 26px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; }
+.reel-words .office-card-cta { position: static; align-self: flex-start; margin-top: auto; padding: 10px 16px; font-size: 17px; white-space: nowrap; }
+.reel-description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; margin: 0; overflow: hidden; line-height: 1.3; color: rgba(232, 232, 232, 0.7); }
+.reel-details { margin: 0; font: 15px/1.3 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.04em; color: rgba(232, 232, 232, 0.6); }
 /* On the laptop (~0.59 on a 1440 x 900 screen): the words fill its screen, label and headline reading at ~16 and ~22 px.
-   The print is 640 x ~432: label, three headline lines, the action and the controls fit with room to spare. ‹ and ›
-   bracket the dots, which wrap at ~14 a row (36 px each in ~500 px): each further row of dots takes 36 px of that room. */
+   The print is 640 x ~432, 386 px inside its padding. Worst case with today's words: label 27 + two headline lines 91 +
+   three description lines (24 px x 1.3) 94 + a details line that wraps to two (19 px x 1.3) 49 + the action ~68 + four
+   gaps of 14 = 385. So the description is clamped to three lines (four would be 416, over). */
 .reel-words--laptop { gap: 14px; padding: 26px 30px 20px; font-size: 38px; }
 .reel-words--laptop > * { flex: none; }
 .reel-words--laptop .reel-label { gap: 14px; font-size: 27px; }
 .reel-words--laptop .reel-label::before { width: 52px; height: 12px; background-size: 18px 12px; background-image: radial-gradient(circle, rgba(232, 232, 232, 0.7) 4.5px, transparent 5px); }
 .reel-words--laptop .reel-headline { line-height: 1.2; }
 .reel-words--laptop .office-card-cta { padding: 16px 24px; font-size: 27px; }
-.reel-words--laptop .reel-controls { flex-wrap: nowrap; gap: 16px; }
-.reel-words--laptop .reel-dots { gap: 16px; }
-.reel-words--laptop .reel-step { padding: 0 8px; font-size: 44px; }
-.reel-words--laptop .reel-dot { width: 20px; height: 20px; }
+.reel-words--laptop .reel-description { font-size: 24px; }
+.reel-words--laptop .reel-details { font-size: 19px; }
 
-/* The strip under the monitor (portrait screens): seen at about half size on a phone, so everything is made to be
-   tapped: ‹ › 84 px square, the action 84 px tall, which at ~0.56 come out over 40 px on screen. */
+/* The strip under the monitor (portrait screens): seen at about half size on a phone, so the action is made to be
+   tapped: 84 px tall, which at ~0.56 comes out over 40 px on screen. */
 .reel-words--strip { gap: 10px; padding: 16px 18px; font-size: 28px; border: 1px solid rgba(232, 232, 232, 0.6); background: var(--office-bg); }
 /* nothing in the strip may be squeezed: the print is sized to hold all of it (STRIP_HEIGHT_PX), headline at its two lines */
 .reel-words--strip > * { flex: none; }
 .reel-words--strip .reel-label { font-size: 22px; }
 .reel-words--strip .reel-headline { -webkit-line-clamp: 2; }
+.reel-words--strip .reel-description { -webkit-line-clamp: 2; font-size: 28px; line-height: 1.25; }
 .reel-words--strip .office-card-cta { min-height: 84px; padding: 0 22px; font-size: 28px; }
-.reel-words--strip .reel-controls { flex-wrap: nowrap; justify-content: space-between; }
-.reel-words--strip .reel-step { width: 84px; height: 84px; font-size: 64px; }
 
 /* The whiteboard (a hidden extra): a canvas to draw on, the tool strip along its bottom edge. */
 .office-whiteboard { position: relative; display: flex; flex-direction: column; height: 100%; }
