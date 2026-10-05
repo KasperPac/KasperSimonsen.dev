@@ -18,11 +18,12 @@ import BusinessCard from "./cards/BusinessCard";
 import SleeveBack from "./cards/SleeveBack";
 import Plaque from "./cards/Plaque";
 import ReelScreen from "./cards/ReelScreen";
-import LaptopScreen from "./cards/LaptopScreen";
+import ReelControls from "./cards/ReelControls";
 import Whiteboard, { type BoardPointer } from "./cards/Whiteboard";
 import { endStroke } from "./whiteboard/board";
 import type { ToolId } from "./whiteboard/marker";
 import { useReel } from "./monitor/useReel";
+import { usePortrait } from "./usePortrait";
 import { clampDig } from "./objects/crate";
 import { canPull, digFor, swipeStep } from "./crate/dig";
 import { tourAt } from "./hints/tour";
@@ -177,9 +178,9 @@ export default function OfficeExperience() {
   // Asked once, on the client: this page is also rendered on the server, where there is no matchMedia.
   const reduced = useMemo(() => typeof window !== "undefined" && reducedMotion(), []);
   const reel = useReel(focusedOn === "hs_monitor", slides.length, reduced);
+  const portraitScreen = usePortrait();
   const play = useCallback((slug: string) => activate({ hotspot: "hs_crate", item: slug }), [activate]);
-  // The reel's own button acts on the slide that's mostly on the monitor now, which mid-drag isn't the one ReelScreen last
-  // rendered: a crate record plays as picking it in the crate does, a page opens in a new tab.
+  // The reel's action plays the slide its words name: a crate record plays as picking it in the crate does, a page opens in a new tab.
   const reelCurrent = reel.current;
   const playReel = useCallback(() => {
     const slide = slides[reelCurrent()];
@@ -443,12 +444,18 @@ export default function OfficeExperience() {
             onSleeveOut={setSleeveOut}
             shelf={shelf}
             plaque={plaqueRef}
-            monitorScreen={
+            monitorScreen={focusedOn === "hs_monitor" ? { content: <ReelScreen view={reel.view} hold={reel.hold} /> } : null}
+            reelControls={
               focusedOn === "hs_monitor"
-                ? { titleId: "reel-title", content: <ReelScreen titleId="reel-title" view={reel.view} hold={reel.hold} onStep={reel.step} onShow={reel.show} onPlay={playReel} /> }
+                ? {
+                    titleId: "reel-title",
+                    place: portraitScreen ? "strip" : "laptop",
+                    content: (
+                      <ReelControls titleId="reel-title" view={reel.view} hold={reel.hold} onStep={reel.step} onShow={reel.show} onPlay={playReel} place={portraitScreen ? "strip" : "laptop"} />
+                    ),
+                  }
                 : null
             }
-            laptopScreen={focusedOn === "hs_monitor" ? { content: <LaptopScreen view={reel.view} /> } : null}
             whiteboard={{
               print:
                 focusedOn === "hs_whiteboard"

@@ -13,8 +13,11 @@ export const LAPTOP_WIDTH_PX = 640;
 export const STRIP_WIDTH_PX = SCREEN_WIDTH_PX;
 /** Tall enough for its content box (324 - 32 padding - 2 border = 290): label 22 + 2-line headline 70 + action 84 + controls 84 + 3 gaps of 10. */
 export const STRIP_HEIGHT_PX = 324;
-/** Between the screen's bottom edge and the strip, at the screen's print scale: clear of the bezel's chin. */
-export const STRIP_GAP_PX = 12;
+/**
+ * Between the screen's bottom edge and the strip, at the screen's print scale: the bezel's chin is 0.02 m, ~21 px at that
+ * scale, so 28 clears it.
+ */
+export const STRIP_GAP_PX = 28;
 
 /** The line a slide's words show: its crate project's headline, or its own line for work not in the crate. */
 export function headlineFor(slide: Slide): string {
