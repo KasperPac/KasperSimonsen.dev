@@ -178,7 +178,7 @@ export default function OfficeExperience() {
   // Asked once, on the client: this page is also rendered on the server, where there is no matchMedia.
   const reduced = useMemo(() => typeof window !== "undefined" && reducedMotion(), []);
   const reel = useReel(focusedOn === "hs_monitor", slides.length, reduced);
-  const portraitScreen = usePortrait();
+  const reelPlace = usePortrait() ? "strip" : "laptop";
   const play = useCallback((slug: string) => activate({ hotspot: "hs_crate", item: slug }), [activate]);
   // The reel's action plays the slide its words name: a crate record plays as picking it in the crate does, a page opens in a new tab.
   const reelCurrent = reel.current;
@@ -449,9 +449,9 @@ export default function OfficeExperience() {
               focusedOn === "hs_monitor"
                 ? {
                     titleId: "reel-title",
-                    place: portraitScreen ? "strip" : "laptop",
+                    place: reelPlace,
                     content: (
-                      <ReelControls titleId="reel-title" view={reel.view} hold={reel.hold} onStep={reel.step} onShow={reel.show} onPlay={playReel} place={portraitScreen ? "strip" : "laptop"} />
+                      <ReelControls titleId="reel-title" view={reel.view} hold={reel.hold} onStep={reel.step} onShow={reel.show} onPlay={playReel} place={reelPlace} />
                     ),
                   }
                 : null

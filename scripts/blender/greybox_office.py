@@ -115,9 +115,9 @@ FOCUS = {
     # keystone. On 16:10 the eye is on the screen's centre line, slid right to bring in the laptop, which carries the
     # reel's words: the monitor's screen is 53% of the width (7% in from the left) and the laptop's wholly in shot beside
     # it, 27% (to 91%), with the duck on top cut; the desk's front is below the frame, so the fallen notes lie out of
-    # shot. On portrait the screen is 92% of the width with the strip the site hangs under it (0.306 m tall, 0.011 m
-    # below its bottom edge, in its plane) ending 15% above the frame's bottom, not 5%: a 390 x 664 phone keeps the
-    # width and crops 11% off the top and bottom, which still leaves it a 5% margin. The portrait eye is between the
+    # shot. On portrait the screen is 92% of the width with the strip the site hangs under it (0.306 m tall, ~0.026 m
+    # below its bottom edge, in its plane) ending ~14% above the frame's bottom, not 5%: a 390 x 664 phone keeps the
+    # width and crops 11% off the top and bottom, which still leaves it a ~4% margin. The portrait eye is between the
     # chair's back and the desk, 0.33 m off the chair
     "monitor": {"land": ((-0.06, 3.981, 1.126), (-0.06, 4.957, 1.041), 40.0),
                 "portrait": ((-0.25, 3.96, 1.118), (-0.25, 4.956, 1.031), 70.7)},

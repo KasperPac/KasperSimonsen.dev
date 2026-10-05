@@ -450,6 +450,18 @@ html.office-locked {
 .reel-controls .reel-dot { width: 10px; height: 10px; padding: 0; border: 1px solid var(--office-fg); border-radius: 50%; }
 .reel-controls .reel-dot[aria-current="true"] { background: var(--accent); border-color: var(--accent); }
 .reel-count { font: 26px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; }
+/* On the laptop (~0.59 on a 1440 x 900 screen): the words fill its screen, label and headline reading at ~16 and ~22 px.
+   The print is 640 x ~432: label, three headline lines, the action and the controls fit with the dots on one row. */
+.reel-words--laptop { gap: 14px; padding: 26px 30px 20px; font-size: 38px; }
+.reel-words--laptop > * { flex: none; }
+.reel-words--laptop .reel-label { gap: 14px; font-size: 27px; }
+.reel-words--laptop .reel-label::before { width: 52px; height: 12px; background-size: 18px 12px; background-image: radial-gradient(circle, rgba(232, 232, 232, 0.7) 4.5px, transparent 5px); }
+.reel-words--laptop .reel-headline { line-height: 1.2; }
+.reel-words--laptop .office-card-cta { padding: 16px 24px; font-size: 27px; }
+.reel-words--laptop .reel-controls { gap: 16px; }
+.reel-words--laptop .reel-step { padding: 0 8px; font-size: 44px; }
+.reel-words--laptop .reel-dot { width: 20px; height: 20px; }
+
 /* The strip under the monitor (portrait screens): seen at about half size on a phone, so everything is made to be
    tapped: ‹ › 84 px square, the action 84 px tall, which at ~0.56 come out over 40 px on screen. */
 .reel-words--strip { gap: 10px; padding: 16px 18px; font-size: 28px; border: 1px solid rgba(232, 232, 232, 0.6); background: var(--office-bg); }

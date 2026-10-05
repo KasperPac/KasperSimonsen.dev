@@ -102,15 +102,23 @@ test("the notes come off, the screenshot fills the monitor, the words are on the
   await expect(button).toBeFocused();
 });
 
-test("it moves on by itself, and holds while the pointer is on the laptop's words", async ({ page }) => {
-  test.slow(); // over 12 s of the reel's clock (see reelSeconds)
+test("it moves on by itself, and holds while the pointer is on the laptop's words or the monitor's screenshot", async ({ page }) => {
+  test.slow(); // over 19 s of the reel's clock (see reelSeconds)
   await standInOffice(page);
   await openMonitor(page);
+  await expect(words(page)).toBeVisible({ timeout: MOVE_WAIT });
+  await expect(shotOnMonitor(page)).toBeVisible({ timeout: MOVE_WAIT });
+  const onWords = (await words(page).boundingBox())!;
+  const onShot = (await shotOnMonitor(page).boundingBox())!;
   await page.mouse.move(2, 2);
   await reelSeconds(page, 5.7); // the hold and the slide
+  // On the words straight away (before asserting, so the reel can't step on meanwhile), then: still on slide 1?
+  await page.mouse.move(onWords.x + onWords.width / 2, onWords.y + onWords.height / 3);
   await expect(words(page)).toHaveAttribute("data-slide", "1", { timeout: MOVE_WAIT });
-  const box = (await words(page).boundingBox())!;
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 3);
+  await reelSeconds(page, 7);
+  await expect(words(page)).toHaveAttribute("data-slide", "1");
+  // and on the monitor's screenshot
+  await page.mouse.move(onShot.x + onShot.width / 2, onShot.y + onShot.height / 2);
   await reelSeconds(page, 7);
   await expect(words(page)).toHaveAttribute("data-slide", "1");
 });
@@ -159,9 +167,13 @@ test("‹ slides the screenshot back out to the right, and it never flashes back
 test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
   test("no fall, no slide, no auto-advance: the arrows switch the screenshot and the words at once", async ({ page }) => {
+    test.slow(); // 6.5 s of the reel's clock (see reelSeconds)
     await standInOffice(page);
     await openMonitor(page);
-    await expect(office(page)).toHaveAttribute("data-notes", "down", { timeout: MOVE_WAIT });
+    await expect(office(page)).toHaveAttribute("data-notes", "down", { timeout: 5_000 }); // no fall: they're down at once
+    await page.mouse.move(2, 2);
+    await reelSeconds(page, 6.5);
+    await expect(words(page)).toHaveAttribute("data-slide", "0"); // no auto-advance
     await reel(page).getByRole("button", { name: COPY.reel.next }).click();
     await expect(words(page)).toHaveAttribute("data-slide", "1", { timeout: 2_000 });
     await expect(shotOnMonitor(page)).toHaveAttribute("src", slides[1].shot.src);
@@ -187,11 +199,17 @@ for (const height of [844, 664]) {
       expect(strip.x).toBeGreaterThanOrEqual(0);
       expect(strip.x + strip.width).toBeLessThanOrEqual(390);
       expect(await printedPx(words(page), ".reel-headline")).toBeGreaterThanOrEqual(12);
+      const fits = () => words(page).evaluate((el) => el.scrollHeight <= el.clientHeight + 1);
+      expect(await fits()).toBe(true);
       for (const name of [COPY.reel.prev, COPY.reel.next, COPY.reel.caseStudy]) {
         const box = (await reel(page).getByRole("button", { name }).boundingBox())!;
         expect(box.width, name).toBeGreaterThanOrEqual(40);
         expect(box.height, name).toBeGreaterThanOrEqual(40);
       }
+      // The last slide (Pac Technologies) has a line that wraps to two, and an action: it still fits.
+      await reel(page).getByRole("button", { name: COPY.reel.prev }).click();
+      await expect(words(page)).toHaveAttribute("data-slide", String(slides.length - 1), { timeout: MOVE_WAIT });
+      expect(await fits()).toBe(true);
     });
   });
 }

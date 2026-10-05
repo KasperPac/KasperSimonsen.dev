@@ -586,6 +586,7 @@ function Office({
         </CardFace>
       )}
       {monitorScreen && screen && (
+        // titleId is only a placeholder: focus is off, and the reel's heading (and its region's name) is with its controls
         <CardFace surface={screen} place="screen" widthPx={SCREEN_WIDTH_PX} hotspot="hs_monitor" titleId="reel-shot" focus={false}>
           {monitorScreen.content}
         </CardFace>

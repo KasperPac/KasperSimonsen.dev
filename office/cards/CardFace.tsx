@@ -61,6 +61,7 @@ export default function CardFace({
     el.dataset.placed = "";
     if (focus) document.getElementById(titleId)?.focus({ preventScroll: true });
   });
+  // Prints are overlays drawn over the canvas, never hidden behind geometry: the reel's strip relies on it (its plane reaches below the desk top).
   return createPortal(
     <Html transform position={face.position} rotation={face.rotation} distanceFactor={face.distanceFactor}>
       <section
