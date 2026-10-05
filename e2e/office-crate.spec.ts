@@ -209,18 +209,25 @@ test.describe("picking the record you mean", () => {
   });
 
   test("bringing a record forward and moving down onto its cover to click it plays that record", async ({ page }) => {
+    test.setTimeout(240_000); // a pointer move at a time, each waiting for frames under software WebGL
     await standInOffice(page);
     await openCrate(page);
-    await expect(crate(page)).toBeFocused();
-    await page.keyboard.press("ArrowDown");
-    await page.keyboard.press("ArrowDown");
-    await expect(office(page)).toHaveAttribute("data-dig", "2");
     await expect(office(page)).toHaveAttribute("data-camera", "focus", { timeout: MOVE_WAIT });
+    // one of the middle records, so the back one coming up by mistake (or the front one staying) can't pass for it
+    const target = Math.ceil((work.length - 1) / 2);
     const at = await crateTop(page);
-    await page.mouse.move(at.x, at.y - 150); // above the crate, then down over the records' tops onto its cover
-    await page.mouse.move(at.x, at.y + 40, { steps: 16 });
-    await expect(office(page)).toHaveAttribute("data-dig", "2");
-    await page.mouse.click(at.x, at.y + 40);
-    await expect(office(page)).toHaveAttribute("data-playing", work[2].slug, { timeout: MOVE_WAIT });
+    const settle = () => page.evaluate(() => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(() => done(null)))));
+    // back across the crate from in front of it, as a visitor flicks, until that record is at the front
+    let y = at.y + 200;
+    for (; y >= at.y - 200; y -= 6) {
+      await page.mouse.move(at.x, y);
+      await settle();
+      if (Number(await office(page).getAttribute("data-dig")) >= target) break;
+    }
+    await expect(office(page)).toHaveAttribute("data-dig", String(target));
+    await page.mouse.move(at.x, y + 40, { steps: 8 }); // down off its top edge onto its cover
+    await expect(office(page)).toHaveAttribute("data-dig", String(target));
+    await page.mouse.click(at.x, y + 40);
+    await expect(office(page)).toHaveAttribute("data-playing", work[target].slug, { timeout: MOVE_WAIT });
   });
 });

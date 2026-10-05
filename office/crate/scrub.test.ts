@@ -1,27 +1,50 @@
 import { describe, it, expect } from "vitest";
 import { BoxGeometry, Group, Mesh, Raycaster, Vector3 } from "three";
-import { addDigPlane, DIG_PLANE, digFromDepth } from "./scrub";
+import { addDigPlane, DIG_PLANE, digFromPointer, recordUnder } from "./scrub";
 
-// a crate 0.3 deep (z +0.15 at its front, -0.15 at its back) holding three projects: a band of 0.1 each
-const FRONT = 0.15;
-const BACK = -0.15;
+// the projects' top edges, front to back, in the crate's frame (+z its front)
+const TOPS = [0.08, 0.05, 0.02, -0.01, -0.04];
 
-describe("digFromDepth", () => {
-  it("maps the crate's front to the first project and its back to the last", () => {
-    expect(digFromDepth(0.14, FRONT, BACK, 3, 1)).toBe(0);
-    expect(digFromDepth(-0.14, FRONT, BACK, 3, 1)).toBe(2);
+describe("digFromPointer", () => {
+  it("brings up the record the pointer is on, in front of the current one or behind it", () => {
+    expect(digFromPointer(3, 0, TOPS, 5, 2)).toBe(3); // the next one's top, peeking over the front one's
+    expect(digFromPointer(1, 0.2, TOPS, 5, 2)).toBe(1); // one flicked forward, leaning over the crate's front
   });
-  it("moves on only well past a band's edge, so the pointer can't make it flicker", () => {
-    expect(digFromDepth(0.045, FRONT, BACK, 3, 0)).toBe(0); // just past the 0 | 1 edge at 0.05
-    expect(digFromDepth(0.02, FRONT, BACK, 3, 0)).toBe(1);
-    expect(digFromDepth(0.055, FRONT, BACK, 3, 1)).toBe(1); // and back the other way
-    expect(digFromDepth(0.08, FRONT, BACK, 3, 1)).toBe(0);
+  it("keeps the front record while the pointer is anywhere on it, however far its cover reaches", () => {
+    expect(digFromPointer(2, 0.15, TOPS, 5, 2)).toBe(2);
+    expect(digFromPointer(2, null, TOPS, 5, 2)).toBe(2);
   });
-  it("keeps to the projects outside the crate's depth", () => {
-    expect(digFromDepth(0.5, FRONT, BACK, 3, 2)).toBe(0);
-    expect(digFromDepth(-0.5, FRONT, BACK, 3, 0)).toBe(2);
+  it("takes the records with no project, behind them all, as the last project", () => {
+    expect(digFromPointer(7, -0.12, TOPS, 5, 1)).toBe(4);
   });
-  it("has nothing to choose with one project", () => expect(digFromDepth(-0.1, FRONT, BACK, 1, 0)).toBe(0));
+  it("off the records, keeps to the front in front of the first top edge and the back behind the last", () => {
+    expect(digFromPointer(null, 0.25, TOPS, 5, 3)).toBe(0);
+    expect(digFromPointer(null, -0.15, TOPS, 5, 1)).toBe(4);
+    expect(digFromPointer(null, 0.03, TOPS, 5, 2)).toBe(2); // between them: as it was
+    expect(digFromPointer(null, null, TOPS, 5, 2)).toBe(2); // not over the opening
+  });
+  it("has nothing to choose with one project", () => expect(digFromPointer(3, -0.1, TOPS, 1, 0)).toBe(0));
+});
+
+describe("recordUnder", () => {
+  const records = [0, 1, 2].map((i) => {
+    const r = new Group();
+    r.name = `record_0${i}`;
+    return r;
+  });
+  const vinyl = new Mesh();
+  records[1].add(vinyl);
+  const plane = new Mesh();
+  plane.name = DIG_PLANE;
+  const body = new Mesh();
+  it("is the record nearest the pointer, its vinyl or art counting as it, the dig plane not counting", () => {
+    expect(recordUnder([{ object: plane }, { object: vinyl }, { object: records[2] }], records)).toBe(1);
+    expect(recordUnder([{ object: records[2] }, { object: records[0] }], records)).toBe(2);
+  });
+  it("is none when the nearest thing is no record, even with one behind it", () => {
+    expect(recordUnder([{ object: plane }, { object: body }, { object: records[0] }], records)).toBeNull();
+    expect(recordUnder([{ object: plane }], records)).toBeNull();
+  });
 });
 
 describe("addDigPlane", () => {
@@ -47,6 +70,17 @@ describe("addDigPlane", () => {
     const hit = down(2, 0.1).intersectObject(root, true).find((h) => h.object === plane)!;
     expect(hit.point.y).toBeCloseTo(0.327, 3);
     expect(root.worldToLocal(hit.point.clone()).z).toBeCloseTo(0.1, 6);
+  });
+  it("knows how deep each record's top edge is in the crate, leaning or not", () => {
+    const { root, record } = crate();
+    const leaning = new Mesh(new BoxGeometry(0.315, 0.315, 0.005).translate(0, 0.1575, 0));
+    leaning.position.set(0, 0.012, -0.05);
+    leaning.rotation.x = -0.2; // its top leans back
+    root.add(leaning);
+    root.updateMatrixWorld(true);
+    const plane = addDigPlane(root, [record, leaning], () => true)!;
+    expect(plane.userData.tops[0]).toBeCloseTo(0, 6);
+    expect(plane.userData.tops[1]).toBeCloseTo(-0.05 - 0.315 * Math.sin(0.2), 3);
   });
   it("covers the crate's opening and the flicked records leaning out over its front, nothing further", () => {
     const { root, record } = crate();

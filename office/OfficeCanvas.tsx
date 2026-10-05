@@ -37,7 +37,7 @@ import { findNotesNodes, NotesMotion } from "./objects/notes";
 import type { Placement } from "./objects/shelf";
 import { screenRect } from "./overlay/screenRect";
 import { placeCard } from "./overlay/place";
-import { addDigPlane, DIG_PLANE, digFromDepth } from "./crate/scrub";
+import { addDigPlane, DIG_PLANE, digFromPointer, recordUnder } from "./crate/scrub";
 import { PLATTER_NODE, STAND_NODE } from "./idle/turntable";
 import CardFace from "./cards/CardFace";
 import { SLEEVE_WIDTH_PX } from "./cards/SleeveBack";
@@ -501,6 +501,8 @@ function Office({
       shown.current = key;
     }
 
+    // Project with this frame's camera: the walk-in has just placed it, and its matrices only follow at the render.
+    camera.updateMatrixWorld();
     const project = (p: Vector3) => {
       v.copy(p).project(camera);
       return v.z > 1 ? { x: Number.NaN, y: Number.NaN } : { x: ((v.x + 1) / 2) * size.width, y: ((1 - v.y) / 2) * size.height };
@@ -536,19 +538,13 @@ function Office({
   const browsedHit = (e: ThreeEvent<PointerEvent | MouseEvent>): Hit | null => {
     const plane = digPlane.current;
     const across = plane && e.intersections.find((i) => i.object.name === DIG_PLANE);
-    let dig = crate.current.dig;
-    // On the record at the front (its cover, its top edge, its vinyl), that's the one meant: the depth bands are a third
-    // of the crate each but the projects are its front three records, so the front one's top edge and cover fall in
-    // later bands, and moving down to click it, or tapping it, picked the one behind (Kasper: "it selects Manuva").
-    const front = crateNodes?.records[dig];
-    const onFront = !!front && e.intersections.some((i) => {
-      for (let o: Object3D | null = i.object; o; o = o.parent) if (o === front) return true;
-      return false;
-    });
-    if (plane?.parent && across && !onFront) {
-      const z = plane.parent.worldToLocal(across.point.clone()).z;
-      dig = digFromDepth(z, plane.userData.front, plane.userData.back, work.length, dig);
-    }
+    // On a record, that one: the next one's top over the front one's as it goes back, a flicked one as it comes
+    // forward, and the front one anywhere on its cover, so moving down to click it, or tapping it, keeps it (Kasper: "it
+    // selects Manuva"). Off them, how deep it crosses the opening. The records, not shares of the crate's depth, so
+    // every one comes up in turn however many projects there are.
+    const z = plane?.parent && across ? plane.parent.worldToLocal(across.point.clone()).z : null;
+    const on = recordUnder(e.intersections, crateNodes.records);
+    const dig = digFromPointer(on, z, plane?.userData.tops ?? [], work.length, crate.current.dig);
     return across || onCrate(e) ? { hotspot: "hs_crate", item: work[dig]?.slug ?? null } : null;
   };
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
