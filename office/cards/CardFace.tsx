@@ -30,7 +30,7 @@ export default function CardFace({
   widthPx?: number;
   hotspot: HotspotName;
   titleId: string;
-  /** Move focus to the title as it shows; the laptop's decorative print doesn't. */
+  /** Move focus to the title as it shows. Off for a decorative print (the laptop's), which is then hidden from screen readers. */
   focus?: boolean;
   children: ReactNode;
 }) {
@@ -59,7 +59,8 @@ export default function CardFace({
       <section
         ref={section}
         className={place === "back" ? "office-card-face office-sleeve-back" : place === "screen" ? "office-card-face office-screen" : "office-card-face"}
-        aria-labelledby={titleId}
+        aria-labelledby={focus ? titleId : undefined}
+        aria-hidden={focus ? undefined : true}
         style={{ width: widthPx, height: face.heightPx, "--accent": theme.accents[hotspot] } as CSSProperties}
       >
         {children}

@@ -61,6 +61,10 @@ test("the notes come off, the reel steps on by hand, and See the case study play
   await expect(reel(page).getByRole("heading", { name: COPY.reel.title })).toBeFocused();
   await expect(page.locator(".office-reel[data-slide]")).toHaveAttribute("data-slide", "0");
   await expect(laptop(page)).toContainText(work[1].name); // the next one waits on the laptop
+  // The laptop's print is decoration: hidden from screen readers, and not a region.
+  const laptopPrint = page.locator(".office-screen").filter({ has: laptop(page) });
+  await expect(laptopPrint).toHaveAttribute("aria-hidden", "true");
+  await expect(laptopPrint).not.toHaveAttribute("aria-labelledby");
 
   await reel(page).getByRole("button", { name: COPY.reel.next }).click();
   await expect(page.locator(".office-reel[data-slide]")).toHaveAttribute("data-slide", "1", { timeout: MOVE_WAIT });
@@ -75,6 +79,7 @@ test("the notes come off, the reel steps on by hand, and See the case study play
   await expect(page).toHaveURL(/\/$/);
   await expect(office(page)).toHaveAttribute("data-director", "focused:hs_monitor", { timeout: MOVE_WAIT });
   await expect(office(page)).toHaveAttribute("data-notes", "down", { timeout: MOVE_WAIT });
+  await expect(reel(page).getByRole("heading", { name: COPY.reel.title })).toBeFocused();
   await expect(page.locator(".office-reel[data-slide]")).toHaveAttribute("data-slide", "1"); // the same project
 
   await page.keyboard.press("Escape");
@@ -121,6 +126,12 @@ for (const height of [844, 664]) {
       await expect(section).toBeVisible({ timeout: MOVE_WAIT });
       expect(await section.evaluate((el) => el.scrollHeight <= el.clientHeight + 1)).toBe(true);
       expect(await printedPx(section, ".reel-headline")).toBeGreaterThanOrEqual(12);
+      // Big enough to tap on the screen itself (the boxes include the print's 3D transform).
+      for (const name of [COPY.reel.prev, COPY.reel.next, COPY.reel.caseStudy]) {
+        const box = (await reel(page).getByRole("button", { name }).boundingBox())!;
+        expect(box.width, name).toBeGreaterThanOrEqual(40);
+        expect(box.height, name).toBeGreaterThanOrEqual(40);
+      }
     });
   });
 }

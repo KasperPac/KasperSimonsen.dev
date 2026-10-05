@@ -457,10 +457,30 @@ html.office-locked {
 .reel-controls .reel-dot { width: 9px; height: 9px; padding: 0; border: 1px solid var(--office-fg); border-radius: 50%; }
 .reel-controls .reel-dot[aria-current="true"] { background: var(--accent); border-color: var(--accent); }
 .office-reel--laptop .reel-window { inset: 8px; }
+/* Phones see the print at about half size, so its controls are made to be tapped: See the case study grows (the
+   headline gives way beside it), and ‹ › become tall zones over the window's edges. The strip and the dots get fixed
+   heights so the zones (placed against .office-reel) end where the window does. */
 @media (max-width: 700px), (orientation: portrait) {
   .office-reel { font-size: 26px; }
   .reel-bar { height: 40px; font-size: 22px; }
-  .office-reel .office-card-cta { padding: 10px 16px; font-size: 22px; }
-  .reel-controls button { font-size: 30px; }
+  .reel-strip { box-sizing: border-box; height: 132px; padding: 8px 12px 4px; }
+  .reel-headline { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; white-space: normal; line-height: 1.2; }
+  .office-reel .office-card-cta { box-sizing: border-box; width: 350px; height: 120px; padding: 0 16px; font-size: 32px; white-space: normal; }
+  .reel-controls { box-sizing: border-box; height: 34px; padding: 0; }
+  /* The window is shorter here: a logo card keeps its logo and name (its headline is in the strip just below). */
+  .reel-card { gap: 4px; padding: 6px; }
+  .reel-card img { width: 40%; }
+  .reel-card p + p { display: none; }
   .reel-controls .reel-dot { width: 14px; height: 14px; }
+  .reel-controls button:not(.reel-dot) {
+    position: absolute;
+    z-index: 2; /* over the window being dragged across */
+    top: 0;
+    bottom: 166px; /* the strip and the dots */
+    width: 18%;
+    padding: 0;
+    font-size: 72px;
+  }
+  .reel-controls button:first-child { left: 0; background: linear-gradient(to right, rgba(11, 11, 11, 0.6), transparent); }
+  .reel-controls button:last-child { right: 0; background: linear-gradient(to left, rgba(11, 11, 11, 0.6), transparent); }
 }
