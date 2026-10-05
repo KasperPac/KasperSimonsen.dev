@@ -6,7 +6,7 @@ import { useGLTF } from "@react-three/drei";
 import { Box3, Quaternion, Vector3, type Mesh, type Object3D, type PerspectiveCamera } from "three";
 import manifest from "./manifest.json";
 import { theme } from "./theme";
-import { applyCleanEdges, setHighlight, setLineResolution, updateEdgeFades, type CleanEdgesHandle } from "./style/cleanEdges";
+import { applyCleanEdges, setHighlight, setLineResolution, setTint, updateEdgeFades, type CleanEdgesHandle } from "./style/cleanEdges";
 import { findClipFor, makeClipSampler, progressToTime } from "./walkin/clipSampler";
 import { useTurntable } from "./idle/useTurntable";
 import { applySkippingGirl, findSkippingGirl } from "./walkin/skippingGirl";
@@ -23,6 +23,7 @@ import { CARD_NODE, findMotionNodes, ObjectMotion, SCREEN_NODE } from "./objects
 import { CrateMotion, findCrateNodes, type PlayerPoses } from "./objects/crate";
 import { findShelfNodes, ShelfMotion } from "./objects/shelf";
 import { findNotesNodes, NotesMotion } from "./objects/notes";
+import type { Placement } from "./objects/shelf";
 import { screenRect } from "./overlay/screenRect";
 import { placeCard } from "./overlay/place";
 import { addDigPlane, DIG_PLANE, digFromDepth } from "./crate/scrub";
@@ -31,6 +32,9 @@ import CardFace from "./cards/CardFace";
 import { SLEEVE_WIDTH_PX } from "./cards/SleeveBack";
 import { SCREEN_WIDTH_PX } from "./cards/ReelScreen";
 import { LAPTOP_WIDTH_PX } from "./cards/LaptopScreen";
+import { TOOLS, WHITEBOARD_WIDTH_PX, type BoardPointer } from "./cards/Whiteboard";
+import { screenFaceFor } from "./cards/face";
+import { boardPoint, findTools, handPlacement, ToolMotion, type ToolId, type ToolNodes } from "./whiteboard/marker";
 import { work } from "@/content/work";
 
 /** DOM the canvas positions each frame: the hover label and the touch markers. */
@@ -63,6 +67,13 @@ export type OfficeCanvasProps = {
   monitorScreen: { titleId: string; content: ReactNode } | null;
   /** What's printed on the laptop beside the monitor while the monitor is open, or null. */
   laptopScreen: { content: ReactNode } | null;
+  /**
+   * The whiteboard: what's printed on it while it's open (or null), and, read every frame, the tool in hand (null when
+   * the board isn't open) and where the pointer is on the board.
+   */
+  whiteboard: { print: { titleId: string; content: ReactNode } | null; state: RefObject<{ held: ToolId | null; pointer: BoardPointer }> };
+  /** The height the board's print is laid out at (CSS px, at WHITEBOARD_WIDTH_PX across), once the model has loaded. */
+  onBoardHeight: (heightPx: number) => void;
   /** Which ornament is out in front of the camera (its index), or null: each arrival, swap and start back. */
   onPresented: (out: number | null) => void;
   onProgressCross: (progress: number) => void;
@@ -105,6 +116,18 @@ function useCleanEdges(url: string, keyFor?: (mesh: Object3D) => string | null) 
   useEffect(() => setLineResolution(handle, width, height), [handle, width, height]);
   useFrame(({ camera }) => updateEdgeFades(handle, camera.position)); // dense detail fades with distance
   return { gltf, handle };
+}
+
+/**
+ * The whiteboard's tools and their rest poses in the tray, found once per model. drei caches the loaded scene, so if
+ * the office remounts (or the frame loop stops) while a tool is out of the tray, finding them again would take where it
+ * was left as its new rest and strand it on the board. With the first rest kept, a fresh ToolMotion puts it home.
+ */
+const toolsByRoot = new WeakMap<Object3D, ToolNodes>();
+function toolsOf(root: Object3D): ToolNodes {
+  let nodes = toolsByRoot.get(root);
+  if (!nodes) toolsByRoot.set(root, (nodes = findTools(root)));
+  return nodes;
 }
 
 type StreetProps = Pick<OfficeCanvasProps, "progress" | "pan" | "host" | "director" | "onProgressCross" | "onSettled"> & { info: RefObject<OfficeInfo | null> };
@@ -201,13 +224,16 @@ function Street({ progress, pan, host, director, onProgressCross, onSettled, inf
 type OfficeProps = Pick<
   OfficeCanvasProps,
   "host" | "director" | "hover" | "overlay" | "drawerCard" | "crate" | "sleeveBack" | "shelf" | "plaque" | "monitorScreen" | "laptopScreen"
-  | "onHover" | "onActivate" | "onDrawerOpen" | "onSleeveOut" | "onPresented"
+  | "whiteboard" | "onHover" | "onActivate" | "onDrawerOpen" | "onSleeveOut" | "onPresented" | "onBoardHeight"
 > & {
   info: RefObject<OfficeInfo | null>;
 };
 
 /** The office model: hover, click, highlight, object motion, where the label and markers go, and the business card's print. */
-function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack, shelf, plaque, monitorScreen, laptopScreen, onHover, onActivate, onDrawerOpen, onSleeveOut, onPresented, info }: OfficeProps) {
+function Office({
+  host, director, hover, overlay, drawerCard, crate, sleeveBack, shelf, plaque, monitorScreen, laptopScreen, whiteboard,
+  onHover, onActivate, onDrawerOpen, onSleeveOut, onPresented, onBoardHeight, info,
+}: OfficeProps) {
   const { gltf: office, handle } = useCleanEdges(manifest.office.url, highlightKey);
   const albumAway = useRef(false); // a project's record plays, or its sleeve is on the stand: the album is put away
   useTurntable(office.scene, albumAway);
@@ -248,6 +274,31 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
   const notesWereDown = useRef(false);
   const laptop = useMemo(() => (office.scene.getObjectByName("prop_laptop__screen") as Mesh | undefined) ?? null, [office]);
   const v = useMemo(() => new Vector3(), []);
+  // The whiteboard (whiteboard spec 3.2): the surface its print and the held tool's tip go on, and the tray's tools.
+  const surface = useMemo(() => (office.scene.getObjectByName("hs_whiteboard__surface") as Mesh | undefined) ?? null, [office]);
+  const boardFace = useMemo(() => {
+    if (!surface) return null;
+    const at = surface.geometry.getAttribute("position");
+    return screenFaceFor(Array.from({ length: at.count }, (_, i) => new Vector3().fromBufferAttribute(at, i)), WHITEBOARD_WIDTH_PX);
+  }, [surface]);
+  useEffect(() => {
+    if (boardFace) onBoardHeight(boardFace.heightPx);
+  }, [boardFace, onBoardHeight]);
+  const toolNodes = useMemo(() => {
+    const root = office.scene.getObjectByName("hs_whiteboard");
+    return root ? toolsOf(root) : { tools: new Map(), rest: new Map() };
+  }, [office]);
+  const toolMotion = useMemo(() => new ToolMotion(), []);
+  const wb = useMemo(
+    () => ({
+      boardLocal: new Vector3(),
+      // until the pointer has been on the board, the held tool waits at its middle
+      lastBoardLocal: new Vector3().fromArray(boardFace?.position ?? [0, 0, 0]),
+      handPose: { position: new Vector3(), quaternion: new Quaternion() } as Placement,
+      wasOpen: false,
+    }),
+    [boardFace],
+  );
 
   // Each object's whole outline takes the pointer while nothing is focused (thin shelf, gaps between ornaments).
   useEffect(() => {
@@ -290,6 +341,11 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
       info.current = null;
     };
   }, [office, handle, info]);
+
+  // The tray's markers keep their colours in their outlines (whiteboard spec 4). The white one stays the base colour.
+  useEffect(() => {
+    for (let i = 1; i < TOOLS.length; i++) setTint(handle, `hs_whiteboard__marker_0${i}`, TOOLS[i].color);
+  }, [handle]);
 
   useFrame(({ camera, size, clock }, dt) => {
     const d = director.current;
@@ -341,11 +397,30 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
       notesWereDown.current = notesMotion.down;
       if (host.current) host.current.dataset.notes = notesMotion.down ? "down" : "up";
     }
+    // The whiteboard's held tool follows the pointer on the board; leaving puts it back in the tray (whiteboard spec 3).
+    // Between touches it stays where the pointer last was, lifted, never sent home.
+    const board = whiteboard.state.current;
+    let hand: Placement | null = null;
+    if (board.held !== null && surface && boardFace) {
+      if (board.pointer.pt) {
+        boardPoint(boardFace, WHITEBOARD_WIDTH_PX, board.pointer.pt, wb.boardLocal);
+        wb.lastBoardLocal.copy(wb.boardLocal);
+      }
+      hand = handPlacement(surface, wb.lastBoardLocal, board.held === "eraser" ? "eraser" : "marker", board.pointer.pressing, wb.handPose);
+    }
+    toolMotion.update(toolNodes, { held: board.held, hand, reduced }, dt);
+    const open = focused?.hotspot === "hs_whiteboard";
+    if (open !== wb.wasOpen) {
+      wb.wasOpen = open;
+      if (host.current) host.current.dataset.whiteboard = open ? "open" : "shut";
+    }
 
     const lit = hover.current ?? focused;
     const key = lit ? `${highlightFor(lit)}:${lit.hotspot}` : null;
     if (key !== shown.current) {
       setHighlight(handle, lit ? highlightFor(lit) : null, lit ? theme.accents[lit.hotspot] : theme.line);
+      // The whiteboard lights white, the base colour: its tray's markers keep their own colours through it.
+      if (lit?.hotspot === "hs_whiteboard") for (let i = 1; i < TOOLS.length; i++) setTint(handle, `hs_whiteboard__marker_0${i}`, TOOLS[i].color);
       shown.current = key;
     }
 
@@ -442,6 +517,11 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
       {laptopScreen && laptop && (
         <CardFace surface={laptop} place="screen" widthPx={LAPTOP_WIDTH_PX} hotspot="hs_monitor" titleId="laptop-print" focus={false}>
           {laptopScreen.content}
+        </CardFace>
+      )}
+      {whiteboard.print && surface && (
+        <CardFace surface={surface} place="screen" widthPx={WHITEBOARD_WIDTH_PX} hotspot="hs_whiteboard" titleId={whiteboard.print.titleId}>
+          {whiteboard.print.content}
         </CardFace>
       )}
     </>

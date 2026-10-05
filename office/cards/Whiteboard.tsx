@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { COPY } from "@/office/copy";
 import { theme } from "@/office/theme";
 import { boardItems, endStroke, extendStroke, startStroke, wipe } from "@/office/whiteboard/board";
@@ -9,7 +9,10 @@ import type { ToolId } from "@/office/whiteboard/marker";
 
 /** CSS px the board's print is laid out at (whiteboard spec): mapped onto hs_whiteboard__surface. */
 export const WHITEBOARD_WIDTH_PX = 800;
-/** Height of the tool strip along the board's bottom edge, in CSS px. */
+/**
+ * Height of the tool strip along the board's bottom edge, in CSS px, until it's measured: phones see the print at under
+ * half size, so office.css makes the strip taller there for fingers, and the canvas takes what's left.
+ */
 const STRIP_PX = 96;
 /** The canvas's bitmap is this many times its CSS size, so lines stay crisp when the camera comes in close. */
 const DENSITY = 2;
@@ -40,19 +43,34 @@ export default function Whiteboard({
   pointer: { current: BoardPointer };
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const strip = useRef<HTMLDivElement>(null);
+  const [stripPx, setStripPx] = useState(STRIP_PX);
+  // The strip's laid-out height (CSS px; the print's 3D transform doesn't change it), again if the media query flips.
+  useLayoutEffect(() => {
+    const el = strip.current;
+    if (!el) return;
+    const measure = () => setStripPx(el.offsetHeight || STRIP_PX);
+    measure();
+    const watch = new ResizeObserver(measure);
+    watch.observe(el);
+    return () => watch.disconnect();
+  }, []);
   const font = () => getComputedStyle(document.body).fontFamily;
   const redraw = () => {
     const c = canvas.current;
-    const ctx = c?.getContext("2d");
+    // Kept on the CPU from the first draw: Chrome moves a canvas off the GPU the first time its pixels are read back,
+    // and the two anti-alias a line differently, so the same drawing would come back a few pixels different.
+    const ctx = c?.getContext("2d", { willReadFrequently: true });
     if (!c || !ctx) return;
     ctx.setTransform(DENSITY, 0, 0, DENSITY, 0, 0);
     ctx.clearRect(0, 0, c.width, c.height);
     drawItems(ctx as unknown as Ctx2D, boardItems(), font());
   };
-  // Changing the canvas's height attribute clears its bitmap, so redraw whenever heightPx changes.
+  const drawHeight = heightPx - stripPx;
+  // Changing the canvas's height attribute clears its bitmap, so redraw whenever its height changes.
   // Redraw again once web fonts have loaded, so the printed text leaves the fallback face.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(redraw, [heightPx]);
+  useEffect(redraw, [drawHeight]);
   useEffect(() => {
     let live = true;
     document.fonts?.ready.then(() => {
@@ -68,7 +86,6 @@ export default function Whiteboard({
 
   const at = (e: React.PointerEvent<HTMLCanvasElement>): Pt => ({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
   const colour = tool === "eraser" ? "" : TOOLS[tool].color;
-  const drawHeight = heightPx - STRIP_PX;
 
   return (
     <div className="office-whiteboard">
@@ -112,7 +129,7 @@ export default function Whiteboard({
           if (!pointer.current.pressing) pointer.current = { pt: pointer.current.pt, pressing: false };
         }}
       />
-      <div className="whiteboard-tools">
+      <div ref={strip} className="whiteboard-tools">
         {TOOLS.map((t) => (
           <button key={t.id} type="button" className="whiteboard-swatch" aria-label={t.label} aria-pressed={tool === t.id} style={{ ["--swatch" as string]: t.color }} onClick={() => onTool(t.id)} />
         ))}

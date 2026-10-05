@@ -19,6 +19,9 @@ import SleeveBack from "./cards/SleeveBack";
 import Plaque from "./cards/Plaque";
 import ReelScreen from "./cards/ReelScreen";
 import LaptopScreen from "./cards/LaptopScreen";
+import Whiteboard, { type BoardPointer } from "./cards/Whiteboard";
+import { endStroke } from "./whiteboard/board";
+import type { ToolId } from "./whiteboard/marker";
 import { useReel } from "./monitor/useReel";
 import { clampDig } from "./objects/crate";
 import { canPull, digFor, swipeStep } from "./crate/dig";
@@ -184,6 +187,32 @@ export default function OfficeExperience() {
     else if (slide.href) window.open(slide.href, "_blank", "noopener,noreferrer");
   }, [play, reelCurrent]);
   const showCard = focusedOn === "hs_drawer" && drawerOpen;
+
+  // The whiteboard (whiteboard spec 3.2): the tool in hand, and where the pointer is on the board, read by the canvas each
+  // frame to move the held marker. The white marker comes off the tray once the camera is at the board.
+  const [tool, setTool] = useState<ToolId>(0);
+  const whiteboard = useRef<{ held: ToolId | null; pointer: BoardPointer }>({ held: null, pointer: { pt: null, pressing: false } });
+  whiteboard.current.held = focusedOn === "hs_whiteboard" ? tool : null;
+  // The print reads and writes the shared pointer through this, so the canvas sees every move without a render.
+  const boardPointer = useMemo(
+    () => ({
+      get current() {
+        return whiteboard.current.pointer;
+      },
+      set current(p: BoardPointer) {
+        whiteboard.current.pointer = p;
+      },
+    }),
+    [],
+  );
+  // Leaving mid-stroke (Esc or Back with the pointer down) closes the stroke and lets go of the board.
+  useEffect(() => {
+    if (focusedOn === "hs_whiteboard") return;
+    whiteboard.current.pointer = { pt: null, pressing: false };
+    endStroke();
+  }, [focusedOn]);
+  // The print's height follows the board's surface, measured by the canvas once the model has loaded.
+  const [boardHeightPx, setBoardHeightPx] = useState(590);
 
   // The crate (spec 3.2): flick through the records, pull the front one out, read it on its back and in the panel.
   const pulledSlug = scene.target?.hotspot === "hs_crate" ? scene.target.item : null;
@@ -382,7 +411,7 @@ export default function OfficeExperience() {
   const navProps = (hit: Hit) => ({ onFocus: () => onHover(hit), onBlur: () => onHover(null) });
 
   return (
-    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-presented={shelfSlug ?? ""} data-shelf="in" data-notes="up" data-hints={hints} data-walking={walking}>
+    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-presented={shelfSlug ?? ""} data-shelf="in" data-notes="up" data-whiteboard="shut" data-hints={hints} data-walking={walking}>
       {/* First in the page, so the keyboard reaches it first (spec 7.3). Shows only on the street. */}
       <div className="office-arrive">
         <button type="button" className="office-come-in" onClick={comeIn}>
@@ -418,6 +447,14 @@ export default function OfficeExperience() {
                 : null
             }
             laptopScreen={focusedOn === "hs_monitor" ? { content: <LaptopScreen view={reel.view} /> } : null}
+            whiteboard={{
+              print:
+                focusedOn === "hs_whiteboard"
+                  ? { titleId: "wb-title", content: <Whiteboard titleId="wb-title" heightPx={boardHeightPx} tool={tool} onTool={setTool} pointer={boardPointer} /> }
+                  : null,
+              state: whiteboard,
+            }}
+            onBoardHeight={setBoardHeightPx}
             onPresented={setOutIndex}
             onProgressCross={(value) => dispatch({ type: "progress", value })}
             onSettled={() => dispatch({ type: "settled" })}
@@ -455,6 +492,12 @@ export default function OfficeExperience() {
           <li>
             <button type="button" onClick={() => activate({ hotspot: "hs_monitor", item: null })} {...navProps({ hotspot: "hs_monitor", item: null })}>
               {COPY.labels.hs_monitor}
+            </button>
+          </li>
+          {/* A hidden extra: no dot, tour or glint, but the keyboard can still reach it (whiteboard spec 5). */}
+          <li>
+            <button type="button" onClick={() => activate({ hotspot: "hs_whiteboard", item: null })} {...navProps({ hotspot: "hs_whiteboard", item: null })}>
+              {COPY.whiteboard.nav}
             </button>
           </li>
         </ul>
@@ -574,7 +617,10 @@ export default function OfficeExperience() {
       )}
 
       <p className="office-hints-text" aria-hidden="true">
-        <span className="office-hints-wide">{COPY.hints}</span>
+        <span className="office-hints-wide">
+          {COPY.hints}
+          <span className="office-hints-more"> {COPY.hintsMore}</span>
+        </span>
         <span className="office-hints-tall">{COPY.hintsPan}</span>
       </p>
 
