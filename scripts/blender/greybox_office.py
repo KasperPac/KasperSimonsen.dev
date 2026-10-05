@@ -39,8 +39,11 @@ PORTRAIT_FOV_DEG = 54.0  # vertical, on a 0.64-aspect phone (narrower ones widen
 # Every line of visible text, in one place for Kasper to approve or swap.
 COPY = {
     "nameplate": "KASPER SIMONSEN.DEV",
+    # the whiteboard's writing: the site draws these now, as part of the drawing (office/copy.ts), not the model
     "whiteboard": "TODO: sleep",
     "whiteboard_note": "(next sprint)",
+    # on the sticky note beside it, the one in-world nudge that the hidden extras exist (DRAFT)
+    "whiteboard_hint": "some things in\nhere do more\nthan they look",
 }
 # The parts of build_desk_mess kept: the pen, can, paper balls and cables read only as stray lines from the standing
 # spot, so they're left out.
@@ -79,6 +82,7 @@ CHAIR = (-0.35, -0.75, math.pi - 0.35)  # x and y from the desk's centre, turn: 
 # Room-frame floor spots for the couch and the old TV on its stand: (centre x, centre y, rotation_z, width, depth).
 # Both face into the room, in view from cam_stand.
 RESERVED = {"couch": (-1.825, 4.2, math.pi / 2, 1.7, 0.85), "tv": (2.0, 4.0, -math.pi / 2, 0.7, 0.5)}
+WHITEBOARD = (-1.0, WALL + ROOM[1], 1.8)  # room frame: the whiteboard's centre on the back wall
 PILLOW_TURN = -math.pi / 2  # the pillow stood side-on to the couch, its top leaning into the far arm
 # Where the monitor's notes land on the desk when the site peels them off, one per note: (x, y, turn in degrees) for
 # hs_monitor__notes__note_NN's top centre, in the monitor's frame (origin under its foot, on the desk top). Found by a
@@ -89,11 +93,11 @@ PILLOW_TURN = -math.pi / 2  # the pillow stood side-on to the couch, its top lea
 NOTE_RESTS = ((-0.16, -0.30, -25), (0.04, -0.16, 15), (-0.44, 0.0, 25), (0.30, -0.18, -20))
 NOTE_LIFT = 0.001  # a resting note's lowest point above the desk top
 # Focus cameras (spec 3.5), room frame: (eye, look-at, vertical fov). Landscape frames (16:10) leave the right ~40% for
-# the panel, so the object's centre sits about a third in from the left; the monitor, the crate and the player have no
-# panel beside them and are centred. Portrait frames (390 x 844) centre the object, as the panel is a full-screen sheet
-# there. Every eye is at least 0.3 m from any mesh (the crate and monitor eyes pass closest, by the desk top and over
-# the chair), except the drawer's: it looks into the open drawer under the desk, 0.17 m from the drawer front on
-# portrait.
+# the panel, so the object's centre sits about a third in from the left; the monitor, the crate, the player and the
+# whiteboard have no panel beside them and are centred. Portrait frames (390 x 844) centre the object, as the panel is
+# a full-screen sheet there. Every eye is at least 0.3 m from any mesh (the crate and monitor eyes pass closest, by the
+# desk top and over the chair), except the drawer's: it looks into the open drawer under the desk, 0.17 m from the
+# drawer front on portrait.
 FOCUS = {
     # square on to the crate's front and 63 degrees down: a flicked record stands upright against the corner posts, and
     # the next sleeve's logo only shows over its top from 57 degrees down (the front sleeve's label over the crate's
@@ -124,6 +128,12 @@ FOCUS = {
     # back reads: on 16:10 it is 42% of the height with the platter in shot beside it, on portrait 80% of the width
     "player": {"land": ((1.286, 3.976, 1.191), (1.464, 4.858, 0.916), 45.0),
                "portrait": ((1.471, 4.178, 1.219), (1.734, 4.85, 1.066), 60.0)},
+    # the whiteboard, drawn on: square on and level, so the print lies flat on the screen and the canvas maps without
+    # keystone. On 16:10 the writing surface is 80% of the height (68% of the width) with the tray's markers showing
+    # over its lip below and the hint note in shot on the right (the eye sits 1.5 cm right of the board's centre for
+    # it); on portrait the surface is 92% of the width across the middle, the tray under it. Eyes 0.69 and 0.64 m clear
+    "whiteboard": {"land": ((-0.985, 4.37, 1.78), (-0.985, 5.1, 1.78), 40.0),
+                   "portrait": ((-1.0, 3.93, 1.78), (-1.0, 5.1, 1.78), 60.0)},
 }
 
 
@@ -298,8 +308,9 @@ def furnish(room, col, w, back):
 
     # on the back wall: the clock over the desk, the whiteboard and a note left of it, the Victory poster over the couch
     props.build_wall_clock("prop_wall_clock", (desk.x, back, 2.25), 0, room, col)
-    props.build_whiteboard("prop_whiteboard", (-1.0, back, 1.8), 0, room, col, text=COPY["whiteboard"], note=COPY["whiteboard_note"])
-    props.build_sticky_note("prop_sticky_note", (-0.6, back, 1.72), 0.05, room, col)
+    # the whiteboard is a hidden extra: blank, the site draws on it, with markers and an eraser in its tray
+    props.build_whiteboard("hs_whiteboard", WHITEBOARD, 0, room, col, drawable=True)
+    props.build_sticky_note("prop_sticky_note", (-0.64, back, 1.72), 0.05, room, col, text=COPY["whiteboard_hint"])
     props.build_poster_victory("prop_poster_victory", (-w + 0.5, back, 1.65), 0, room, col)
 
     # the couch on the street side, cushions straight and one pillow stood against its far arm, facing the room's

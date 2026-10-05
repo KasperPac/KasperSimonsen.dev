@@ -59,4 +59,11 @@ describe("runtime node names are required by the manifest", () => {
     notes.forEach((i) => expect(manifest.office.nodes).toContain(`hs_monitor__notes__rest_${String(i).padStart(2, "0")}`));
     expect(manifest.office.nodes).toContain("prop_laptop__screen");
   });
+
+  it("the whiteboard is a hidden extra with a surface to draw on, five markers and an eraser, and its cameras", () => {
+    for (const n of ["hs_whiteboard", "hs_whiteboard__surface", "hs_whiteboard__eraser"]) expect(manifest.office.nodes).toContain(n);
+    for (let i = 0; i < 5; i++) expect(manifest.office.nodes).toContain(`hs_whiteboard__marker_0${i}`);
+    expect(manifest.office.cameras).toContain("cam_focus_whiteboard");
+    expect(manifest.office.cameras).toContain("cam_focus_whiteboard_portrait");
+  });
 });
