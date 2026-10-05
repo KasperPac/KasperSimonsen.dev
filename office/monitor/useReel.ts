@@ -24,8 +24,9 @@ const viewKey = (v: ReelView) => `${v.monitor}:${v.moving?.slide ?? ""}:${v.word
  * Runs the monitor's reel while `active` (spec 3.5). React re-renders only when a slide changes; a sliding screenshot's
  * position goes to `--at` on every `[data-reel]` print each frame. Frames longer than 0.1 s count as 0.1 s, so a stall or
  * a background tab never skips a slide (and a frame stamped before `last` counts as 0). The slide is kept between visits.
+ * `held`: the full-screen view is open (spec 3.5 3a); the reel holds still, as it does under the pointer.
  */
-export function useReel(active: boolean, count: number, reduced: boolean) {
+export function useReel(active: boolean, count: number, reduced: boolean, held = false) {
   const state = useRef(initialReel());
   const pointer = useRef(false);
   const focus = useRef(false);
@@ -56,13 +57,13 @@ export function useReel(active: boolean, count: number, reduced: boolean) {
     const loop = (now: number) => {
       const dt = Math.max(0, Math.min(0.1, (now - last) / 1000));
       last = now;
-      state.current = tickReel(state.current, dt, { count, paused: pointer.current || focus.current, reduced });
+      state.current = tickReel(state.current, dt, { count, paused: pointer.current || focus.current || held, reduced });
       publish();
       frame = requestAnimationFrame(loop);
     };
     frame = requestAnimationFrame(loop);
     return () => cancelAnimationFrame(frame);
-  }, [active, count, reduced, publish]);
+  }, [active, count, reduced, held, publish]);
   // A hold only lasts while the reel runs; a change of count or reduced motion mid-run keeps it.
   useEffect(() => {
     if (!active) pointer.current = focus.current = false;

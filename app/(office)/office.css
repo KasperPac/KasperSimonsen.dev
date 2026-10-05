@@ -455,6 +455,8 @@ html.office-locked {
 .reel-pip { width: 30px; height: 30px; border: 3px solid var(--office-fg); border-radius: 50%; }
 .reel-pip[data-current] { background: var(--accent); border-color: var(--accent); }
 @media (hover: none) { .reel-zone, .reel-expand { opacity: 1; } }
+/* The expand button is ~20 px on a phone; there tapping the screenshot opens full screen. Comes after the rule above so it wins. */
+@media (hover: none) and (pointer: coarse) { .reel-expand { display: none; } }
 @media (prefers-reduced-motion: reduce) { .reel-zone, .reel-expand { transition: none; } }
 .reel-words { box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; height: 100%; padding: 22px 26px 18px; font-size: 22px; }
 .reel-label { display: flex; align-items: center; gap: 10px; margin: 0; font: 16px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; }
@@ -513,3 +515,14 @@ html.office-locked {
   .whiteboard-eraser[aria-pressed="true"] { outline-width: 5px; outline-offset: 5px; }
   .whiteboard-wipe { flex: none; box-sizing: border-box; min-width: 96px; height: 96px; padding: 0 8px; border-width: 2px; font-size: 30px; }
 }
+
+/* The reel's full-screen view (spec 3.5 3a): over everything (above the Read more scrim at 10), on black, the screenshot uncropped. */
+.reel-viewer { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; background: #000; outline: none; animation: reel-viewer-in 0.2s ease-out; }
+.reel-viewer-shot { max-width: 100vw; max-height: calc(100vh - 96px); object-fit: contain; }
+.reel-viewer-label { position: absolute; top: 18px; left: 20px; margin: 0; font: 14px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; color: var(--office-fg); }
+.reel-viewer-close { position: absolute; top: 10px; right: 12px; min-width: 44px; min-height: 44px; padding: 0 14px; background: none; border: 1px solid rgba(232, 232, 232, 0.6); color: var(--office-fg); font: 14px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; cursor: pointer; }
+.reel-viewer-step { position: absolute; top: 50%; translate: 0 -50%; width: 56px; height: 96px; background: rgba(11, 11, 11, 0.55); border: 0; color: var(--office-fg); font: 48px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; }
+.reel-viewer-step--prev { left: 8px; }
+.reel-viewer-step--next { right: 8px; }
+@keyframes reel-viewer-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .reel-viewer { animation: none; } }
