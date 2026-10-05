@@ -26,7 +26,7 @@ function neighbours(i: number): string[] {
 
 /**
  * What's printed on the monitor (spec 3.5): the slide's screenshot edge to edge, the next one sliding in over it, and the
- * carousel over them: ‹ and › as tall zones at the edges, a dot per slide along the bottom, and the expand button. The
+ * carousel over them: ‹ and › as tall zones at the edges, a dot per slide along the bottom (and "Slide n of N" for screen readers), and the expand button. The
  * screenshot opens full screen on a click; the zones and buttons over it don't. The visually hidden heading takes focus as
  * the monitor opens. `dots` is "buttons" where they can be tapped, "marker" on phones, where they only show the position.
  */
@@ -50,14 +50,11 @@ export default function ReelScreen({ titleId, view, hold, onStep, onShow, onOpen
       <button type="button" className="reel-zone reel-zone--next" aria-label={COPY.reel.next} onClick={() => onStep(1)}>›</button>
       <button type="button" className="reel-expand" aria-label={COPY.reel.expand} onClick={onOpen}>⤢</button>
       <div className="reel-dots">
-        {dots === "buttons" ? (
-          slides.map((s, k) => <button key={k} type="button" className="reel-dot" aria-label={COPY.reel.show(s.label)} aria-current={k === i} onClick={() => onShow(k)} />)
-        ) : (
-          <>
-            {slides.map((_, k) => <span key={k} className="reel-pip" aria-hidden="true" data-current={k === i || undefined} />)}
-            <span className="visually-hidden">{COPY.reel.position(i + 1, slides.length)}</span>
-          </>
-        )}
+        {dots === "buttons"
+          ? slides.map((s, k) => <button key={k} type="button" className="reel-dot" aria-label={COPY.reel.show(s.label)} aria-current={k === i} onClick={() => onShow(k)} />)
+          : slides.map((_, k) => <span key={k} className="reel-pip" aria-hidden="true" data-current={k === i || undefined} />)}
+        {/* where the reel is, read out in both modes */}
+        <span className="visually-hidden">{COPY.reel.position(i + 1, slides.length)}</span>
       </div>
     </div>
   );

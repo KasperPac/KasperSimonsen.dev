@@ -80,6 +80,13 @@ describe("ReelScreen's carousel", () => {
     expect(out).not.toContain('class="reel-dot"');
     expect(out).toContain(esc(COPY.reel.position(2, slides.length)));
   });
+  it("reads the position as Slide n of N in both modes, once", () => {
+    for (const dots of ["buttons", "marker"] as const) {
+      const out = monitorOf(1, dots);
+      expect(out.split(esc(COPY.reel.position(2, slides.length))).length - 1, dots).toBe(1);
+      expect(out, dots).toContain(`class="visually-hidden">${esc(COPY.reel.position(2, slides.length))}<`);
+    }
+  });
 });
 
 describe("ReelWords", () => {

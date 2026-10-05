@@ -72,7 +72,7 @@ export const COPY = {
     show: (name: string) => `Show ${name}`,
     /** The monitor's button for the full-screen view. DRAFT. */
     expand: "See it full screen",
-    /** The strip's position, for screen readers (it shows `3 / 7`). DRAFT. */
+    /** Where the reel is, for screen readers: on the monitor (the dots only mark it) and in the full-screen view. DRAFT. */
     position: (n: number, total: number) => `Slide ${n} of ${total}`,
   },
 } as const;

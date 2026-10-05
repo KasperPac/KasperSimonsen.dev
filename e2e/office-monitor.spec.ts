@@ -20,6 +20,22 @@ const slideNow = async (page: Page) => Number(await words(page).getAttribute("da
 /** Whether a print holds all its content: nothing pushed out below or to the side. */
 const fits = (print: Locator) => print.evaluate((el) => el.scrollHeight <= el.clientHeight + 1 && el.scrollWidth <= el.clientWidth + 1);
 
+/** Whether a words print's action sits inside it, in the print's own (CSS px) layout. */
+const actionInside = (print: Locator) =>
+  print.evaluate((el) => {
+    const cta = el.querySelector<HTMLElement>(".office-card-cta");
+    if (!cta) return true;
+    // offsetTop/Left add up along the offset parents, which a 3D transform doesn't touch: a layout-space comparison
+    const sum = (n: HTMLElement, key: "offsetTop" | "offsetLeft") => {
+      let v = 0;
+      for (let e: HTMLElement | null = n; e; e = e.offsetParent as HTMLElement | null) v += e[key];
+      return v;
+    };
+    const y = sum(cta, "offsetTop") - sum(el as HTMLElement, "offsetTop");
+    const x = sum(cta, "offsetLeft") - sum(el as HTMLElement, "offsetLeft");
+    return y >= 0 && x >= 0 && y + cta.offsetHeight <= el.clientHeight + 1 && x + cta.offsetWidth <= el.clientWidth + 1;
+  });
+
 // Found by what they are, not where they sit in the reel, so adding or reordering slides doesn't break the tests.
 /** A slide that plays a crate record (See the case study). */
 const CRATE = slides.findIndex((s) => s.slug);
@@ -89,6 +105,9 @@ test("the notes come off, the screenshot fills the monitor with the carousel ove
   }
   await expect(page.locator(".office-reel .reel-dot")).toHaveCount(slides.length);
   await expect(words(page).locator(".reel-dot")).toHaveCount(0);
+  await expect(reel(page).getByRole("button", { name: COPY.reel.expand })).toHaveCount(1);
+  // where the reel is, read out as Slide n of N next to the dot buttons too
+  await expect(reel(page).getByText(COPY.reel.position(1, slides.length), { exact: true })).toHaveCount(1);
   // laid out at 1280 px across, so the browser shrinks it onto the screen (sharp) rather than blowing it up
   expect(await page.locator(".office-reel").evaluate((el) => (el as HTMLElement).offsetWidth)).toBe(1280);
   const img = (await shotOnMonitor(page).boundingBox())!;
@@ -165,6 +184,7 @@ test("a click on the screenshot opens it full screen: uncropped, ← → step, t
   await page.mouse.click(open.x + open.width / 2, open.y + open.height / 2);
   await expect(viewer(page, i)).toBeVisible({ timeout: MOVE_WAIT });
   expect(new URL(page.url()).pathname).toBe("/"); // a local layer, like the panels
+  await expect(viewer(page, i)).toHaveAccessibleDescription(COPY.reel.position(i + 1, slides.length));
   const img = viewer(page, i).locator("img");
   await expect(img).toHaveAttribute("src", slides[i].shot.src);
   await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).complete && (el as HTMLImageElement).naturalWidth > 0)).toBe(true);
@@ -216,6 +236,34 @@ test("a click on the screenshot opens it full screen: uncropped, ← → step, t
   await page.keyboard.press("Escape");
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
   await expect(monitorButton).toBeFocused();
+});
+
+test("opening full screen mid-slide settles the reel: the view names one slide and keeps naming it while the reel's clock runs on", async ({ page }) => {
+  test.slow(); // 2 s of the reel's clock (see reelSeconds)
+  await standInOffice(page);
+  await openMonitor(page);
+  await expect(shotOnMonitor(page)).toBeVisible({ timeout: MOVE_WAIT });
+  await page.mouse.move(2, 2);
+  const from = await slideNow(page);
+  const open = (await page.locator(".office-reel .reel-open").boundingBox())!;
+  // › starts a slide; the click on the screenshot comes while it is still sliding
+  await reel(page).getByRole("button", { name: COPY.reel.next }).click();
+  await expect(page.locator(".office-reel .reel-moving")).toHaveCount(1);
+  await page.mouse.click(open.x + open.width / 2, open.y + open.height / 2);
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible({ timeout: MOVE_WAIT });
+  const label = dialog.locator(".reel-viewer-label");
+  const name = (await label.textContent())!;
+  const shown = slides.findIndex((s) => s.label === name);
+  expect([from, (from + 1) % slides.length], `the view opened on "${name}"`).toContain(shown);
+  await reelSeconds(page, 2); // the slide would have landed in 0.7 s
+  await expect(label).toHaveText(name);
+  await expect(dialog.locator("img")).toHaveAttribute("src", slides[shown].shot.src);
+  await expect(page.locator(".office-reel .reel-moving")).toHaveCount(0); // settled, not left sliding under the view
+  await expect(words(page)).toHaveAttribute("data-slide", String(shown)); // the monitor under the view is on it too
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(words(page)).toHaveAttribute("data-slide", String(shown));
 });
 
 test("it moves on by itself, and holds while the pointer is on the laptop's words or the monitor's screenshot", async ({ page }) => {
@@ -301,6 +349,40 @@ test.describe("reduced motion", () => {
     await expect(office(page)).toHaveAttribute("data-notes", "up", { timeout: MOVE_WAIT });
     await expect(button).toBeFocused();
   });
+
+  test("the laptop's words fit its screen on every slide, and with far longer words than any project has", async ({ page }) => {
+    test.slow(); // a pass over every slide
+    await standInOffice(page);
+    await openMonitor(page);
+    await page.mouse.move(2, 2);
+    await expect(page.locator(".reel-words--laptop")).toHaveCount(1);
+    await expect(words(page)).toBeVisible({ timeout: MOVE_WAIT });
+    for (let k = 0; k < slides.length; k++) {
+      if (k > 0) await reel(page).getByRole("button", { name: COPY.reel.next }).click();
+      await expect(words(page)).toHaveAttribute("data-slide", String(k), { timeout: 5_000 });
+      const at = `slide ${k} (${slides[k].label})`;
+      expect(await fits(words(page)), `${at}: the laptop holds its words`).toBe(true);
+      expect(await actionInside(words(page)), `${at}: the action is inside the print`).toBe(true);
+      const print = (await words(page).boundingBox())!;
+      const action = await words(page).locator(".office-card-cta").boundingBox();
+      if (action) {
+        expect(action.y + action.height, `${at}: the action's bottom`).toBeLessThanOrEqual(print.y + print.height + 1);
+        expect(action.x + action.width, `${at}: the action's right`).toBeLessThanOrEqual(print.x + print.width + 1);
+        expect(action.y, `${at}: the action's top`).toBeGreaterThanOrEqual(print.y - 1);
+      }
+    }
+    // Longer words than any project has (a long headline, description and details line): clamped, never pushing the action off.
+    const crate = slides.findIndex((s) => s.slug);
+    if (crate < 0) return test.info().annotations.push({ type: "skipped", description: "longer words: no slide has a project's" });
+    await dot(page, crate).click();
+    await expect(words(page)).toHaveAttribute("data-slide", String(crate), { timeout: 5_000 });
+    await words(page).evaluate((el) => {
+      const long = "A far longer line than any project has, running on and on across the whole of the laptop's screen and onto the next line and the one after that. ";
+      for (const [sel, times] of [[".reel-headline", 3], [".reel-description", 4], [".reel-details", 6]] as const) el.querySelector(sel)!.textContent = long.repeat(times);
+    });
+    expect(await fits(words(page)), "long words: the laptop holds them").toBe(true);
+    expect(await actionInside(words(page)), "long words: the action is inside the print").toBe(true);
+  });
 });
 
 // Phones, and a portrait tablet (squarer: the camera widens to keep the strip on screen). Under reduced motion, so each
@@ -331,6 +413,7 @@ for (const [width, height] of [
       await expect(reel(page).locator(".reel-dot")).toHaveCount(0);
       await expect(reel(page).locator(".reel-pip")).toHaveCount(slides.length);
       await expect(reel(page).getByText(COPY.reel.position(1, slides.length), { exact: true })).toHaveCount(1);
+      await expect(reel(page).getByRole("button", { name: COPY.reel.expand })).toHaveCount(1);
       for (const name of [COPY.reel.prev, COPY.reel.next]) {
         const box = (await reel(page).getByRole("button", { name }).boundingBox())!;
         test.info().annotations.push({ type: "measured", description: `${width}x${height} ${name}: ${box.width.toFixed(1)} x ${box.height.toFixed(1)}` });
@@ -363,6 +446,43 @@ for (const [width, height] of [
           expect(box.x + box.width, `${at}: ${name} inside the strip`).toBeLessThanOrEqual(strip.x + strip.width + 1);
         }
       }
+      // Full screen on a portrait screen: ‹ › sit below the image, not over its edges, and are big enough for a finger.
+      await reel(page).getByRole("button", { name: COPY.reel.expand }).click();
+      const view = page.getByRole("dialog");
+      await expect(view).toBeVisible({ timeout: MOVE_WAIT });
+      const image = (await view.locator("img").boundingBox())!;
+      for (const name of [COPY.reel.prev, COPY.reel.next]) {
+        const box = (await view.getByRole("button", { name }).boundingBox())!;
+        test.info().annotations.push({ type: "measured", description: `${width}x${height} full screen ${name}: ${box.width.toFixed(1)} x ${box.height.toFixed(1)}` });
+        expect(box.width, name).toBeGreaterThanOrEqual(44);
+        expect(box.height, name).toBeGreaterThanOrEqual(44);
+        expect(box.y, `${name} below the image`).toBeGreaterThanOrEqual(image.y + image.height - 1);
+        expect(box.y + box.height, name).toBeLessThanOrEqual(height);
+      }
     });
   });
 }
+
+// A landscape phone is wider than tall (so the laptop's words) but its dots are as small as on a portrait one: its pointer is coarse.
+test.describe("landscape phone 844x390", () => {
+  test.use({ viewport: { width: 844, height: 390 }, hasTouch: true, reducedMotion: "reduce" });
+  test("the dots only mark the place, read as Slide n of N, and the expand button is still there for a screen reader", async ({ page }) => {
+    await standInOffice(page);
+    await openMonitor(page);
+    await expect(page.locator(".reel-words--laptop")).toHaveCount(1, { timeout: MOVE_WAIT });
+    expect(await page.evaluate(() => matchMedia("(pointer: coarse)").matches)).toBe(true);
+    await expect(reel(page).locator(".reel-dot")).toHaveCount(0);
+    await expect(reel(page).locator(".reel-pip")).toHaveCount(slides.length);
+    await expect(reel(page).getByText(COPY.reel.position(1, slides.length), { exact: true })).toHaveCount(1);
+    // hidden visually, not removed from the accessibility tree
+    const expand = reel(page).getByRole("button", { name: COPY.reel.expand });
+    await expect(expand).toHaveCount(1);
+    const box = (await expand.boundingBox())!;
+    expect(box.width).toBeLessThanOrEqual(2);
+    expect(box.height).toBeLessThanOrEqual(2);
+    // and it still opens the view
+    await expand.focus();
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("dialog")).toBeVisible({ timeout: MOVE_WAIT });
+  });
+});

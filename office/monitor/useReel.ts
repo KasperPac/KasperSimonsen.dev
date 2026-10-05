@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FocusEvent } from "react";
-import { atToWrite, initialReel, showSlide, stepReel, tickReel, viewOf, type ReelView } from "./reel";
+import { atToWrite, initialReel, showSlide, stepReel, tickReel, viewOf, visibleSlide, type ReelView } from "./reel";
 
 export type HoldProps = {
   onPointerEnter: () => void;
@@ -96,5 +96,12 @@ export function useReel(active: boolean, count: number, reduced: boolean, held =
   );
   /** The slide whose words show, read now: the one the action button plays. */
   const current = useCallback(() => state.current.index, []);
-  return { view, step, show, hold, current };
+  /** Stops the reel where the visitor sees it: finishes a slide in progress on whichever slide covers most of the monitor, and returns it. */
+  const settle = useCallback(() => {
+    const i = visibleSlide(viewOf(state.current, count));
+    state.current = showSlide(state.current, i, count);
+    publish();
+    return i;
+  }, [count, publish]);
+  return { view, step, show, hold, current, settle };
 }

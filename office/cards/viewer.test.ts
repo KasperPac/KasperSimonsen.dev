@@ -19,4 +19,9 @@ describe("ReelViewer", () => {
     for (const name of [COPY.reel.prev, COPY.reel.next]) expect(out).toContain(`aria-label="${esc(name)}"`);
     expect(out).toContain(`>${esc(COPY.close)}<`);
   });
+  it("is described by where the reel is, read as Slide n of N", () => {
+    const out = html(1);
+    expect(out).toMatch(/aria-describedby="v-position"/);
+    expect(out).toMatch(new RegExp(`id="v-position"[^>]*>${esc(COPY.reel.position(2, slides.length))}<`));
+  });
 });

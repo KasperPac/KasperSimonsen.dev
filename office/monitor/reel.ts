@@ -61,6 +61,15 @@ export function viewOf(s: ReelState, count: number): ReelView {
 }
 
 /**
+ * The slide the visitor is looking at: the one covering most of the monitor. Mid-slide that is the sliding screenshot once it
+ * covers more than half (`at` under 0.5, going either way), else the one under it; at rest, the reel's slide. Opening the
+ * full-screen view settles the reel on it, so the view opens on what was on screen and nothing switches under it.
+ */
+export function visibleSlide(v: ReelView): number {
+  return v.moving && v.moving.at < 0.5 ? v.moving.slide : v.monitor;
+}
+
+/**
  * What to write to `--at` this frame, or null to leave it. Only a sliding screenshot writes: when it lands, the DOM still shows the old
  * view for a painted frame or two, and zeroing `--at` then would throw the moving screenshot over the monitor.
  */

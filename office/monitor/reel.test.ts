@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { atToWrite, DRAG_SECONDS, initialReel, REEL_HOLD_SECONDS, showSlide, stepReel, tickReel, viewOf, wrap, type ReelState } from "./reel";
+import { atToWrite, DRAG_SECONDS, initialReel, REEL_HOLD_SECONDS, showSlide, stepReel, tickReel, viewOf, visibleSlide, wrap, type ReelState } from "./reel";
 
 const go = { count: 3, paused: false, reduced: false };
 const run = (s: ReelState, seconds: number, o = go) => {
@@ -96,5 +96,29 @@ describe("atToWrite", () => {
   it("writes nothing when nothing moves, so the last in-drag value stays until the DOM catches up", () => {
     expect(atToWrite(view(null), 0.97)).toBeNull();
     expect(atToWrite(view(null), null)).toBeNull();
+  });
+});
+
+describe("visibleSlide", () => {
+  it("is the reel's slide at rest", () => expect(visibleSlide(viewOf({ index: 2, wait: 1, drag: null }, 3))).toBe(2));
+  it("going forward, is the old slide until the new one covers more than half, then the new one", () => {
+    const at = (t: number) => visibleSlide(viewOf({ index: 0, wait: 0, drag: { dir: 1, t } }, 3));
+    expect(at(0)).toBe(0);
+    expect(at(0.3)).toBe(0);
+    expect(at(0.7)).toBe(1);
+    expect(at(0.99)).toBe(1);
+  });
+  it("going back, is the leaving slide until it has gone more than half, then the one it uncovers", () => {
+    const at = (t: number) => visibleSlide(viewOf({ index: 0, wait: 0, drag: { dir: -1, t } }, 3));
+    expect(at(0)).toBe(0);
+    expect(at(0.3)).toBe(0);
+    expect(at(0.7)).toBe(2);
+    expect(at(0.99)).toBe(2);
+  });
+  it("agrees with where the reel lands: from the end of a slide it is the slide the reel settles on", () => {
+    for (const dir of [1, -1] as const) {
+      const s = { index: 1, wait: 0, drag: { dir, t: 0.999 } };
+      expect(visibleSlide(viewOf(s, 3))).toBe(tickReel(s, 1, { count: 3, paused: true, reduced: false }).index);
+    }
   });
 });

@@ -452,13 +452,18 @@ html.office-locked {
 .office-reel:hover .reel-expand, .reel-expand:focus-visible { opacity: 1; }
 .reel-dots { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 22px; min-height: 96px; padding: 0 16%; box-sizing: border-box; background: linear-gradient(to top, rgba(11, 11, 11, 0.6), transparent); pointer-events: none; }
 .reel-dot { width: 26px; height: 26px; padding: 0; border: 2px solid var(--office-fg); border-radius: 50%; background: none; cursor: pointer; pointer-events: auto; }
-.reel-dot:focus-visible { outline: 4px solid var(--accent); outline-offset: 4px; }
+.reel-dot:focus-visible, .reel-expand:focus-visible { outline: 4px solid var(--accent); outline-offset: 4px; }
+/* a zone is the full height of the print and fills its edge, so its outline sits inside it */
+.reel-zone:focus-visible { outline: 4px solid var(--accent); outline-offset: -8px; }
 .reel-dot[aria-current="true"] { background: var(--accent); border-color: var(--accent); }
 .reel-pip { width: 30px; height: 30px; border: 3px solid var(--office-fg); border-radius: 50%; }
 .reel-pip[data-current] { background: var(--accent); border-color: var(--accent); }
 @media (hover: none) { .reel-zone, .reel-expand { opacity: 1; } }
-/* The expand button is ~20 px on a phone; there tapping the screenshot opens full screen. Comes after the rule above so it wins. */
-@media (hover: none) and (pointer: coarse) { .reel-expand { display: none; } }
+/* The expand button is ~20 px on a phone; there tapping the screenshot opens full screen. It is hidden visually, not removed
+   (display: none would take it out of the accessibility tree), so a screen reader can still open the view; a keyboard focus shows it. */
+@media (hover: none) and (pointer: coarse) {
+  .reel-expand:not(:focus-visible) { width: 1px; height: 1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); opacity: 0; }
+}
 @media (prefers-reduced-motion: reduce) { .reel-zone, .reel-expand { transition: none; } }
 .reel-words { box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; height: 100%; padding: 22px 26px 18px; font-size: 22px; }
 .reel-label { display: flex; align-items: center; gap: 10px; margin: 0; font: 16px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; }
@@ -471,17 +476,19 @@ html.office-locked {
 .reel-description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; margin: 0; overflow: hidden; line-height: 1.3; color: rgba(232, 232, 232, 0.7); }
 .reel-details { margin: 0; font: 15px/1.3 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.04em; color: rgba(232, 232, 232, 0.6); }
 /* On the laptop (~0.59 on a 1440 x 900 screen): the words fill its screen, label and headline reading at ~16 and ~22 px.
-   The print is 640 x ~432, 386 px inside its padding. Worst case with today's words: label 27 + two headline lines 91 +
-   three description lines (24 px x 1.3) 94 + a details line that wraps to two (19 px x 1.3) 49 + the action ~59 + four
-   gaps of 14 = 376, ~10 px to spare. So the description is clamped to three lines (four would be 407, over). */
+   The print is 640 x ~432, 386 px inside its padding. Every part is bounded whatever the words, so any project fits: the label
+   is one line (27, ellipsis), the headline is clamped to two (2 x 38 px x 1.2 = 91), the description to three (3 x 24 px x 1.3 = 94),
+   the details to one line (19 px x 1.3 = 25, ellipsis) and the action is one line (~59, nowrap). Worst case 27 + 91 + 94 + 25 + 59 +
+   four gaps of 14 = 352, 34 px to spare. Nothing shrinks (flex: none), so a part can never be squeezed out, and the action
+   sits at the bottom on its margin-top: auto. (A three-line headline would be 398, over the 386: hence two.) */
 .reel-words--laptop { gap: 14px; padding: 26px 30px 20px; font-size: 38px; }
 .reel-words--laptop > * { flex: none; }
 .reel-words--laptop .reel-label { gap: 14px; font-size: 27px; }
 .reel-words--laptop .reel-label::before { width: 52px; height: 12px; background-size: 18px 12px; background-image: radial-gradient(circle, rgba(232, 232, 232, 0.7) 4.5px, transparent 5px); }
-.reel-words--laptop .reel-headline { line-height: 1.2; }
+.reel-words--laptop .reel-headline { -webkit-line-clamp: 2; line-height: 1.2; }
 .reel-words--laptop .office-card-cta { padding: 16px 24px; font-size: 27px; }
 .reel-words--laptop .reel-description { font-size: 24px; }
-.reel-words--laptop .reel-details { font-size: 19px; }
+.reel-words--laptop .reel-details { font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* The strip under the monitor (portrait screens): seen at about half size on a phone, so the action is made to be
    tapped: 84 px tall, which at ~0.56 comes out over 40 px on screen. */
@@ -527,5 +534,13 @@ html.office-locked {
 .reel-viewer-step { position: absolute; top: 50%; translate: 0 -50%; width: 56px; height: 96px; background: rgba(11, 11, 11, 0.55); border: 0; color: var(--office-fg); font: 48px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; }
 .reel-viewer-step--prev { left: 8px; }
 .reel-viewer-step--next { right: 8px; }
+/* On portrait screens ‹ › go in a bar under the image rather than over its edges, each at least 44 x 44. */
+@media (orientation: portrait) {
+  .reel-viewer { padding-bottom: 88px; }
+  .reel-viewer-shot { max-height: calc(100vh - 142px); max-height: calc(100dvh - 142px); }
+  .reel-viewer-step { top: auto; bottom: 16px; translate: none; width: 72px; height: 56px; }
+  .reel-viewer-step--prev { left: 16px; }
+  .reel-viewer-step--next { right: 16px; }
+}
 @keyframes reel-viewer-in { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .reel-viewer { animation: none; } }

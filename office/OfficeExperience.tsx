@@ -26,6 +26,7 @@ import type { ToolId } from "./whiteboard/marker";
 import { useReel } from "./monitor/useReel";
 import { wrap } from "./monitor/reel";
 import { usePortrait } from "./usePortrait";
+import { useCoarsePointer } from "./useCoarsePointer";
 import { clampDig } from "./objects/crate";
 import { canPull, digFor, swipeStep } from "./crate/dig";
 import { tourAt } from "./hints/tour";
@@ -184,6 +185,15 @@ export default function OfficeExperience() {
   const viewing = scene.reading && scene.target?.hotspot === "hs_monitor";
   const reel = useReel(focusedOn === "hs_monitor", slides.length, reduced, viewing);
   const portraitScreen = usePortrait();
+  // Dots are tappable only where the screen is big and the pointer is fine: phones, either way up, get the marker.
+  const coarsePointer = useCoarsePointer();
+  // Opening the full-screen view settles the reel first, on the slide the visitor sees (the sliding one once it covers more than half
+  // the monitor): `tickReel` would otherwise finish a slide in progress before honouring the hold, and the view would switch as it lands.
+  const reelSettle = reel.settle;
+  const openViewer = useCallback(() => {
+    reelSettle();
+    read();
+  }, [reelSettle, read]);
   const reelPlace = portraitScreen ? "strip" : "laptop";
   const play = useCallback((slug: string) => activate({ hotspot: "hs_crate", item: slug }), [activate]);
   // The reel's action plays the slide its words name: a crate record plays as picking it in the crate does, a page opens in a new tab.
@@ -461,8 +471,8 @@ export default function OfficeExperience() {
                         hold={reel.hold}
                         onStep={reel.step}
                         onShow={reel.show}
-                        onOpen={read}
-                        dots={portraitScreen ? "marker" : "buttons"}
+                        onOpen={openViewer}
+                        dots={portraitScreen || coarsePointer ? "marker" : "buttons"}
                       />
                     ),
                   }
