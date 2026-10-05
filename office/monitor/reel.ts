@@ -1,8 +1,8 @@
 import { easeInOutCubic } from "@/office/camera/pose";
 
-/** How long a slide holds on the monitor before the next is dragged across from the laptop (spec 3.5). */
+/** How long a slide holds on the monitor before the next slides in over the monitor (spec 3.5). */
 export const REEL_HOLD_SECONDS = 5;
-/** How long a drag between the screens takes. */
+/** How long a slide takes to slide in over the monitor. */
 export const DRAG_SECONDS = 0.7;
 
 export type ReelState = { index: number; wait: number; drag: { dir: 1 | -1; t: number } | null };
@@ -16,8 +16,8 @@ export function wrap(i: number, n: number): number {
 }
 
 /**
- * The reel `dt` seconds on. A drag in progress runs to its end (a long frame finishes it and starts nothing more);
- * otherwise the slide holds, and after REEL_HOLD_SECONDS the next is dragged across. Paused, the hold starts again;
+ * The reel `dt` seconds on. A slide in progress runs to its end (a long frame finishes it and starts nothing more);
+ * otherwise the slide holds, and after REEL_HOLD_SECONDS the next slides in over the monitor. Paused, the hold starts again;
  * under reduced motion nothing moves by itself.
  */
 export function tickReel(s: ReelState, dt: number, o: { count: number; paused: boolean; reduced: boolean }): ReelState {
@@ -31,44 +31,38 @@ export function tickReel(s: ReelState, dt: number, o: { count: number; paused: b
   return wait >= REEL_HOLD_SECONDS ? { ...s, wait: 0, drag: { dir: 1, t: 0 } } : { ...s, wait };
 }
 
-/** A step by hand (‹ or ›): drags one slide that way, or under reduced motion switches at once. Ignored mid-drag. */
+/** A step by hand (‹ or ›): slides one slide that way over the monitor, or under reduced motion switches at once. Ignored mid-slide. */
 export function stepReel(s: ReelState, dir: 1 | -1, o: { count: number; reduced: boolean }): ReelState {
   if (o.count < 2 || s.drag) return s;
   if (o.reduced) return { index: wrap(s.index + dir, o.count), wait: 0, drag: null };
   return { ...s, wait: 0, drag: { dir, t: 0 } };
 }
 
-/** Straight to slide `i` (a dot), no drag. */
+/** Straight to slide `i` (a dot), no sliding. */
 export function showSlide(_s: ReelState, i: number, count: number): ReelState {
   return { index: wrap(i, count), wait: 0, drag: null };
 }
 
 export type ReelView = {
-  /** The slide on the monitor, under anything being dragged. */
+  /** The slide on the monitor, under anything sliding. */
   monitor: number;
-  /** The slide on the laptop, under anything being dragged. */
-  laptop: number;
-  /** The window crossing between the screens, and where it is: 1 on the laptop, 0 on the monitor. */
+  /** The screenshot sliding over the monitor, and where it is: 1 off the right edge (the laptop's side), 0 covering it. */
   moving: { slide: number; at: number } | null;
+  /** The slide whose words and controls show (spec 3.5): the reel's own slide, which changes as a slide lands. */
+  words: number;
 };
 
-/** What each screen shows. Forward, the next slide crosses from the laptop; back, the monitor's slide returns to it. */
+/** What the monitor shows. Forward, the next screenshot slides in from the right; back, the current one slides out to the right. */
 export function viewOf(s: ReelState, count: number): ReelView {
-  const next = wrap(s.index + 1, count);
-  if (!s.drag) return { monitor: s.index, laptop: next, moving: null };
+  if (!s.drag) return { monitor: s.index, moving: null, words: s.index };
   const e = easeInOutCubic(s.drag.t);
-  if (s.drag.dir === 1) return { monitor: s.index, laptop: wrap(s.index + 2, count), moving: { slide: next, at: 1 - e } };
-  return { monitor: wrap(s.index - 1, count), laptop: next, moving: { slide: s.index, at: e } };
-}
-
-/** The slide the visitor mostly sees on the monitor: a window dragged in covers it once it is past halfway. */
-export function slideInView(v: ReelView): number {
-  return v.moving && v.moving.at < 0.5 ? v.moving.slide : v.monitor;
+  if (s.drag.dir === 1) return { monitor: s.index, moving: { slide: wrap(s.index + 1, count), at: 1 - e }, words: s.index };
+  return { monitor: wrap(s.index - 1, count), moving: { slide: s.index, at: e }, words: s.index };
 }
 
 /**
- * What to write to `--at` this frame, or null to leave it. Only a drag writes: when it lands, the DOM still shows the old
- * view for a painted frame or two, and zeroing `--at` then would throw the moving window over the monitor.
+ * What to write to `--at` this frame, or null to leave it. Only a sliding screenshot writes: when it lands, the DOM still shows the old
+ * view for a painted frame or two, and zeroing `--at` then would throw the moving screenshot over the monitor.
  */
 export function atToWrite(v: ReelView, last: number | null): number | null {
   return v.moving && v.moving.at !== last ? v.moving.at : null;

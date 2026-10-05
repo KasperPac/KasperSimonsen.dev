@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { atToWrite, DRAG_SECONDS, initialReel, REEL_HOLD_SECONDS, showSlide, slideInView, stepReel, tickReel, viewOf, wrap, type ReelState } from "./reel";
+import { atToWrite, DRAG_SECONDS, initialReel, REEL_HOLD_SECONDS, showSlide, stepReel, tickReel, viewOf, wrap, type ReelState } from "./reel";
 
 const go = { count: 3, paused: false, reduced: false };
 const run = (s: ReelState, seconds: number, o = go) => {
@@ -62,43 +62,32 @@ describe("showSlide", () => {
 });
 
 describe("viewOf", () => {
-  it("at rest: the monitor shows the slide, the laptop the next", () =>
-    expect(viewOf(initialReel(), 3)).toEqual({ monitor: 0, laptop: 1, moving: null }));
-  it("dragging forward: the next slide crosses from the laptop (1) to the monitor (0), the one after waits under it", () => {
-    const start = viewOf({ index: 0, wait: 0, drag: { dir: 1, t: 0 } }, 3);
-    expect(start).toEqual({ monitor: 0, laptop: 2, moving: { slide: 1, at: 1 } });
-    expect(viewOf({ index: 0, wait: 0, drag: { dir: 1, t: 1 } }, 3).moving?.at).toBe(0);
-    const mid = viewOf({ index: 0, wait: 0, drag: { dir: 1, t: 0.5 } }, 3).moving!.at;
-    expect(mid).toBeGreaterThan(0);
-    expect(mid).toBeLessThan(1);
+  it("shows the slide on the monitor and its words, nothing moving, at rest", () =>
+    expect(viewOf(initialReel(), 3)).toEqual({ monitor: 0, moving: null, words: 0 }));
+  it("forward: the next screenshot slides in from the right over the current one, whose words stay until it lands", () => {
+    const s: ReelState = { index: 0, wait: 0, drag: { dir: 1, t: 0 } };
+    expect(viewOf(s, 3)).toEqual({ monitor: 0, moving: { slide: 1, at: 1 }, words: 0 });
+    const mid = viewOf({ ...s, drag: { dir: 1, t: 0.5 } }, 3);
+    expect(mid.moving!.slide).toBe(1);
+    expect(mid.moving!.at).toBeCloseTo(0.5, 9);
+    expect(mid.words).toBe(0);
   });
-  it("dragging back: the monitor's slide goes back onto the laptop, the previous one under it", () => {
-    expect(viewOf({ index: 0, wait: 0, drag: { dir: -1, t: 0 } }, 3)).toEqual({ monitor: 2, laptop: 1, moving: { slide: 0, at: 0 } });
-    expect(viewOf({ index: 0, wait: 0, drag: { dir: -1, t: 1 } }, 3).moving?.at).toBe(1);
+  it("back: the current screenshot slides out to the right over the previous one", () => {
+    const s: ReelState = { index: 0, wait: 0, drag: { dir: -1, t: 0 } };
+    expect(viewOf(s, 3)).toEqual({ monitor: 2, moving: { slide: 0, at: 0 }, words: 0 });
+    expect(viewOf({ ...s, drag: { dir: -1, t: 1 } }, 3).moving!.at).toBeCloseTo(1, 9);
   });
-  it("lands where the next view starts, so nothing jumps when a drag ends", () => {
-    const end = viewOf({ index: 0, wait: 0, drag: { dir: 1, t: 1 } }, 3);
-    const after = viewOf({ index: 1, wait: 0, drag: null }, 3);
-    expect(end.moving!.slide).toBe(after.monitor);
-    expect(end.laptop).toBe(after.laptop);
-  });
-});
-
-describe("slideInView", () => {
-  const view = (at: number | null) => ({ monitor: 0, laptop: 2, moving: at === null ? null : { slide: 1, at } });
-  it("is the monitor's slide at rest and while the dragged window is mostly off the monitor", () => {
-    expect(slideInView(view(null))).toBe(0);
-    expect(slideInView(view(0.5))).toBe(0);
-    expect(slideInView(view(0.9))).toBe(0);
-  });
-  it("is the dragged window's slide once it covers more than half", () => {
-    expect(slideInView(view(0.49))).toBe(1);
-    expect(slideInView(view(0))).toBe(1);
+  it("the words change as the slide lands", () => {
+    let s = stepReel(initialReel(), 1, go);
+    s = run(s, DRAG_SECONDS / 2);
+    expect(viewOf(s, 3).words).toBe(0);
+    s = run(s, DRAG_SECONDS);
+    expect(viewOf(s, 3)).toEqual({ monitor: 1, moving: null, words: 1 });
   });
 });
 
 describe("atToWrite", () => {
-  const view = (at: number | null) => ({ monitor: 0, laptop: 2, moving: at === null ? null : { slide: 1, at } });
+  const view = (at: number | null) => ({ monitor: 0, words: 0, moving: at === null ? null : { slide: 1, at } });
   it("writes the position while a window moves, and not again when it hasn't changed", () => {
     expect(atToWrite(view(0.3), null)).toBe(0.3);
     expect(atToWrite(view(0.3), 0.2)).toBe(0.3);

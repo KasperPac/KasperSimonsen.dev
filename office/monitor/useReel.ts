@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type FocusEvent } from "react";
-import { atToWrite, initialReel, showSlide, slideInView, stepReel, tickReel, viewOf, type ReelView } from "./reel";
+import { atToWrite, initialReel, showSlide, stepReel, tickReel, viewOf, type ReelView } from "./reel";
 
 export type HoldProps = {
   onPointerEnter: () => void;
@@ -18,10 +18,10 @@ export function holdFor(target: Element | null): boolean {
   return !!target && target.matches("button, a") && target.matches(":focus-visible");
 }
 
-const viewKey = (v: ReelView) => `${v.monitor}:${v.laptop}:${v.moving?.slide ?? ""}`;
+const viewKey = (v: ReelView) => `${v.monitor}:${v.moving?.slide ?? ""}:${v.words}`;
 
 /**
- * Runs the monitor's reel while `active` (spec 3.5). React re-renders only when a slide changes; a dragged window's
+ * Runs the monitor's reel while `active` (spec 3.5). React re-renders only when a slide changes; a sliding screenshot's
  * position goes to `--at` on every `[data-reel]` print each frame. Frames longer than 0.1 s count as 0.1 s, so a stall or
  * a background tab never skips a drag (and a frame stamped before `last` counts as 0). The slide is kept between visits.
  */
@@ -93,7 +93,7 @@ export function useReel(active: boolean, count: number, reduced: boolean) {
     }),
     [],
   );
-  /** The index of the slide the visitor mostly sees, read now (the view in props is stale mid-drag): the one the button plays. */
-  const current = useCallback(() => slideInView(viewOf(state.current, count)), [count]);
+  /** The slide whose words show, read now: the one the action button plays. */
+  const current = useCallback(() => state.current.index, []);
   return { view, step, show, hold, current };
 }
