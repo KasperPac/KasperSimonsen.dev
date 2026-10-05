@@ -1,5 +1,5 @@
 import { Box3, BoxGeometry, Matrix4, Mesh, MeshBasicMaterial, type Object3D, type Raycaster, type Intersection } from "three";
-import { HOTSPOTS } from "./registry";
+import { ALL_HOTSPOTS } from "./registry";
 
 const material = new MeshBasicMaterial({ visible: false });
 
@@ -11,7 +11,7 @@ const material = new MeshBasicMaterial({ visible: false });
 export function addHitProxies(root: Object3D, enabled: () => boolean): Mesh[] {
   root.updateWorldMatrix(true, true);
   const proxies: Mesh[] = [];
-  for (const name of HOTSPOTS) {
+  for (const name of ALL_HOTSPOTS) {
     const node = root.getObjectByName(name);
     if (!node) continue;
     const toLocal = new Matrix4().copy(node.matrixWorld).invert();

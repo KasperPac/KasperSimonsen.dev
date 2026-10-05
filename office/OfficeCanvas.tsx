@@ -16,7 +16,7 @@ import { applyPose, makePose, readPose, type Pose } from "./camera/pose";
 import { basePose, focusPose, playerPose } from "./camera/basePose";
 import { CameraRig, FOCUS_MOVES, PLAYER_MOVE } from "./camera/rig";
 import { cameraKey } from "./camera/key";
-import { FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, hitFor, pickHit, type Hit, type HotspotName } from "./hotspots/registry";
+import { ALL_HOTSPOTS, FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, hitFor, pickHit, type Hit, type HotspotName } from "./hotspots/registry";
 import { addHitProxies } from "./hotspots/proxies";
 import { focusedHotspot, IDLE_AT, LEAVE_AT, type DirectorState } from "./director/director";
 import { CARD_NODE, findMotionNodes, ObjectMotion, SCREEN_NODE } from "./objects/motion";
@@ -274,7 +274,7 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
     };
     const focus: OfficeInfo["focus"] = {};
     const anchors: OfficeInfo["anchors"] = {};
-    for (const h of HOTSPOTS) {
+    for (const h of ALL_HOTSPOTS) {
       const land = pose(FOCUS_CAMERA[h]);
       if (land) focus[h] = { land, portrait: pose(`${FOCUS_CAMERA[h]}_portrait`) };
       const node = office.scene.getObjectByName(h);

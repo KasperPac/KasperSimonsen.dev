@@ -1,6 +1,6 @@
 import { Quaternion, Vector3 } from "three";
 import { copyPose, type Pose } from "./pose";
-import type { HotspotName } from "../hotspots/registry";
+import type { SignpostName } from "../hotspots/registry";
 
 /**
  * Panning the office on a phone (Kasper: a tall screen leaves a lot of empty space). The standing view there is framed
@@ -48,15 +48,15 @@ export function applyPan(pose: Pose, pan: number, out: Pose): Pose {
 }
 
 /** Where each object sits along the pan (read off the phone framing): the arrival tour pans to it as it lights it. */
-const PAN_AT: Record<HotspotName, number> = { hs_crate: -0.75, hs_drawer: 0.05, hs_monitor: -0.1, hs_shelf: 0.65 };
+const PAN_AT: Record<SignpostName, number> = { hs_crate: -0.75, hs_drawer: 0.05, hs_monitor: -0.1, hs_shelf: 0.65 };
 /** How far either side of the pan an object is still on screen. */
 const IN_VIEW = 0.5;
 
-export function panFor(hotspot: HotspotName): number {
+export function panFor(hotspot: SignpostName): number {
   return PAN_AT[hotspot];
 }
 
 /** Is the object on screen at this pan? (Glints skip what can't be seen.) */
-export function inView(hotspot: HotspotName, pan: number): boolean {
+export function inView(hotspot: SignpostName, pan: number): boolean {
   return Math.abs(PAN_AT[hotspot] - pan) <= IN_VIEW;
 }

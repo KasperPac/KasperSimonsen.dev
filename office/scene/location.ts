@@ -1,5 +1,5 @@
 import { isTopic, type Topic } from "@/content/contact";
-import { HOTSPOTS, type Hit, type HotspotName } from "../hotspots/registry";
+import { ALL_HOTSPOTS, type Hit, type HotspotName } from "../hotspots/registry";
 import { targetForPath } from "./targets";
 
 /**
@@ -17,7 +17,7 @@ export const LAYER_KEY = "office";
 export function layerOf(state: unknown): Layer {
   const raw = (state as Record<string, unknown> | null | undefined)?.[LAYER_KEY] as Partial<Layer> | undefined;
   if (!raw || typeof raw !== "object") return NO_LAYER;
-  const focus = typeof raw.focus === "string" && (HOTSPOTS as readonly string[]).includes(raw.focus) ? (raw.focus as HotspotName) : null;
+  const focus = typeof raw.focus === "string" && (ALL_HOTSPOTS as readonly string[]).includes(raw.focus) ? (raw.focus as HotspotName) : null;
   if (focus === null) return NO_LAYER; // the shared object: clearLayer checks identity
   const reading = raw.reading === true;
   return { focus, reading, topic: reading && isTopic(raw.topic) ? raw.topic : null };

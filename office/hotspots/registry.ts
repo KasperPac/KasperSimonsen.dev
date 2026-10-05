@@ -2,8 +2,17 @@ import type { Object3D } from "three";
 import { findWork, work } from "@/content/work";
 import { findService, services } from "@/content/services";
 
+/** The four objects the office signposts (dots, tour, glints, the visible nav): the ways in. */
 export const HOTSPOTS = ["hs_crate", "hs_drawer", "hs_monitor", "hs_shelf"] as const;
-export type HotspotName = (typeof HOTSPOTS)[number];
+export type SignpostName = (typeof HOTSPOTS)[number];
+/** Hidden extras (whiteboard spec): hoverable, focusable and openable, but never signposted. The TV's games come next. */
+export const EXTRAS = ["hs_whiteboard"] as const;
+export type ExtraName = (typeof EXTRAS)[number];
+export type HotspotName = SignpostName | ExtraName;
+export const ALL_HOTSPOTS: readonly HotspotName[] = [...HOTSPOTS, ...EXTRAS];
+
+/** The whiteboard tray's markers and eraser: each its own highlight group, so each keeps its own colour. */
+export const TOOL_NODE = /^hs_whiteboard__(marker_\d\d|eraser)$/;
 
 /** What a pointer or a keyboard focus points at: a hotspot, and optionally one piece of its content. */
 export type Hit = { hotspot: HotspotName; item: string | null };
@@ -14,6 +23,7 @@ export const FOCUS_CAMERA: Record<HotspotName, string> = {
   hs_drawer: "cam_focus_drawer",
   hs_monitor: "cam_focus_monitor",
   hs_shelf: "cam_focus_shelf",
+  hs_whiteboard: "cam_focus_whiteboard",
 };
 
 /** Records in the crate and ornaments on the shelf (four, one per service), as modelled (office_props.py). */
@@ -23,7 +33,7 @@ export const ORNAMENTS = 4;
 const ITEM = /^(hs_crate)__record_(\d\d)$|^(hs_shelf)__ornament_(\d\d)$/;
 
 function isHotspot(name: string): name is HotspotName {
-  return (HOTSPOTS as readonly string[]).includes(name);
+  return (ALL_HOTSPOTS as readonly string[]).includes(name);
 }
 
 /** Content slug behind a record or ornament index; null for blank sleeves and other hotspots. */
@@ -79,9 +89,10 @@ export function pickHit(objects: Object3D[], focused: HotspotName | null): Hit |
   return null;
 }
 
-/** Edge-highlight group of a mesh: its record or ornament, else its hotspot, else none. */
+/** Edge-highlight group of a mesh: its tray tool, record or ornament, else its hotspot, else none. */
 export function highlightKey(object: Object3D): string | null {
   for (let o: Object3D | null = object; o; o = o.parent) {
+    if (TOOL_NODE.test(o.name)) return o.name;
     if (ITEM.test(o.name) || isHotspot(o.name)) return o.name;
   }
   return null;

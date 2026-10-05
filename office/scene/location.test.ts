@@ -8,6 +8,8 @@ describe("layerOf", () => {
     "falls back to no layer for %j",
     (state) => expect(layerOf(state)).toEqual(NO_LAYER),
   );
+  it("keeps the whiteboard as a local layer", () =>
+    expect(layerOf({ [LAYER_KEY]: { focus: "hs_whiteboard", reading: false } })).toEqual({ focus: "hs_whiteboard", reading: false, topic: null }));
   it("returns the shared NO_LAYER for a stored empty layer, so clearLayer can tell it's already clear", () =>
     expect(layerOf({ [LAYER_KEY]: { focus: null, reading: false }, __NA: true })).toBe(NO_LAYER));
 });

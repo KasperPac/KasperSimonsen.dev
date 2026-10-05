@@ -12,7 +12,7 @@ import { describeDirector, focusedHotspot, initialDirector, isLocked, reduceDire
 import { pathForTarget } from "./scene/targets";
 import { layerOf, sceneFor } from "./scene/location";
 import { clearLayer, pushLayer, replaceLayer, useOfficeLocation } from "./history";
-import { HOTSPOTS, labelFor, sameHit, type Hit, type HotspotName } from "./hotspots/registry";
+import { HOTSPOTS, labelFor, sameHit, type Hit, type SignpostName } from "./hotspots/registry";
 import type { OverlayElements } from "./OfficeCanvas";
 import BusinessCard from "./cards/BusinessCard";
 import SleeveBack from "./cards/SleeveBack";
@@ -355,7 +355,7 @@ export default function OfficeExperience() {
   useEffect(() => {
     if (state.kind !== "idle" || hints !== "dots") return;
     let timer = 0;
-    let last: HotspotName | null = null;
+    let last: SignpostName | null = null;
     let lit = false;
     const wait = () => (timer = window.setTimeout(glint, glintGap(Math.random()) * 1000));
     const glint = () => {

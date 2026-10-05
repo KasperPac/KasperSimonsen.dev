@@ -9,6 +9,7 @@ export const COPY = {
     hs_drawer: "Get in touch",
     hs_shelf: "What I do",
     hs_monitor: "Monitor",
+    hs_whiteboard: "Have a go",
   },
   back: "Back",
   close: "Close",
@@ -33,6 +34,18 @@ export const COPY = {
   arrive: { comeIn: "Come in", scroll: "or scroll" },
   hints: "Have a look around.",
   hintsPan: "Drag sideways to look around.",
+  /** After the arrival tour, once: a nudge that there's more to find. DRAFT. */
+  hintsMore: "Some things in here do more than they look.",
+  /** The whiteboard, a hidden extra (whiteboard spec). DRAFT. */
+  whiteboard: {
+    nav: "The whiteboard (just for fun)",
+    title: "Whiteboard",
+    todo: "TODO: sleep",
+    note: "(next sprint)",
+    tools: { white: "White marker", lime: "Green marker", red: "Red marker", cyan: "Blue marker", amber: "Orange marker" },
+    eraser: "Eraser",
+    wipe: "Wipe it",
+  },
   sleeve: { readMore: "Read more", stack: "Built with" },
   caseStudy: { stack: "Built with", live: "See it live" },
   crate: {

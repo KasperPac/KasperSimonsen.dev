@@ -14,6 +14,7 @@ export const FOCUS_MOVES: Record<HotspotName, { seconds: number; arc: Arc | null
   hs_drawer: { seconds: 2.4, arc: { lift: 0.6, swing: 0.3 } },
   hs_monitor: { seconds: FOCUS_SECONDS, arc: null },
   hs_shelf: { seconds: FOCUS_SECONDS, arc: null },
+  hs_whiteboard: { seconds: FOCUS_SECONDS, arc: null },
 };
 
 /** Between the crate and the record player (playing a record, or putting it back): across the room, over the desk. */
