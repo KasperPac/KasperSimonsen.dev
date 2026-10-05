@@ -9,6 +9,9 @@
 - **Amended 2026-10-05** (Kasper, after the M3 preview): the monitor's age-check joke "reads like a part of the site that
   isn't working". The monitor now shows previews of the crate's projects (section 3.5), the sticky notes fall off it onto
   the desk while it's open, and the laptop beside it shows the next preview, dragged across onto the monitor.
+- **Amended again 2026-10-05** (Kasper, after the whiteboard preview): the screenshot squeezed into a window on the
+  monitor had the wrong aspect. The monitor's screen becomes 16:10 and shows the screenshot edge to edge; the words and
+  controls move to the laptop (section 3.5).
 
 ## 1. Goal
 
@@ -125,28 +128,38 @@ Amended 2026-10-05. The age-check joke built in M3 is removed: Kasper found it r
    the bezel one after another (~0.1 s apart): each tips off its top edge, drops with a small sideways flutter and
    settles flat and slightly askew at its own landing spot on the desk. All are down within ~0.9 s, before the camera
    arrives (~1.1 s), so the whole screen is clear.
-2. **The reel:** the monitor shows one screenshot at a time as a little window: a thin title bar naming it, the
-   screenshot filling the window, and a strip along the bottom with its project's one-line headline and **See the case
-   study**. Small ‹ › arrows and dots step through by hand. Amended 2026-10-05 (Kasper): one slide per screenshot, not
-   per project; a project can have several (Manuva's site and app). The order is Pac Hub, Manuva (site, bill of
-   materials, components), Silio, then the Pac Technologies site. A slide for work not yet in the crate (the Pac
-   Technologies site) says **Visit the site** and opens it in a new tab instead, until it has a record. Pac Hub's
-   screenshot is blurred where it shows a customer, a job or people's names.
-3. **The laptop** beside the monitor shows the next project. Every ~5 s (or on ‹ ›), a small pointer arrow grabs that
-   slide's title bar and drags it left off the laptop's screen; it slides in over the monitor from the right, as a window
-   crosses between two displays (~0.7 s, eased). The laptop then shows the one after. ‹ plays it backwards: the
-   monitor's slide is dragged right, back onto the laptop, and the previous project shows on the monitor.
-4. **Pausing:** the reel holds still while the pointer is over the screen or keyboard focus is in it, and never moves on
-   while the visitor is reading.
+2. **The reel:** the monitor shows one screenshot at a time, **edge to edge**: no window, title bar or caption on it.
+   Amended 2026-10-05 (Kasper): the monitor's screen is 16:10 like the screenshots (1280 x 800), so nothing is cropped
+   or letterboxed. One slide per screenshot, not per project; a project can have several (Manuva's site and app). The
+   order is Pac Hub, Manuva (site, bill of materials, components), Silio, Marianne's Hair, then the Pac Technologies
+   site. Pac Hub's screenshot is blurred where it shows a customer, a job or people's names; Marianne's Hair's phone
+   number is blurred.
+3. **The laptop** beside the monitor carries the reel's words and controls, as real buttons: the slide's label (mono,
+   like a title bar), its one-line headline, its action, and ‹, a dot per slide, ›. The action is **See the case study**
+   for a crate project; **Visit the site** (a new tab) for work not yet in the crate that is live; nothing for a site not
+   live yet (Marianne's Hair, until it has a record or a domain). Every ~5 s (or on ›) the next screenshot slides in over
+   the monitor from the right, the laptop's side (~0.7 s, eased), and the laptop's words change to it as it lands. ‹
+   plays it backwards: the screenshot slides out to the right and the previous one is underneath. The pointer that
+   dragged windows across, and the laptop's preview of the next slide, are gone.
+4. **Pausing:** the reel holds still while the pointer is over the monitor or the laptop, or keyboard focus is in the
+   laptop's controls, and never moves on while the visitor is reading.
 5. **See the case study** plays that project's record exactly as picking it in the crate does: the camera goes to the
    record player and the URL becomes `/work/<slug>`. Back returns to the monitor; Back again to the standing spot.
 6. **Leaving** (Back, Esc, or See the case study): the notes lift off the desk and hop back to their places on the bezel,
    each reversing its own fall, finishing as the camera arrives where it's going. Leaving mid-fall, each note turns round
    from wherever it is.
-7. **Phones:** the monitor keeps most of the width (it has to stay readable), so the laptop is mostly out of shot; the
-   slide still arrives from the right-hand edge, the laptop's side. The notes fall as on desktop.
-8. **Reduced motion:** no fall, no drag, no auto-advance. The notes are on the desk while the monitor is open and back on
-   the bezel otherwise; ‹ › switch both screens at once.
+7. **Phones:** the camera frames the monitor across the width. The laptop is mostly out of shot, so its words and
+   controls are printed on a strip just under the monitor instead: a print in the screen's plane, below the bezel and in
+   front of the stand, sized for fingers (every button at least 40 x 40 CSS px on screen). Only one of the two carries
+   the controls at a time (the strip on portrait screens, the laptop otherwise), so the keyboard and screen readers meet
+   them once. The next screenshot still slides in from the right-hand edge. The notes fall as on desktop.
+8. **Reduced motion:** no fall, no slide, no auto-advance. The notes are on the desk while the monitor is open and back
+   on the bezel otherwise; ‹ › switch the screenshot and the words at once.
+9. **Accessibility:** the visually hidden heading that takes focus as the monitor opens is with the laptop's controls;
+   each screenshot keeps its alt text, read with its label.
+10. **Model:** the monitor's screen (and its bezel) is 16:10, keeping its width; the stand and the sticky notes' bezel
+    spots move to suit. The focus cameras frame the monitor and the laptop on desktop, and the monitor across the width
+    with room for the strip under it on phones.
 
 ### 3.6 Direct visits
 
