@@ -49,7 +49,22 @@ export default function Whiteboard({
     ctx.clearRect(0, 0, c.width, c.height);
     drawItems(ctx as unknown as Ctx2D, boardItems(), font());
   };
-  useEffect(redraw, []);
+  // Changing the canvas's height attribute clears its bitmap, so redraw whenever heightPx changes.
+  // Redraw again once web fonts have loaded, so the printed text leaves the fallback face.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(redraw, [heightPx]);
+  useEffect(() => {
+    let live = true;
+    document.fonts?.ready.then(() => {
+      if (live) redraw();
+    });
+    return () => {
+      live = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  /** The one pointer that is drawing, so a second finger or another button can't start, extend or end its stroke. */
+  const drawing = useRef<number | null>(null);
 
   const at = (e: React.PointerEvent<HTMLCanvasElement>): Pt => ({ x: e.nativeEvent.offsetX, y: e.nativeEvent.offsetY });
   const colour = tool === "eraser" ? "" : TOOLS[tool].color;
@@ -67,6 +82,8 @@ export default function Whiteboard({
         height={drawHeight * DENSITY}
         style={{ width: WHITEBOARD_WIDTH_PX, height: drawHeight }}
         onPointerDown={(e) => {
+          if (!e.isPrimary || e.button !== 0) return;
+          drawing.current = e.pointerId;
           e.currentTarget.setPointerCapture(e.pointerId);
           const p = at(e);
           startStroke(tool === "eraser", colour, p);
@@ -74,15 +91,20 @@ export default function Whiteboard({
           redraw();
         }}
         onPointerMove={(e) => {
+          if (!e.isPrimary) return;
           const p = at(e);
           pointer.current = { pt: p, pressing: pointer.current.pressing };
-          if (pointer.current.pressing && extendStroke(p)) redraw();
+          if (drawing.current === e.pointerId && extendStroke(p)) redraw();
         }}
-        onPointerUp={() => {
+        onPointerUp={(e) => {
+          if (drawing.current !== e.pointerId) return;
+          drawing.current = null;
           endStroke();
           pointer.current = { ...pointer.current, pressing: false };
         }}
-        onPointerCancel={() => {
+        onPointerCancel={(e) => {
+          if (drawing.current !== e.pointerId) return;
+          drawing.current = null;
           endStroke();
           pointer.current = { ...pointer.current, pressing: false };
         }}
