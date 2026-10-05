@@ -1,13 +1,9 @@
-import type { ComponentType } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { currently, previously } from "@/app/(main)/work/data";
 import { fetchRepoMeta } from "@/lib/github";
 import InversionCursor from "@/app/components/InversionCursor";
-import PacForgeContent from "./content/pac-forge";
-import ManuvaContent from "./content/manuva";
-import SilioContent from "./content/silio";
-import CaseStudyContent from "./content/case-study";
+import { contentFor } from "./content/by-slug";
 
 type Params = Promise<{ slug: string }>;
 
@@ -16,13 +12,6 @@ const mono    = { fontFamily: "var(--font-geist-mono), ui-monospace, monospace" 
 const serif   = { fontFamily: "var(--font-fraunces), 'Instrument Serif', Georgia, serif" };
 
 const allProjects = [...currently, ...previously];
-
-// Long-form pages written by hand. Any other project is written up from its case study (CaseStudyContent).
-const contentBySlug: Record<string, ComponentType> = {
-  "pac-forge": PacForgeContent,
-  "manuva":    ManuvaContent,
-  "silio":     SilioContent,
-};
 
 export async function generateStaticParams() {
   return allProjects.map((p) => ({ slug: p.slug }));
@@ -44,8 +33,6 @@ export default async function CaseStudyPage({ params }: { params: Params }) {
   if (!project) notFound();
 
   const github = await fetchRepoMeta(project.githubRepo);
-
-  const Content = contentBySlug[project.slug];
 
   return (
     <article>
@@ -156,7 +143,7 @@ export default async function CaseStudyPage({ params }: { params: Params }) {
 
           {/* Prose — last on mobile (sidebar floats above), first col on desktop */}
           <div className="order-last lg:order-none min-w-0">
-            {Content ? <Content /> : <CaseStudyContent slug={project.slug} />}
+            {contentFor(project.slug)}
           </div>
 
           {/* Sidebar — first on mobile, second col on desktop */}

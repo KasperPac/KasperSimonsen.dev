@@ -14,8 +14,8 @@ export default function CaseStudyContent({ slug }: { slug: string }) {
   return (
     <div className="space-y-14">
       <div className="space-y-4 max-w-[68ch]">
-        {study.intro.map((para) => (
-          <p key={para.slice(0, 32)} className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
+        {study.intro.map((para, i) => (
+          <p key={i} className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
             {para}
           </p>
         ))}
@@ -26,8 +26,8 @@ export default function CaseStudyContent({ slug }: { slug: string }) {
           <h2 className="text-[1.6rem] italic leading-snug" style={{ ...serif, color: "var(--text-primary)" }}>
             {section.title}
           </h2>
-          {section.paras.map((para) => (
-            <p key={para.slice(0, 32)} className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
+          {section.paras.map((para, i) => (
+            <p key={i} className="text-[17px] leading-[1.7]" style={{ ...body, color: "var(--text-muted)" }}>
               {para}
             </p>
           ))}
