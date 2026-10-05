@@ -27,8 +27,8 @@ describe("slides", () => {
     expect(slides.map((s) => [s.slug ?? "href", s.label, s.shot.src])).toEqual([
       ["pac-forge", "Pac Hub", "/reel/pac-hub.jpg"],
       ["manuva", "Manuva · site", "/reel/manuva-site.jpg"],
-      ["manuva", "Manuva · app", "/reel/manuva-app-bom.jpg"],
-      ["manuva", "Manuva · app", "/reel/manuva-app-components.jpg"],
+      ["manuva", "Manuva · bill of materials", "/reel/manuva-app-bom.jpg"],
+      ["manuva", "Manuva · components", "/reel/manuva-app-components.jpg"],
       ["silio", "Silio", "/reel/silio-dashboard.jpg"],
       ["href", "Pac Technologies · site", "/reel/pac-tech-site.jpg"],
     ]);

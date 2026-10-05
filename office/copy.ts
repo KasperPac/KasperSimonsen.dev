@@ -56,8 +56,8 @@ export const COPY = {
     visit: "Visit the site",
     /** The strip's line for a slide with no crate record (the Pac Technologies site). */
     site: "Where Pac Technologies starts: the site I built for it.",
-    prev: "Previous project",
-    next: "Next project",
+    prev: "Previous",
+    next: "Next",
     show: (name: string) => `Show ${name}`,
   },
 } as const;

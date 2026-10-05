@@ -125,10 +125,13 @@ Amended 2026-10-05. The age-check joke built in M3 is removed: Kasper found it r
    the bezel one after another (~0.1 s apart): each tips off its top edge, drops with a small sideways flutter and
    settles flat and slightly askew at its own landing spot on the desk. All are down within ~0.9 s, before the camera
    arrives (~1.1 s), so the whole screen is clear.
-2. **The reel:** the monitor shows one crate project at a time as a little window: a thin title bar with the project's
-   name, its screenshot filling the window, and a strip along the bottom with its one-line headline and **See the case
-   study**. Small ‹ › arrows and dots step through by hand. Projects follow the crate's order. A project with no
-   screenshot yet (Pac-Hub until Kasper sends some) shows a card: its logo, name and headline.
+2. **The reel:** the monitor shows one screenshot at a time as a little window: a thin title bar naming it, the
+   screenshot filling the window, and a strip along the bottom with its project's one-line headline and **See the case
+   study**. Small ‹ › arrows and dots step through by hand. Amended 2026-10-05 (Kasper): one slide per screenshot, not
+   per project; a project can have several (Manuva's site and app). The order is Pac Hub, Manuva (site, bill of
+   materials, components), Silio, then the Pac Technologies site. A slide for work not yet in the crate (the Pac
+   Technologies site) says **Visit the site** and opens it in a new tab instead, until it has a record. Pac Hub's
+   screenshot is blurred where it shows a customer, a job or people's names.
 3. **The laptop** beside the monitor shows the next project. Every ~5 s (or on ‹ ›), a small pointer arrow grabs that
    slide's title bar and drags it left off the laptop's screen; it slides in over the monitor from the right, as a window
    crosses between two displays (~0.7 s, eased). The laptop then shows the one after. ‹ plays it backwards: the

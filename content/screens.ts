@@ -18,12 +18,12 @@ export const slides: Slide[] = [
   },
   {
     slug: "manuva",
-    label: "Manuva · app",
+    label: "Manuva · bill of materials",
     shot: { src: "/reel/manuva-app-bom.jpg", alt: "Manuva's bill of materials for a product variant" },
   },
   {
     slug: "manuva",
-    label: "Manuva · app",
+    label: "Manuva · components",
     shot: { src: "/reel/manuva-app-components.jpg", alt: "Picking components for a bill of materials in Manuva" },
   },
   {
