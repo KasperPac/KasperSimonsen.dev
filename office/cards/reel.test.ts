@@ -5,66 +5,72 @@ import { findWork } from "@/content/work";
 import { slides } from "@/content/screens";
 import { COPY } from "@/office/copy";
 import ReelScreen from "./ReelScreen";
-import LaptopScreen from "./LaptopScreen";
+import ReelControls, { headlineFor } from "./ReelControls";
 import { holdFor } from "@/office/monitor/useReel";
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/'/g, "&#x27;").replace(/"/g, "&quot;");
 const hold = { onPointerEnter: () => {}, onPointerLeave: () => {}, onFocus: () => {}, onBlur: () => {} };
-const screen = (view: { monitor: number; laptop: number; moving: { slide: number; at: number } | null }) =>
-  renderToStaticMarkup(createElement(ReelScreen, { titleId: "r", view, hold, onStep: () => {}, onShow: () => {}, onPlay: () => {} }));
+
+const view = (monitor: number, words = monitor, moving: { slide: number; at: number } | null = null) => ({ monitor, moving, words });
+const controls = (v: ReturnType<typeof view>, place: "laptop" | "strip" = "laptop") =>
+  renderToStaticMarkup(createElement(ReelControls, { titleId: "r", view: v, hold, onStep: () => {}, onShow: () => {}, onPlay: () => {}, place }));
+const monitor = (v: ReturnType<typeof view>) => renderToStaticMarkup(createElement(ReelScreen, { view: v, hold }));
 
 describe("ReelScreen", () => {
-  const hrefAt = slides.findIndex((s) => s.href);
-
-  it("shows the slide on the monitor as a window: label on the title bar, screenshot, the project's headline, See the case study", () => {
-    const out = screen({ monitor: 2, laptop: 3, moving: null });
+  it("is the screenshot edge to edge, its alt read with its label, and no words or controls", () => {
+    const out = monitor(view(2));
     const s = slides[2];
-    for (const text of [s.label, findWork(s.slug!)!.headline, COPY.reel.caseStudy, COPY.reel.title]) expect(out).toContain(esc(text));
-    expect(out).toMatch(new RegExp(`<span class="reel-name">${esc(s.label)}</span>`));
     expect(out).toContain(`src="${s.shot.src}"`);
-    expect(out).toContain(`alt="${esc(s.shot.alt)}"`);
-    expect(out).toContain('data-slide="2"');
-    expect(out).toMatch(/<h2[^>]*id="r"/);
-    expect(out).not.toContain(COPY.reel.visit);
+    expect(out).toContain(`alt="${esc(`${s.label}: ${s.shot.alt}`)}"`);
+    expect(out).not.toContain("<button");
+    expect(out).not.toContain("reel-bar");
+    expect(out).toContain("data-reel");
   });
-  it("the slide that opens a page says Visit the site, with a line of its own for a strip", () => {
-    const out = screen({ monitor: hrefAt, laptop: 0, moving: null });
-    expect(out).toContain(esc(COPY.reel.visit));
-    expect(out).toContain(esc(slides[hrefAt].line!));
-    expect(out).not.toContain(esc(COPY.reel.caseStudy));
-    expect(out).toContain(`src="${slides[hrefAt].shot.src}"`);
+  it("draws the screenshot sliding in over it, hidden from screen readers", () => {
+    const out = monitor(view(0, 0, { slide: 1, at: 0.5 }));
+    expect(out).toMatch(/class="reel-shot reel-moving"[^>]*aria-hidden="true"/);
+    expect(out).toContain(`src="${slides[1].shot.src}"`);
   });
-  it("a site that isn't live yet has its line and no button", () => {
-    const at = slides.findIndex((s) => !s.slug && !s.href);
-    const out = screen({ monitor: at, laptop: 0, moving: null });
-    expect(out).toContain(esc(slides[at].line!));
-    expect(out).not.toContain(esc(COPY.reel.visit));
-    expect(out).not.toContain(esc(COPY.reel.caseStudy));
+});
+
+describe("ReelControls", () => {
+  const crate = slides.findIndex((s) => s.slug);
+  const page = slides.findIndex((s) => !s.slug && s.href);
+  const notLive = slides.findIndex((s) => !s.slug && !s.href);
+  it("names the slide, gives its headline and See the case study, with the hidden heading to take focus", () => {
+    const out = controls(view(crate));
+    const s = slides[crate];
+    expect(out).toContain(`<p class="reel-label">${esc(s.label)}</p>`);
+    expect(out).toContain(esc(findWork(s.slug!)!.headline));
+    expect(out).toContain(`>${esc(COPY.reel.caseStudy)}<`);
+    expect(out).toMatch(/<h2[^>]*id="r"[^>]*class="visually-hidden"/);
+    expect(out).toContain(`data-slide="${crate}"`);
+  });
+  it("says Visit the site for a live page not in the crate, and has no button for a site not live yet", () => {
+    expect(controls(view(page))).toContain(`>${esc(COPY.reel.visit)}<`);
+    const out = controls(view(notLive));
+    expect(out).toContain(esc(slides[notLive].line!));
     expect(out).not.toContain("office-card-cta");
   });
-  it("has ‹ › and a dot per slide, each named for its slide", () => {
-    const out = screen({ monitor: 0, laptop: 1, moving: null });
+  it("shows the words of the slide it's on, not the one sliding in", () =>
+    expect(controls(view(0, 0, { slide: 1, at: 0.4 }))).toContain(esc(slides[0].label)));
+  it("on the laptop: ‹, a dot per slide named for it, ›", () => {
+    const out = controls(view(0));
     expect(out).toContain(`aria-label="${esc(COPY.reel.prev)}"`);
     expect(out).toContain(`aria-label="${esc(COPY.reel.next)}"`);
     expect(out.match(/class="reel-dot"/g)).toHaveLength(slides.length);
     for (const s of slides) expect(out).toContain(`aria-label="${esc(COPY.reel.show(s.label))}"`);
     expect(out).toContain('aria-current="true"');
   });
-  it("draws a window being dragged in, with the pointer on its title bar, hidden from screen readers", () => {
-    const out = screen({ monitor: 0, laptop: 2, moving: { slide: 1, at: 0.5 } });
-    expect(out).toMatch(/class="reel-moving reel-moving--monitor"[^>]*aria-hidden="true"/);
-    expect(out).toContain('class="reel-pointer"');
+  it("on the strip: ‹ › and a read-out of where it is, no dots (too many to tap)", () => {
+    const out = controls(view(2), "strip");
+    expect(out).not.toContain("reel-dot");
+    expect(out).toMatch(new RegExp(`<span class="reel-count" aria-hidden="true">3 / ${slides.length}</span>`));
+    expect(out).toContain("reel-words--strip");
   });
-});
-
-describe("LaptopScreen", () => {
-  it("shows the next slide, all of it hidden from screen readers", () => {
-    const out = renderToStaticMarkup(createElement(LaptopScreen, { view: { monitor: 0, laptop: 1, moving: null } }));
-    expect(out).toContain(esc(slides[1].label));
-    expect(out).toContain(`src="${slides[1].shot.src}"`);
-    // React hoists the screenshot's preload <link> ahead of the markup
-    expect(out).toMatch(/^(?:<link[^>]*>)*<div[^>]*aria-hidden="true"/);
-    expect(out).toContain("data-reel");
+  it("headlineFor: a crate project's headline, or the slide's own line", () => {
+    expect(headlineFor(slides[crate])).toBe(findWork(slides[crate].slug!)!.headline);
+    expect(headlineFor(slides[notLive])).toBe(slides[notLive].line);
   });
 });
 

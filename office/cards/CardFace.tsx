@@ -6,7 +6,7 @@ import { Html } from "@react-three/drei";
 import { Vector3, type Mesh } from "three";
 import { theme } from "@/office/theme";
 import type { HotspotName } from "@/office/hotspots/registry";
-import { backFaceFor, faceFor, screenFaceFor } from "./face";
+import { backFaceFor, belowFaceFor, faceFor, screenFaceFor } from "./face";
 
 /** CSS px the face is laid out at; it is then mapped onto the card's real size. */
 export const FACE_WIDTH_PX = 520;
@@ -23,6 +23,8 @@ export default function CardFace({
   hotspot,
   titleId,
   focus = true,
+  below,
+  hidden = false,
   children,
 }: {
   surface: Mesh;
@@ -30,18 +32,23 @@ export default function CardFace({
   widthPx?: number;
   hotspot: HotspotName;
   titleId: string;
-  /** Move focus to the title as it shows. Off for a decorative print (the laptop's), which is then hidden from screen readers. */
+  /** Move focus to the title as it shows. */
   focus?: boolean;
+  /** With `place="screen"`: hang the print under the screen (its height, and the gap below the screen's bottom edge, in px) instead of on it. */
+  below?: { heightPx: number; gapPx: number };
+  /** Hide the print from screen readers (a decorative one). */
+  hidden?: boolean;
   children: ReactNode;
 }) {
   const face = useMemo(() => {
     if (place === "screen") {
       const at = surface.geometry.getAttribute("position");
-      return screenFaceFor(Array.from({ length: at.count }, (_, i) => new Vector3().fromBufferAttribute(at, i)), widthPx);
+      const screen = screenFaceFor(Array.from({ length: at.count }, (_, i) => new Vector3().fromBufferAttribute(at, i)), widthPx);
+      return below ? belowFaceFor(screen, below.heightPx, below.gapPx) : screen;
     }
     if (!surface.geometry.boundingBox) surface.geometry.computeBoundingBox();
     return (place === "back" ? backFaceFor : faceFor)(surface.geometry.boundingBox!, widthPx);
-  }, [surface, place, widthPx]);
+  }, [surface, place, widthPx, below?.heightPx, below?.gapPx]);
   // drei mounts the print in its own React root and places it on the next frame; until then it would sit flat at the
   // top left of the canvas. Html's frame callback runs before this one (it subscribed first), so once the section
   // exists here it has been placed: show it, and move focus into it. The mark is on the element itself, not a flag on
@@ -60,7 +67,7 @@ export default function CardFace({
         ref={section}
         className={place === "back" ? "office-card-face office-sleeve-back" : place === "screen" ? "office-card-face office-screen" : "office-card-face"}
         aria-labelledby={focus ? titleId : undefined}
-        aria-hidden={focus ? undefined : true}
+        aria-hidden={hidden || undefined}
         style={{ width: widthPx, height: face.heightPx, "--accent": theme.accents[hotspot] } as CSSProperties}
       >
         {children}
