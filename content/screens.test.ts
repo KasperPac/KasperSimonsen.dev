@@ -30,7 +30,7 @@ function imageSize(src: string): [number, number] {
  * Screenshots taken before the monitor went 16:9, shown cropped (the 2:1 ones at the sides, the 16:10 one top and bottom)
  * until Kasper sends full-screen captures. Remove each one as its 16:9 capture arrives; nothing new joins this list.
  */
-const KNOWN_NOT_16_9 = new Set(["/reel/pac-hub.jpg", "/reel/manuva-app-bom.jpg", "/reel/manuva-app-components.jpg", "/reel/silio-dashboard.jpg"]);
+const KNOWN_NOT_16_9 = new Set(["/reel/silio-dashboard.jpg"]); // Silio is being redesigned; retake it then
 const RATIO = 16 / 9;
 
 describe("slides", () => {
