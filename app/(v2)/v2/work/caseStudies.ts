@@ -76,7 +76,7 @@ export const caseStudies: CaseStudy[] = [
         title: "Built to be read",
         paras: [
           // src: spec §1 Problem, §2 Goals, §3.3 Type; tests/e2e/a11y.spec.ts ("body copy is at least 19px"), tests/e2e/ (390 x 844 and 1440 x 900 projects); playwright.config.ts
-          "Most of the salon's clients are expected to be over fifty, and the design starts there. Body text is never smaller than 19 pixels, every tap target is at least 44 pixels, and contrast is checked rather than assumed: the palette's pairs are recorded with their ratios, and gold is used for lines and never for text. The accessibility target is WCAG 2.2 AA, enforced by an axe run in the end-to-end suite, with further tests at 150 and 200 per cent text size.",
+          "The design is built for easy reading. Body text is never smaller than 19 pixels, every tap target is at least 44 pixels, and contrast is checked rather than assumed: the palette's pairs are recorded with their ratios, and gold is used for lines and never for text. The accessibility target is WCAG 2.2 AA, enforced by an axe run in the end-to-end suite, with further tests at 150 and 200 per cent text size.",
           // src: spec §3.4 (mobile action bar, opening); commit MHAIR-49 ("Book online is the only call to action"); spec §3.5 Motion
           "Booking is never more than a tap away. Book online is the page's one call to action, and on a phone a bar fixed to the foot of the screen holds it alone. The motion is quiet: sections fade in as they scroll into view, the opening's gold frame draws itself once, and every animation switches off under the reduced-motion setting, with no content ever waiting for one.",
         ],
