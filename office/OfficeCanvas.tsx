@@ -297,7 +297,7 @@ function Office({
   const notesRoot = useMemo(() => office.scene.getObjectByName("hs_monitor__notes") ?? null, [office]);
   const notesNodes = useMemo(() => (notesRoot ? findNotesNodes(notesRoot) : { notes: [], stuck: [], rest: [] }), [notesRoot]);
   const notesMotion = useMemo(() => new NotesMotion(), []);
-  const notesWereDown = useRef(false);
+  const notesWere = useRef<"up" | "moving" | "down">("up");
   const laptop = useMemo(() => (office.scene.getObjectByName("prop_laptop__screen") as Mesh | undefined) ?? null, [office]);
   const v = useMemo(() => new Vector3(), []);
   // The whiteboard (whiteboard spec 3.2): the surface its print and the held tool's tip go on, and the tray's tools.
@@ -461,9 +461,10 @@ function Office({
     }
     // The notes come off the monitor as its camera move starts and go back on as the camera leaves (spec 3.5).
     notesMotion.update(notesNodes, { open: focused?.hotspot === "hs_monitor", reduced }, dt);
-    if (notesMotion.down !== notesWereDown.current) {
-      notesWereDown.current = notesMotion.down;
-      if (host.current) host.current.dataset.notes = notesMotion.down ? "down" : "up";
+    // Every frame's state, "moving" included, so a test can tell a fall from none (reduced motion never draws one mid-fall).
+    if (notesMotion.state !== notesWere.current) {
+      notesWere.current = notesMotion.state;
+      if (host.current) host.current.dataset.notes = notesMotion.state;
     }
     // The whiteboard's held tool follows the pointer on the board; leaving puts it back in the tray (whiteboard spec 3).
     // Between touches it stays where the pointer last was, lifted, never sent home.

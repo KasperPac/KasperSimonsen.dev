@@ -69,6 +69,11 @@ export class NotesMotion {
     return this.total > 0 && this.elapsed === this.total;
   }
 
+  /** Where the notes are as drawn: all on the bezel, all on the desk, or at least one between (falling or going back). */
+  get state(): "up" | "moving" | "down" {
+    return this.down ? "down" : this.elapsed === 0 ? "up" : "moving";
+  }
+
   update(nodes: NotesNodes, input: { open: boolean; reduced: boolean }, dt: number): void {
     this.total = notesSeconds(nodes.notes.length);
     const goal = input.open ? this.total : 0;

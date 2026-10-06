@@ -58,6 +58,22 @@ async function openMonitor(page: Page) {
 }
 
 /**
+ * Records every value `.office[data-notes]` takes from now on. The canvas writes it in the frame it changes: "up" (all on
+ * the bezel), "moving" (any note between, as drawn), "down" (all on the desk). Returns a reader for the list so far.
+ */
+async function recordNotes(page: Page) {
+  await page.evaluate(() => {
+    const el = document.querySelector(".office")!;
+    const seen: string[] = [];
+    (window as unknown as { notesSeen: string[] }).notesSeen = seen;
+    // Each record's new value is the next record's old one, or the attribute now for the last.
+    new MutationObserver((records) => records.forEach((r, k) => seen.push(records[k + 1]?.oldValue ?? el.getAttribute("data-notes")!)))
+      .observe(el, { attributeFilter: ["data-notes"], attributeOldValue: true });
+  });
+  return () => page.evaluate(() => [...(window as unknown as { notesSeen: string[] }).notesSeen]);
+}
+
+/**
  * Waits for `seconds` on the reel's own clock. useReel counts at most 0.1 s a frame, and software WebGL draws a frame or
  * two a second, so a plain timeout would see a fraction of that: 5 s of reel takes ~40 s here.
  */
@@ -187,7 +203,9 @@ test("a click on the screenshot opens it full screen: uncropped, ← → step, t
   await expect(viewer(page, i)).toHaveAccessibleDescription(COPY.reel.position(i + 1, slides.length));
   const img = viewer(page, i).locator("img");
   await expect(img).toHaveAttribute("src", slides[i].shot.src);
-  await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).complete && (el as HTMLImageElement).naturalWidth > 0)).toBe(true);
+  // Loaded, to measure it. No product timing here, so the bound is software WebGL's: just after the monitor opens, the reel's
+  // screenshots have been seen to finish loading 10 s after they were asked for (all together, the page answering meanwhile).
+  await expect.poll(() => img.evaluate((el) => (el as HTMLImageElement).complete && (el as HTMLImageElement).naturalWidth > 0), { timeout: MOVE_WAIT }).toBe(true);
   const vp = page.viewportSize()!;
   const box = (await img.boundingBox())!;
   test.info().annotations.push({ type: "measured", description: `full screen: ${box.width.toFixed(1)} x ${box.height.toFixed(1)} in ${vp.width} x ${vp.height}` });
@@ -333,8 +351,12 @@ test.describe("reduced motion", () => {
   test("no fall, no slide, no auto-advance: the arrows switch the screenshot and the words at once; Esc from the controls leaves", async ({ page }) => {
     test.slow(); // 6.5 s of the reel's clock (see reelSeconds)
     await standInOffice(page);
+    const notes = await recordNotes(page);
     const button = await openMonitor(page);
-    await expect(office(page)).toHaveAttribute("data-notes", "down", { timeout: 5_000 }); // no fall: they're down at once
+    // No fall: no frame draws a note between the bezel and the desk. (A time limit can't tell: the fall takes 0.9 s, and
+    // software WebGL holds the page for 7-11 s around the monitor's opening, here just after the cut.)
+    await expect.poll(notes, { timeout: MOVE_WAIT }).toContain("down");
+    expect(await notes()).toEqual(["down"]);
     await page.mouse.move(2, 2);
     await reelSeconds(page, 6.5);
     await expect(words(page)).toHaveAttribute("data-slide", "0"); // no auto-advance
@@ -347,6 +369,7 @@ test.describe("reduced motion", () => {
     await page.keyboard.press("Escape");
     await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
     await expect(office(page)).toHaveAttribute("data-notes", "up", { timeout: MOVE_WAIT });
+    expect(await notes()).toEqual(["down", "up"]); // and back on with no rise
     await expect(button).toBeFocused();
   });
 

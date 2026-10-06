@@ -101,4 +101,23 @@ describe("NotesMotion", () => {
     m.update(nodes, { open: false, reduced: true }, 1 / 60);
     expect(nodes.notes[2].position.distanceTo(nodes.stuck[2].position)).toBeLessThan(1e-9);
   });
+  it("reports up, moving and down as drawn: moving for any frame a note is between, never under reduced motion", () => {
+    const { nodes } = rig();
+    const m = new NotesMotion();
+    expect(m.state).toBe("up");
+    m.update(nodes, { open: true, reduced: false }, 0.05);
+    expect(m.state).toBe("moving");
+    m.update(nodes, { open: true, reduced: false }, 5);
+    expect(m.state).toBe("down");
+    m.update(nodes, { open: false, reduced: false }, 0.05);
+    expect(m.state).toBe("moving");
+    m.update(nodes, { open: false, reduced: false }, 5);
+    expect(m.state).toBe("up");
+    const states: string[] = [];
+    for (const open of [true, true, false, false]) {
+      m.update(nodes, { open, reduced: true }, 1 / 60);
+      states.push(m.state);
+    }
+    expect(states).toEqual(["down", "down", "up", "up"]);
+  });
 });
