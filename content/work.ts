@@ -10,6 +10,10 @@ export type WorkItem = {
   role: string;
   stack: string[];
   liveUrl?: string;
+  /** The project's one-paragraph description (the reel's words on the laptop). */
+  description: string;
+  /** Years · role · stack, for the reel's details line. */
+  details: string;
   intro: string[];
   sections: CaseSection[];
 };
@@ -24,6 +28,8 @@ function toItem(p: Project): WorkItem {
     role: p.role,
     stack: p.stack,
     liveUrl: p.liveUrl,
+    description: p.description,
+    details: [p.yearRange, p.role, p.stackSummary].filter(Boolean).join(" · "),
     intro: study?.intro ?? [p.description],
     sections: study?.sections ?? [],
   };

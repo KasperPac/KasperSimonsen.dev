@@ -1,4 +1,4 @@
-import { test, expect, type Locator, type Page } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import { engagementModels, services } from "../content/services";
 import { subjectForTopic } from "../content/contact";
 import { COPY } from "../office/copy";
@@ -24,14 +24,6 @@ async function openShelf(page: Page) {
   await expect(office(page)).toHaveAttribute("data-director", "focused:hs_shelf", { timeout: MOVE_WAIT });
   await expect(link(page, 0)).toBeFocused();
   return button;
-}
-
-/** Rendered size in screen px of the printed text in `region`'s body (`selector`): its CSS size times the 3D print's scale. */
-async function printedPx(region: Locator, selector: string) {
-  return region.evaluate((el, sel) => {
-    const scale = el.getBoundingClientRect().width / (el as HTMLElement).offsetWidth;
-    return parseFloat(getComputedStyle(el.querySelector(sel)!).fontSize) * scale;
-  }, selector);
 }
 
 test("the keyboard picks a service, reads it, writes from it, and steps back out one layer at a time", async ({ page }) => {
@@ -127,24 +119,6 @@ test("an unknown service is a 404", async ({ page }) => {
   expect(response?.status()).toBe(404);
 });
 
-test("the monitor asks your age, and both answers get a reply", async ({ page }) => {
-  await standInOffice(page);
-  const button = page.getByRole("button", { name: COPY.labels.hs_monitor });
-  await button.focus();
-  await page.keyboard.press("Enter");
-  await expect(office(page)).toHaveAttribute("data-director", "focused:hs_monitor", { timeout: MOVE_WAIT });
-  const screen = page.getByRole("region", { name: COPY.monitor.title });
-  await expect(screen.getByRole("heading", { name: COPY.monitor.title })).toBeFocused();
-  await screen.getByRole("button", { name: COPY.monitor.over }).click();
-  await expect(screen.getByRole("status")).toHaveText(COPY.monitor.replies.over);
-  await screen.getByRole("button", { name: COPY.monitor.under }).click();
-  await expect(screen.getByRole("status")).toHaveText(COPY.monitor.replies.under);
-  expect(new URL(page.url()).pathname).toBe("/");
-  await page.keyboard.press("Escape");
-  await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
-  await expect(button).toBeFocused();
-});
-
 test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
   test("the camera cuts to the shelf and the ornament is out at once", async ({ page }) => {
@@ -182,20 +156,5 @@ test.describe("phone", () => {
     expect(box.x).toBeCloseTo(16, 0);
     expect(box.x + box.width).toBeCloseTo(390 - 16, 0);
     expect(box.y + box.height).toBeCloseTo(844 - 16, 0);
-  });
-  test("the age check is readable on the phone itself", async ({ page }) => {
-    await standInOffice(page);
-    await page.getByRole("button", { name: COPY.labels.hs_monitor }).focus();
-    await page.keyboard.press("Enter");
-    const screen = page.getByRole("region", { name: COPY.monitor.title });
-    await expect(screen).toBeVisible({ timeout: MOVE_WAIT });
-    expect(await printedPx(screen, ".office-card-text")).toBeGreaterThanOrEqual(12);
-    const fits = () => screen.evaluate((el) => el.scrollHeight <= el.clientHeight + 1);
-    expect(await fits()).toBe(true);
-    for (const answer of ["over", "under"] as const) {
-      await screen.getByRole("button", { name: COPY.monitor[answer] }).click();
-      await expect(screen.getByRole("status")).toHaveText(COPY.monitor.replies[answer]);
-      expect(await fits()).toBe(true);
-    }
   });
 });

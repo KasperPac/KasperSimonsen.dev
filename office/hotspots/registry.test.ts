@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { Group, Mesh } from "three";
 import { work } from "@/content/work";
 import { services } from "@/content/services";
-import { hitFor, highlightFor, highlightKey, itemAt, itemNode, labelFor, ORNAMENTS, pickHit, RECORDS, sameHit } from "./registry";
+import { ALL_HOTSPOTS, EXTRAS, HOTSPOTS, TOOL_NODE, hitFor, highlightFor, highlightKey, itemAt, itemNode, labelFor, ORNAMENTS, pickHit, RECORDS, sameHit } from "./registry";
 
 /** office_root › hs_crate › (hs_crate__body mesh, record_00 › mesh, record_05 › mesh), hs_shelf › ornament_01 › mesh, hs_drawer › mesh, prop_chair mesh */
 function scene() {
@@ -103,9 +103,35 @@ describe("highlighting", () => {
     expect(sameHit(null, { hotspot: "hs_drawer", item: null })).toBe(false);
   });
   it("labels an item by its content name, else by the hotspot label", () => {
-    const labels = { hs_crate: "C", hs_drawer: "D", hs_monitor: "M", hs_shelf: "S" };
+    const labels = { hs_crate: "C", hs_drawer: "D", hs_monitor: "M", hs_shelf: "S", hs_whiteboard: "W" };
     expect(labelFor({ hotspot: "hs_crate", item: "manuva" }, labels)).toBe("Manuva");
     expect(labelFor({ hotspot: "hs_shelf", item: services[0].slug }, labels)).toBe(services[0].name);
     expect(labelFor({ hotspot: "hs_drawer", item: null }, labels)).toBe("D");
+  });
+});
+
+describe("hidden extras", () => {
+  const node = (name: string, ...children: Array<Group | Mesh>) => {
+    const g = new Group();
+    g.name = name;
+    children.forEach((c) => g.add(c));
+    return g;
+  };
+  it("keeps the signposted four as they are, and the whiteboard apart", () => {
+    expect(HOTSPOTS).toEqual(["hs_crate", "hs_drawer", "hs_monitor", "hs_shelf"]);
+    expect(EXTRAS).toEqual(["hs_whiteboard"]);
+    expect(ALL_HOTSPOTS).toEqual([...HOTSPOTS, ...EXTRAS]);
+  });
+  it("hits the whiteboard like any object while nothing's focused", () => {
+    const mesh = new Mesh();
+    node("hs_whiteboard", node("hs_whiteboard__board", mesh));
+    expect(hitFor(mesh, null)).toEqual({ hotspot: "hs_whiteboard", item: null });
+  });
+  it("gives each tray tool its own highlight group, and knows the tool nodes", () => {
+    const marker = new Mesh();
+    node("hs_whiteboard", node("hs_whiteboard__marker_02", marker));
+    expect(highlightKey(marker)).toBe("hs_whiteboard__marker_02");
+    expect(TOOL_NODE.test("hs_whiteboard__eraser")).toBe(true);
+    expect(TOOL_NODE.test("hs_whiteboard__board")).toBe(false);
   });
 });

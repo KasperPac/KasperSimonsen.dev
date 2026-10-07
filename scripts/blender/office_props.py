@@ -494,7 +494,8 @@ def _screen_uv(co, pose, w, h, dz):
 
 def build_laptop(name, location, rotation_z, parent, col, width=0.31, depth=0.215, open_deg=110):
     """Open laptop: tapered base with a raised key grid and trackpad, lid hinged at the back with an inset screen.
-    The lid is <name>__lid, its origin on the hinge line."""
+    The lid is <name>__lid, its origin on the hinge line. <name>__screen, its child, is a UV-mapped quad over the
+    recess (0..1 across the visible screen) facing the lid's front (-y), for anything the site wants to show on it."""
     root = _root(name, location, rotation_z, parent, col)
     base_h = 0.015
     bm = bmesh.new()
@@ -510,10 +511,14 @@ def build_laptop(name, location, rotation_z, parent, col, width=0.31, depth=0.21
         return [(x, y, z + zc) for x, z in ((-w / 2, -hh / 2), (w / 2, -hh / 2), (w / 2, hh / 2), (-w / 2, hh / 2))]
 
     bm = bmesh.new()
-    zc = depth / 2
+    zc, recess = depth / 2, 0.0015
     _loft(bm, [rect(width, depth, lid_t, zc), rect(width, depth, 0, zc), rect(sw, sh, 0, zc + 0.002),
-               rect(sw, sh, 0.0015, zc + 0.002)])
-    _part(f"{name}__lid", bm, root, col, location=(0, depth / 2 - lid_t, base_h), rotation=(math.radians(-(open_deg - 90)), 0, 0))
+               rect(sw, sh, recess, zc + 0.002)])
+    lid = _part(f"{name}__lid", bm, root, col, location=(0, depth / 2 - lid_t, base_h), rotation=(math.radians(-(open_deg - 90)), 0, 0))
+
+    bm = bmesh.new()
+    _poly(bm, rect(sw, sh, recess - 0.0015, zc + 0.002))  # 1.5 mm in front of the recess face
+    _part(f"{name}__screen", bm, lid, col, uv=lambda co: (co.x / sw + 0.5, (co.z - zc - 0.002) / sh + 0.5))
     return root
 
 
@@ -1805,7 +1810,9 @@ def build_monitor_notes(name, location, rotation_z, parent, col, texts=(), width
     """Sticky notes round a monitor's bezel, some hanging over the screen. Give it the same location, rotation and
     size as the build_monitor it decorates. `count` (up to 12) takes spots in a fixed order: two along the top and
     one down each side first. Six or fewer come out 1.3 times bigger, so they still read from across the room. Mostly
-    blank; `texts` go on the first notes placed (<name>__text_00...)."""
+    blank; `texts` go on the first notes placed (<name>__text_NN, each a child of its note). Each note is its own part,
+    <name>__note_00..., built in its own frame (origin on its top centre) with its place on the bezel as its
+    transform, so the site can peel them off one at a time."""
     root = _root(name, location, rotation_z, parent, col)
     pose, hw, hh = _monitor_pose(height), width / 2, height / 2
     spots = ((-0.25, hh - 0.004, -6), (-0.13, hh - 0.002, 4), (0.05, hh - 0.004, -3), (0.17, hh - 0.003, 7), (0.27, hh - 0.005, -2),
@@ -1813,13 +1820,14 @@ def build_monitor_notes(name, location, rotation_z, parent, col, texts=(), width
              (-0.18, -hh + 0.012, 3), (0.12, -hh + 0.012, -4))
     order = (0, 3, 6, 9, 1, 4, 8, 7, 2, 5, 10, 11)
     grow = Matrix.Scale(1.3 if count <= 6 else 1.0, 4)
-    bm = bmesh.new()
     for i, (x, z, deg) in enumerate(spots[k] for k in order[:count]):
         m = pose @ Matrix.Translation((x, 0, z)) @ Matrix.Rotation(math.radians(deg), 4, "Y") @ grow
-        _note(bm, m, curl=18 + 9 * (i % 3))
+        bm = bmesh.new()
+        _note(bm, I4, curl=18 + 9 * (i % 3))
+        note = _part(f"{name}__note_{i:02d}", bm, root, col)
+        note.matrix_basis = m  # its place on the bezel; the runtime moves it between here and its rest_ empty
         if i < len(texts) and texts[i]:
-            _note_text(f"{name}__text_{i:02d}", texts[i], root, col, m)
-    _part(f"{name}__notes", bm, root, col)
+            _note_text(f"{name}__text_{i:02d}", texts[i], note, col, I4)
     return root
 
 
@@ -1830,10 +1838,49 @@ def _text_at(name, text, size, depth, x, y, top, parent, col, align="LEFT"):
     return obj
 
 
-def build_whiteboard(name, location, rotation_z, parent, col, text="", note="", width=0.6, height=0.45):
+MARKER = (0.12, 0.008, 0.0095, 0.03)  # whiteboard marker: tip to cap end, barrel radius, cap radius, cap length
+ERASER = (0.1, 0.04, 0.028)  # board eraser: length, width, height off its felt
+GAP = 0.001  # air between a tool and the tray floor, so nothing in the tray touches
+# Where the drawable board's tools lie in its tray: (x of the tip, y, tip to the left) for markers 00-04, in the board's
+# frame. Two rows clear of the frame above the back one; the eraser at the right end spans both.
+MARKER_SPOTS = ((-0.285, -0.0325, True), (-0.13, -0.0325, True), (0.025, -0.0325, True),
+                (-0.06, -0.0555, False), (0.17, -0.0555, False))
+ERASER_SPOT = (0.235, -0.044)
+
+
+def _marker(bm):
+    """A marker lying along -y from its felt tip at the origin: a small flat nib, a tapered nose, the barrel and a
+    thicker cap. Hexagonal, a flat face down (z), so it lies still in a tray."""
+    length, r, cap_r, cap = MARKER
+    profile = [(0.0018, 0.0), (0.0035, 0.006), (0.0055, 0.008), (r, 0.02), (r, length - cap), (cap_r, length - cap),
+               (cap_r, length - 0.003), (cap_r - 0.003, length)]
+    _lathe(bm, profile, 6, WALL)
+
+
+def _eraser(bm):
+    """A board eraser, its felt face on y = 0 (the origin at its centre), its back out towards -y: a felt pad, the
+    block, a chamfered top."""
+    length, width, height = ERASER
+
+    def ring(w, d, y):
+        return [(x, y, z) for x, z in ((-w / 2, -d / 2), (w / 2, -d / 2), (w / 2, d / 2), (-w / 2, d / 2))]
+
+    _loft(bm, [ring(length - 0.006, width - 0.006, 0), ring(length - 0.006, width - 0.006, -0.005), ring(length, width, -0.006),
+               ring(length, width, -0.02), ring(length - 0.014, width - 0.014, -height)])
+
+
+def build_whiteboard(name, location, rotation_z, parent, col, text="", note="", width=0.6, height=0.45, drawable=False):
     """A small whiteboard: aluminium frame, marker tray with two markers and an eraser, `text` written large (lines
-    split on \\n) and underlined, `note` smaller underneath. Origin on the wall plane at its centre."""
+    split on \\n) and underlined, `note` smaller underneath. Origin on the wall plane at its centre.
+
+    drawable=True makes it the one the site draws on: no writing (the site draws it), <name>__surface over the
+    writing area 1 mm in front of the board (facing out; it carries no UVs, as the GLB exports none: the runtime
+    draws the ink on its own quad, hs_whiteboard__ink, placed from the face mapping), and a full-width tray holding five markers
+    <name>__marker_00..04 and <name>__eraser as parts of their own. A marker's origin is its felt tip, its body along
+    its local -y (glTF +z); the eraser's is the centre of its felt, its back along its local -y (glTF +z)."""
     root = _root(name, location, rotation_z, parent, col)
+    if drawable:
+        text = note = ""
 
     def rect(rw, rh):
         return [(-rw / 2, -rh / 2), (rw / 2, -rh / 2), (rw / 2, rh / 2), (-rw / 2, rh / 2)]
@@ -1842,12 +1889,21 @@ def build_whiteboard(name, location, rotation_z, parent, col, text="", note="", 
     bm = bmesh.new()
     _strip(bm, rect(width, height), rect(width - 0.03, height - 0.03), 0.02, WALL, closed=True)
     _poly(bm, [(x, face, z) for x, z in rect(width - 0.03, height - 0.03)])
-    tray, base = [(0, 0), (-0.05, 0), (-0.05, 0.018), (-0.044, 0.018), (-0.044, 0.005), (0, 0.005)], -height / 2 - 0.006
-    _prism(bm, tray, width * 0.7, Matrix.Translation((-width * 0.35, 0, base)) @ YZ)
-    for x0 in (-width * 0.28, -width * 0.06):
-        _tube(bm, [(x0, -0.026, base + 0.013), (x0 + 0.1, -0.026, base + 0.013)], 0.008, 6, hint=(0, 0, 1))
-        _tube(bm, [(x0 + 0.1, -0.026, base + 0.013), (x0 + 0.13, -0.026, base + 0.013)], 0.0095, 6, hint=(0, 0, 1))
-    _box(bm, (0.1, 0.04, 0.028), (width * 0.2, -0.025, base + 0.019))
+    base = -height / 2 - 0.006
+    if drawable:
+        # full width and 74 mm deep, with end stops in front of the frame: two rows of markers clear of the frame, the
+        # eraser beside them. A low lip, so the markers show over it from a level eye
+        tray, end, lip = [(0, 0), (-0.074, 0), (-0.074, 0.012), (-0.068, 0.012), (-0.068, 0.005), (0, 0.005)], 0.006, 0.012
+        _prism(bm, tray, width - 2 * end, Matrix.Translation((-width / 2 + end, 0, base)) @ YZ)
+        for s in (-1, 1):
+            _box(bm, (end, 0.053, lip), (s * (width - end) / 2, -0.0475, base + lip / 2))
+    else:
+        tray = [(0, 0), (-0.05, 0), (-0.05, 0.018), (-0.044, 0.018), (-0.044, 0.005), (0, 0.005)]
+        _prism(bm, tray, width * 0.7, Matrix.Translation((-width * 0.35, 0, base)) @ YZ)
+        for x0 in (-width * 0.28, -width * 0.06):
+            _tube(bm, [(x0, -0.026, base + 0.013), (x0 + 0.1, -0.026, base + 0.013)], 0.008, 6, hint=(0, 0, 1))
+            _tube(bm, [(x0 + 0.1, -0.026, base + 0.013), (x0 + 0.13, -0.026, base + 0.013)], 0.0095, 6, hint=(0, 0, 1))
+        _box(bm, (0.1, 0.04, 0.028), (width * 0.2, -0.025, base + 0.019))
     left, top = -width / 2 + 0.05, height / 2 - 0.05
     if text:
         big = _text_at(f"{name}__text", text, 0.055, 0.0012, left, face, top, root, col)
@@ -1859,6 +1915,24 @@ def build_whiteboard(name, location, rotation_z, parent, col, text="", note="", 
     if note:
         _text_at(f"{name}__note", note, 0.04, 0.0012, left + 0.03, face, top, root, col)
     _part(f"{name}__board", bm, root, col)
+    if drawable:
+        sw, sh = width - 0.03, height - 0.03
+        bm = bmesh.new()
+        _poly(bm, [(x, face - 0.001, z) for x, z in rect(sw, sh)])
+        surface = _part(f"{name}__surface", bm, root, col, uv=lambda co: (co.x / sw + 0.5, co.z / sh + 0.5))
+        if surface.data.polygons[0].normal.y > 0:
+            surface.data.flip_normals()  # it faces the room (-y), which glTF makes +z
+        floor = base + 0.005
+        for i, (x, y, tip_left) in enumerate(MARKER_SPOTS):
+            bm = bmesh.new()
+            _marker(bm)
+            low = min(v.co.z for v in bm.verts)
+            # turned about z so its body runs along +x from a tip on the left, or -x from one on the right
+            _part(f"{name}__marker_{i:02d}", bm, root, col, (x, y, floor + GAP - low), (0, 0, (1 if tip_left else -1) * math.pi / 2))
+        bm = bmesh.new()
+        _eraser(bm)
+        # felt down, its back up
+        _part(f"{name}__eraser", bm, root, col, (*ERASER_SPOT, floor + GAP), (-math.pi / 2, 0, 0))
     return root
 
 

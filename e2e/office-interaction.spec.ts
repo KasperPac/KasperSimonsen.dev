@@ -113,7 +113,7 @@ test("the crate, shelf and monitor focus locally with no URL change", async ({ p
         ? page.locator('[aria-roledescription="record crate"]')
         : hotspot === "hs_shelf"
           ? page.getByRole("link", { name: services[0].name })
-          : page.getByRole("heading", { name: COPY.monitor.title });
+          : page.getByRole("heading", { name: COPY.reel.title });
     await expect(into).toBeFocused();
     await page.getByRole("button", { name: "Back" }).click();
     await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });

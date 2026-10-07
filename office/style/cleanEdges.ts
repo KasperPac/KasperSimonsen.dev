@@ -40,6 +40,8 @@ export type CleanEdgesHandle = {
   fades: EdgeFadeGroup[];
   /** One line material per highlight key. */
   highlights: Map<string, LineMaterial>;
+  /** A highlight group's own resting colour, where it has one (see `setTint`). */
+  tints: Map<string, string>;
   baseColor: string;
 };
 
@@ -134,7 +136,7 @@ export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanE
     for (const o of group.objects) box.union(new Box3().setFromObject(o));
     box.getBoundingSphere(new Sphere()).center.clone().toArray().forEach((v, i) => group.centre.setComponent(i, v));
   }
-  const handle = { fill, line, fades: [...fades.values()], highlights, baseColor: opts.line };
+  const handle = { fill, line, fades: [...fades.values()], highlights, tints: new Map<string, string>(), baseColor: opts.line };
   handles.set(root, handle);
   return handle;
 }
@@ -165,12 +167,21 @@ export function updateEdgeFades(handle: CleanEdgesHandle, cameraPosition: Vector
   for (const g of handle.fades) g.material.opacity = fadeOpacity(cameraPosition.distanceTo(g.centre), g.near, g.far, g.min);
 }
 
-/** Recolours the lines of `prefix` and everything under it (`prefix__…`); every other highlight group goes back to the base colour. */
+/**
+ * Recolours the lines of `prefix` and everything under it (`prefix__…`); every other group goes back to the base colour.
+ * A tinted group keeps its tint throughout, lit or not (the whiteboard's tray markers stay their colours).
+ */
 export function setHighlight(handle: CleanEdgesHandle, prefix: string | null, color: string): void {
   for (const [key, material] of handle.highlights) {
     const on = prefix !== null && (key === prefix || key.startsWith(`${prefix}__`));
-    material.color.set(on ? color : handle.baseColor);
+    material.color.set(handle.tints.get(key) ?? (on ? color : handle.baseColor));
   }
+}
+
+/** A highlight group's own line colour (the whiteboard's tray markers), kept through highlights. */
+export function setTint(handle: CleanEdgesHandle, key: string, color: string): void {
+  handle.tints.set(key, color);
+  handle.highlights.get(key)?.color.set(color);
 }
 
 /** Line widths are in CSS pixels relative to this; call on every canvas resize. */

@@ -91,7 +91,7 @@ export function findMotionNodes(root: Object3D): MotionNodes {
 /** Per-frame easing of the drawer, the teases and the monitor flicker. Pure state: no React, no clocks. */
 export class ObjectMotion {
   private drawerM = 0;
-  private tease: Record<HotspotName, number> = { hs_crate: 0, hs_drawer: 0, hs_monitor: 0, hs_shelf: 0 };
+  private tease: Record<HotspotName, number> = { hs_crate: 0, hs_drawer: 0, hs_monitor: 0, hs_shelf: 0, hs_whiteboard: 0 };
   private hoverSince = -1;
   private lastHovered: HotspotName | null = null;
   private target = 0;

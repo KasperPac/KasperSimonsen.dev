@@ -9,6 +9,7 @@ export const COPY = {
     hs_drawer: "Get in touch",
     hs_shelf: "What I do",
     hs_monitor: "Monitor",
+    hs_whiteboard: "Have a go",
   },
   back: "Back",
   close: "Close",
@@ -33,6 +34,18 @@ export const COPY = {
   arrive: { comeIn: "Come in", scroll: "or scroll" },
   hints: "Have a look around.",
   hintsPan: "Drag sideways to look around.",
+  /** After the arrival tour, once: a nudge that there's more to find. DRAFT. */
+  hintsMore: "Some things in here do more than they look.",
+  /** The whiteboard, a hidden extra (whiteboard spec). DRAFT. */
+  whiteboard: {
+    nav: "The whiteboard (just for fun)",
+    title: "Whiteboard",
+    todo: "TODO: sleep",
+    note: "(next sprint)",
+    tools: { white: "White marker", lime: "Green marker", red: "Red marker", cyan: "Blue marker", amber: "Orange marker" },
+    eraser: "Eraser",
+    wipe: "Wipe it",
+  },
   sleeve: { readMore: "Read more", stack: "Built with" },
   caseStudy: { stack: "Built with", live: "See it live" },
   crate: {
@@ -49,16 +62,17 @@ export const COPY = {
   service: { eyebrow: "What I do", ways: "Two ways to work with me" },
   /** On the standalone pages, back into the office. */
   enter: "Enter the office",
-  /** The monitor's gag (spec 3.5): a fake Australian age check. No real agency's name. */
-  monitor: {
-    eyebrow: "Age verification",
-    title: "Hang on. How old are you?",
-    text: "Australian law wants to know who's looking at screens now. This one's got TypeScript on it, so I have to ask.",
-    over: "I'm 18 or over",
-    under: "I'm under 18",
-    replies: {
-      over: "No ID, no questions. About as thorough as the real ones. It's only terminal windows on here anyway.",
-      under: "Honest. Nobody ever presses this one. You're fine, it's just code. Go tell your parents to hire me.",
-    },
+  /** The monitor's reel of past work (spec 3.5). DRAFT. */
+  reel: {
+    title: "Some things I've built",
+    caseStudy: "See the case study",
+    visit: "Visit the site",
+    prev: "Previous",
+    next: "Next",
+    show: (name: string) => `Show ${name}`,
+    /** The monitor's button for the full-screen view. DRAFT. */
+    expand: "See it full screen",
+    /** Where the reel is, for screen readers: on the monitor (the dots only mark it) and in the full-screen view. DRAFT. */
+    position: (n: number, total: number) => `Slide ${n} of ${total}`,
   },
 } as const;

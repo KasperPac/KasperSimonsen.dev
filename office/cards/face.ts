@@ -1,4 +1,4 @@
-import { Euler, Matrix4, Vector3, type Box3 } from "three";
+import { Euler, Matrix4, Quaternion, Vector3, type Box3 } from "three";
 
 /** Lift off the face printed on, in metres, so the print never shares a plane with the object's outline. */
 const LIFT = 0.0003;
@@ -66,4 +66,17 @@ export function screenFaceFor(points: Vector3[], widthPx: number, front = new Ve
     distanceFactor: (width * 400) / widthPx,
     heightPx: (widthPx * height) / width,
   };
+}
+
+export type Face = ReturnType<typeof screenFaceFor>;
+
+/**
+ * A print `heightPx` tall hung under another print's `face`, the same width (and px scale), in its plane and tilt, its top
+ * `gapPx` below the face's bottom edge: the reel's words under the monitor on portrait screens (spec 3.5).
+ */
+export function belowFaceFor(face: Face, heightPx: number, gapPx: number): Face {
+  const k = face.distanceFactor / 400;
+  const up = new Vector3(0, 1, 0).applyQuaternion(new Quaternion().setFromEuler(new Euler(...face.rotation)));
+  const at = new Vector3(...face.position).addScaledVector(up, -(face.heightPx / 2 + gapPx + heightPx / 2) * k);
+  return { position: at.toArray() as [number, number, number], rotation: face.rotation, distanceFactor: face.distanceFactor, heightPx };
 }

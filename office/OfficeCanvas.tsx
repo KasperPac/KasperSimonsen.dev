@@ -3,32 +3,51 @@
 import { Suspense, useEffect, useMemo, useRef, type ReactNode, type RefObject } from "react";
 import { Canvas, useFrame, useThree, type ThreeEvent } from "@react-three/fiber";
 import { useGLTF } from "@react-three/drei";
-import { Box3, Quaternion, Vector3, type Mesh, type Object3D, type PerspectiveCamera } from "three";
+import {
+  CanvasTexture,
+  Euler,
+  Mesh,
+  MeshBasicMaterial,
+  PlaneGeometry,
+  Quaternion,
+  SRGBColorSpace,
+  Vector3,
+  type Object3D,
+  type PerspectiveCamera,
+} from "three";
 import manifest from "./manifest.json";
 import { theme } from "./theme";
-import { applyCleanEdges, setHighlight, setLineResolution, updateEdgeFades, type CleanEdgesHandle } from "./style/cleanEdges";
+import { applyCleanEdges, setHighlight, setLineResolution, setTint, updateEdgeFades, type CleanEdgesHandle } from "./style/cleanEdges";
 import { findClipFor, makeClipSampler, progressToTime } from "./walkin/clipSampler";
 import { useTurntable } from "./idle/useTurntable";
 import { applySkippingGirl, findSkippingGirl } from "./walkin/skippingGirl";
 import { findCamera, WALKIN_CAMERA } from "./walkin/cameraPose";
 import { onStreet } from "./walkin/autoWalk";
 import { applyPose, makePose, readPose, type Pose } from "./camera/pose";
-import { basePose, focusPose, playerPose } from "./camera/basePose";
+import { basePose, focusPose, MONITOR_MIN_HEIGHT, playerPose } from "./camera/basePose";
 import { CameraRig, FOCUS_MOVES, PLAYER_MOVE } from "./camera/rig";
 import { cameraKey } from "./camera/key";
-import { FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, hitFor, pickHit, type Hit, type HotspotName } from "./hotspots/registry";
-import { addHitProxies } from "./hotspots/proxies";
+import { ALL_HOTSPOTS, FOCUS_CAMERA, HOTSPOTS, highlightFor, highlightKey, hitFor, pickHit, type Hit, type HotspotName } from "./hotspots/registry";
+import { addHitProxies, NO_BOUNDS, outlineBox } from "./hotspots/proxies";
 import { focusedHotspot, IDLE_AT, LEAVE_AT, type DirectorState } from "./director/director";
 import { CARD_NODE, findMotionNodes, ObjectMotion, SCREEN_NODE } from "./objects/motion";
 import { CrateMotion, findCrateNodes, type PlayerPoses } from "./objects/crate";
 import { findShelfNodes, ShelfMotion } from "./objects/shelf";
+import { findNotesNodes, NotesMotion } from "./objects/notes";
+import NeonSign from "./neon/NeonSign";
+import type { Placement } from "./objects/shelf";
 import { screenRect } from "./overlay/screenRect";
 import { placeCard } from "./overlay/place";
-import { addDigPlane, DIG_PLANE, digFromDepth } from "./crate/scrub";
+import { addDigPlane, DIG_PLANE, digFromPointer, recordUnder } from "./crate/scrub";
 import { PLATTER_NODE, STAND_NODE } from "./idle/turntable";
 import CardFace from "./cards/CardFace";
 import { SLEEVE_WIDTH_PX } from "./cards/SleeveBack";
-import { SCREEN_WIDTH_PX } from "./cards/AgeGate";
+import { SCREEN_WIDTH_PX } from "./cards/ReelScreen";
+import { LAPTOP_WIDTH_PX, STRIP_GAP_PX, STRIP_HEIGHT_PX, STRIP_WIDTH_PX } from "./cards/ReelWords";
+import { STRIP_PX, TOOLS, WHITEBOARD_WIDTH_PX, type BoardPointer } from "./cards/Whiteboard";
+import { screenFaceFor } from "./cards/face";
+import { boardPoint, findTools, handPlacement, ToolMotion, type Face, type ToolId, type ToolNodes } from "./whiteboard/marker";
+import { boardCanvas, boardSize, boardVersion, sizeBoard } from "./whiteboard/surface";
 import { work } from "@/content/work";
 
 /** DOM the canvas positions each frame: the hover label and the touch markers. */
@@ -57,8 +76,17 @@ export type OfficeCanvasProps = {
   shelf: RefObject<{ presented: number | null }>;
   /** The plaque card the canvas keeps beside the picked ornament (CSS docks it on narrow screens). */
   plaque: RefObject<HTMLElement | null>;
-  /** What's printed on the monitor's screen while it's open, or null. */
+  /** What's printed on the monitor's screen while it's open (the reel and its carousel, spec 3.5), or null. Focus moves to its title. */
   monitorScreen: { titleId: string; content: ReactNode } | null;
+  /** The reel's words (spec 3.5): on the laptop, or on portrait screens on a strip under the monitor's screen. */
+  reelWords: { content: ReactNode; place: "laptop" | "strip" } | null;
+  /**
+   * The whiteboard: what's printed on it while it's open (or null), and, read every frame, the tool in hand (null when
+   * the board isn't open) and where the pointer is on the board.
+   */
+  whiteboard: { print: { titleId: string; content: ReactNode } | null; state: RefObject<{ held: ToolId | null; pointer: BoardPointer }> };
+  /** The height the board's print is laid out at (CSS px, at WHITEBOARD_WIDTH_PX across), once the model has loaded. */
+  onBoardHeight: (heightPx: number) => void;
   /** Which ornament is out in front of the camera (its index), or null: each arrival, swap and start back. */
   onPresented: (out: number | null) => void;
   onProgressCross: (progress: number) => void;
@@ -103,6 +131,31 @@ function useCleanEdges(url: string, keyFor?: (mesh: Object3D) => string | null) 
   return { gltf, handle };
 }
 
+/**
+ * The whiteboard's tools and their rest poses in the tray, found once per model. drei caches the loaded scene, so if
+ * the office remounts (or the frame loop stops) while a tool is out of the tray, finding them again would take where it
+ * was left as its new rest and strand it on the board. With the first rest kept, a fresh ToolMotion puts it home.
+ */
+const toolsByRoot = new WeakMap<Object3D, ToolNodes>();
+function toolsOf(root: Object3D): ToolNodes {
+  let nodes = toolsByRoot.get(root);
+  if (!nodes) toolsByRoot.set(root, (nodes = findTools(root)));
+  return nodes;
+}
+
+/**
+ * Lays the ink quad (1 × 1, facing +z) over the board's drawing area: the canvas's `widthPx × heightPx` from the top
+ * left of the print's face, at boardPoint's scale (drei's distanceFactor / 400 metres per CSS px) and in its plane, so
+ * a canvas pixel and the held marker's tip agree. The tool strip's part of the face, below it, is left bare.
+ */
+const inkEuler = new Euler();
+function placeInk(mesh: Mesh, face: Face, size: { widthPx: number; heightPx: number }) {
+  const k = face.distanceFactor / 400;
+  boardPoint(face, WHITEBOARD_WIDTH_PX, { x: size.widthPx / 2, y: size.heightPx / 2 }, mesh.position);
+  mesh.quaternion.setFromEuler(inkEuler.set(...face.rotation));
+  mesh.scale.set(Math.max(size.widthPx * k, 1e-6), Math.max(size.heightPx * k, 1e-6), 1);
+}
+
 type StreetProps = Pick<OfficeCanvasProps, "progress" | "pan" | "host" | "director" | "onProgressCross" | "onSettled"> & { info: RefObject<OfficeInfo | null> };
 
 /** The street, the walk-in and the one place the render camera is driven from. */
@@ -140,7 +193,8 @@ function Street({ progress, pan, host, director, onProgressCross, onSettled, inf
     const cams = playing ? (office?.player ?? office?.focus.hs_crate) : hotspot ? office?.focus[hotspot] : undefined;
     const sleeveOut = playing && !!office?.sleeveOut;
     if (cams && playing) playerPose(cams.land, cams.portrait, camera.aspect, sleeveOut, poses.focus);
-    else if (cams) focusPose(cams.land, cams.portrait, camera.aspect, poses.focus);
+    // The monitor's close-up keeps its strip on screen on squarer portrait screens too (a tablet); the others keep their width.
+    else if (cams) focusPose(cams.land, cams.portrait, camera.aspect, poses.focus, hotspot === "hs_monitor" ? MONITOR_MIN_HEIGHT : 0);
 
     // A new state or a new object starts a camera move from wherever the camera is; on a phone, so does the played
     // sleeve turning round (it comes in close to read it).
@@ -196,14 +250,17 @@ function Street({ progress, pan, host, director, onProgressCross, onSettled, inf
 
 type OfficeProps = Pick<
   OfficeCanvasProps,
-  "host" | "director" | "hover" | "overlay" | "drawerCard" | "crate" | "sleeveBack" | "shelf" | "plaque" | "monitorScreen"
-  | "onHover" | "onActivate" | "onDrawerOpen" | "onSleeveOut" | "onPresented"
+  "host" | "director" | "hover" | "overlay" | "drawerCard" | "crate" | "sleeveBack" | "shelf" | "plaque" | "monitorScreen" | "reelWords"
+  | "whiteboard" | "onHover" | "onActivate" | "onDrawerOpen" | "onSleeveOut" | "onPresented" | "onBoardHeight"
 > & {
   info: RefObject<OfficeInfo | null>;
 };
 
 /** The office model: hover, click, highlight, object motion, where the label and markers go, and the business card's print. */
-function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack, shelf, plaque, monitorScreen, onHover, onActivate, onDrawerOpen, onSleeveOut, onPresented, info }: OfficeProps) {
+function Office({
+  host, director, hover, overlay, drawerCard, crate, sleeveBack, shelf, plaque, monitorScreen, reelWords, whiteboard,
+  onHover, onActivate, onDrawerOpen, onSleeveOut, onPresented, onBoardHeight, info,
+}: OfficeProps) {
   const { gltf: office, handle } = useCleanEdges(manifest.office.url, highlightKey);
   const albumAway = useRef(false); // a project's record plays, or its sleeve is on the stand: the album is put away
   useTurntable(office.scene, albumAway);
@@ -238,7 +295,76 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
   // The CSS that docks the plaque on narrow screens (office.css), asked without a per-frame getComputedStyle.
   const docked = useMemo(() => (typeof window === "undefined" ? null : window.matchMedia("(max-width: 700px), (orientation: portrait)")), []);
   const screen = useMemo(() => (office.scene.getObjectByName(SCREEN_NODE) as Mesh | undefined) ?? null, [office]);
+  const notesRoot = useMemo(() => office.scene.getObjectByName("hs_monitor__notes") ?? null, [office]);
+  const notesNodes = useMemo(() => (notesRoot ? findNotesNodes(notesRoot) : { notes: [], stuck: [], rest: [] }), [notesRoot]);
+  const notesMotion = useMemo(() => new NotesMotion(), []);
+  const notesWere = useRef<"up" | "moving" | "down">("up");
+  const laptop = useMemo(() => (office.scene.getObjectByName("prop_laptop__screen") as Mesh | undefined) ?? null, [office]);
   const v = useMemo(() => new Vector3(), []);
+  // The whiteboard (whiteboard spec 3.2): the surface its print and the held tool's tip go on, and the tray's tools.
+  const surface = useMemo(() => (office.scene.getObjectByName("hs_whiteboard__surface") as Mesh | undefined) ?? null, [office]);
+  const boardFace = useMemo(() => {
+    if (!surface) return null;
+    const at = surface.geometry.getAttribute("position");
+    return screenFaceFor(Array.from({ length: at.count }, (_, i) => new Vector3().fromBufferAttribute(at, i)), WHITEBOARD_WIDTH_PX);
+  }, [surface]);
+  useEffect(() => {
+    if (boardFace) onBoardHeight(boardFace.heightPx);
+  }, [boardFace, onBoardHeight]);
+  const toolNodes = useMemo(() => {
+    const root = office.scene.getObjectByName("hs_whiteboard");
+    return root ? toolsOf(root) : { tools: new Map(), rest: new Map() };
+  }, [office]);
+  const toolMotion = useMemo(() => new ToolMotion(), []);
+  const wb = useMemo(
+    () => ({
+      boardLocal: new Vector3(),
+      // until the pointer has been on the board, the held tool waits at its middle
+      lastBoardLocal: new Vector3().fromArray(boardFace?.position ?? [0, 0, 0]),
+      handPose: { position: new Vector3(), quaternion: new Quaternion() } as Placement,
+      wasOpen: false,
+    }),
+    [boardFace],
+  );
+  // The drawing, on the 3D board for the whole visit (whiteboard spec 3.3): the board's canvas as a texture on a quad
+  // over the surface's drawing area, so it's seen from across the room and the held marker is drawn in front of it.
+  const ink = useMemo(() => {
+    const canvas = boardCanvas();
+    if (!surface || !boardFace || !canvas) return null;
+    // before the print has measured its strip, the drawing area is the face less the desktop strip
+    if (!boardSize().widthPx) sizeBoard(WHITEBOARD_WIDTH_PX, boardFace.heightPx - STRIP_PX);
+    const texture = new CanvasTexture(canvas);
+    texture.colorSpace = SRGBColorSpace;
+    texture.anisotropy = 4; // read at a slant from the standing spot
+    const material = new MeshBasicMaterial({
+      map: texture,
+      transparent: true,
+      depthWrite: false,
+      toneMapped: false, // the ink's colours are the office's line colours, as printed
+      polygonOffset: true, // in front of the board's own fill, which is pushed back
+      polygonOffsetFactor: -1,
+      polygonOffsetUnits: -1,
+    });
+    const mesh = new Mesh(new PlaneGeometry(1, 1), material); // its UVs run u left → right, v bottom → top
+    mesh.name = "hs_whiteboard__ink";
+    mesh.userData.cleanEdges = true; // never outlined
+    mesh.raycast = () => {}; // the board's own parts take the pointer
+    mesh.userData[NO_BOUNDS] = true; // nor does it grow the board's hit proxy or move its label
+    // over the drawing area before it's ever in the scene (the frame loop moves it if the canvas is resized)
+    const size = boardSize();
+    placeInk(mesh, boardFace, size);
+    return { mesh, texture, material, size, version: -1 };
+  }, [surface, boardFace]);
+  useEffect(() => {
+    if (!ink || !surface) return;
+    surface.add(ink.mesh);
+    return () => {
+      ink.mesh.removeFromParent();
+      ink.mesh.geometry.dispose();
+      ink.material.dispose();
+      ink.texture.dispose();
+    };
+  }, [ink, surface]);
 
   // Each object's whole outline takes the pointer while nothing is focused (thin shelf, gaps between ornaments).
   useEffect(() => {
@@ -246,7 +372,7 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
     return () => proxies.forEach((p) => p.removeFromParent());
   }, [office, director]);
 
-  // Browsing the crate, the pointer's depth across its opening picks the front record (Kasper: flick on mouseover).
+  // Browsing the crate, the record under the pointer comes to the front (Kasper: flick on mouseover).
   const digPlane = useRef<Mesh | null>(null);
   useEffect(() => {
     const crateRoot = office.scene.getObjectByName("hs_crate");
@@ -265,12 +391,12 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
     };
     const focus: OfficeInfo["focus"] = {};
     const anchors: OfficeInfo["anchors"] = {};
-    for (const h of HOTSPOTS) {
+    for (const h of ALL_HOTSPOTS) {
       const land = pose(FOCUS_CAMERA[h]);
       if (land) focus[h] = { land, portrait: pose(`${FOCUS_CAMERA[h]}_portrait`) };
       const node = office.scene.getObjectByName(h);
       if (node) {
-        const box = new Box3().setFromObject(node);
+        const box = outlineBox(node); // the board's ink is no part of its outline
         anchors[h] = new Vector3((box.min.x + box.max.x) / 2, box.max.y, (box.min.z + box.max.z) / 2);
       }
     }
@@ -282,7 +408,15 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
     };
   }, [office, handle, info]);
 
+  // The tray's markers keep their colours in their outlines (whiteboard spec 4). The white one stays the base colour.
+  useEffect(() => {
+    for (let i = 1; i < TOOLS.length; i++) setTint(handle, `hs_whiteboard__marker_0${i}`, TOOLS[i].color);
+  }, [handle]);
+
   useFrame(({ camera, size, clock }, dt) => {
+    // This frame's camera is placed already (the walk-in has just done it); its matrices only follow at the render, so
+    // bring them up to date before anything below projects through it (the plaque, the label, the dots).
+    camera.updateMatrixWorld();
     const d = director.current;
     const focused = d.kind === "focusing" || d.kind === "focused" ? d.target : null;
     motion.update(nodes, { open: focused?.hotspot ?? null, hovered: hover.current?.hotspot ?? null, reduced }, dt, clock.elapsedTime);
@@ -326,6 +460,44 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
         plaqueEl.style.top = `${at.top}px`;
       }
     }
+    // The notes come off the monitor as its camera move starts and go back on as the camera leaves (spec 3.5).
+    notesMotion.update(notesNodes, { open: focused?.hotspot === "hs_monitor", reduced }, dt);
+    // Every frame's state, "moving" included, so a test can tell a fall from none (reduced motion never draws one mid-fall).
+    if (notesMotion.state !== notesWere.current) {
+      notesWere.current = notesMotion.state;
+      if (host.current) host.current.dataset.notes = notesMotion.state;
+    }
+    // The whiteboard's held tool follows the pointer on the board; leaving puts it back in the tray (whiteboard spec 3).
+    // Between touches it stays where the pointer last was, lifted, never sent home.
+    const board = whiteboard.state.current;
+    let hand: Placement | null = null;
+    if (board.held !== null && surface && boardFace) {
+      if (board.pointer.pt) {
+        boardPoint(boardFace, WHITEBOARD_WIDTH_PX, board.pointer.pt, wb.boardLocal);
+        wb.lastBoardLocal.copy(wb.boardLocal);
+      }
+      hand = handPlacement(surface, wb.lastBoardLocal, board.held === "eraser" ? "eraser" : "marker", board.pointer.pressing, wb.handPose);
+    }
+    toolMotion.update(toolNodes, { held: board.held, hand, reduced, pressing: board.pointer.pressing }, dt);
+    // The board's canvas changed: lay its quad over the drawing area again if it was resized, and upload it again.
+    if (ink && boardFace) {
+      const now = boardSize();
+      if (now !== ink.size) {
+        ink.size = now;
+        placeInk(ink.mesh, boardFace, now);
+        ink.texture.dispose(); // a new size needs new texture storage
+      }
+      const version = boardVersion();
+      if (version !== ink.version) {
+        ink.version = version;
+        ink.texture.needsUpdate = true;
+      }
+    }
+    const open = focused?.hotspot === "hs_whiteboard";
+    if (open !== wb.wasOpen) {
+      wb.wasOpen = open;
+      if (host.current) host.current.dataset.whiteboard = open ? "open" : "shut";
+    }
 
     const lit = hover.current ?? focused;
     const key = lit ? `${highlightFor(lit)}:${lit.hotspot}` : null;
@@ -334,6 +506,7 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
       shown.current = key;
     }
 
+    // Project with this frame's camera: the walk-in has just placed it, and its matrices only follow at the render.
     const project = (p: Vector3) => {
       v.copy(p).project(camera);
       return v.z > 1 ? { x: Number.NaN, y: Number.NaN } : { x: ((v.x + 1) / 2) * size.width, y: ((1 - v.y) / 2) * size.height };
@@ -365,23 +538,17 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
     return d.kind === "idle" || d.kind === "focused";
   };
   const onCrate = (e: ThreeEvent<PointerEvent | MouseEvent>) => e.intersections.some((i) => hitFor(i.object, null)?.hotspot === "hs_crate");
-  /** Browsing the crate: the front record the pointer asks for (by its depth across the opening), else the current one. */
+  /** Browsing the crate: the front record the pointer asks for (the record under it), else the current one. Only for hover; a click plays the front record (see onClick). */
   const browsedHit = (e: ThreeEvent<PointerEvent | MouseEvent>): Hit | null => {
     const plane = digPlane.current;
     const across = plane && e.intersections.find((i) => i.object.name === DIG_PLANE);
-    let dig = crate.current.dig;
-    // On the record at the front (its cover, its top edge, its vinyl), that's the one meant: the depth bands are a third
-    // of the crate each but the projects are its front three records, so the front one's top edge and cover fall in
-    // later bands, and moving down to click it, or tapping it, picked the one behind (Kasper: "it selects Manuva").
-    const front = crateNodes?.records[dig];
-    const onFront = !!front && e.intersections.some((i) => {
-      for (let o: Object3D | null = i.object; o; o = o.parent) if (o === front) return true;
-      return false;
-    });
-    if (plane?.parent && across && !onFront) {
-      const z = plane.parent.worldToLocal(across.point.clone()).z;
-      dig = digFromDepth(z, plane.userData.front, plane.userData.back, work.length, dig);
-    }
+    // On a record, that one: the next one's top over the front one's as it goes back, a flicked one as it comes
+    // forward, and the front one anywhere on its cover, so moving down to click it keeps it (Kasper: "it selects
+    // Manuva"). Off them, how deep it crosses the opening (the first project at its front, the last at its back).
+    // The records, not shares of the crate's depth, so every one comes up in turn however many projects there are.
+    const z = plane?.parent && across ? plane.parent.worldToLocal(across.point.clone()).z : null;
+    const on = recordUnder(e.intersections, crateNodes.records);
+    const dig = digFromPointer(on, z, plane?.userData.tops ?? [], work.length, crate.current.dig);
     return across || onCrate(e) ? { hotspot: "hs_crate", item: work[dig]?.slug ?? null } : null;
   };
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
@@ -399,8 +566,11 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
   };
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     if (!interactive()) return;
-    // Browsing the crate, a click anywhere on it plays the front record.
-    const hit = crate.current.browsing ? browsedHit(e) : pickHit(e.intersections.map((i) => i.object), focusedHotspot(director.current));
+    // Browsing the crate, a click, tap or second click anywhere on it plays the front record (spec 3.2.3), the one shown,
+    // never whichever record happens to be under the pointer at that moment (a leaning one, or one peeking over the front).
+    const hit = crate.current.browsing
+      ? browsedHit(e) && { hotspot: "hs_crate" as const, item: work[crate.current.dig]?.slug ?? null }
+      : pickHit(e.intersections.map((i) => i.object), focusedHotspot(director.current));
     if (!hit) return;
     e.stopPropagation();
     onActivate(hit);
@@ -409,6 +579,7 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
   return (
     <>
       <primitive object={office.scene} onPointerMove={onPointerMove} onPointerOut={onPointerOut} onClick={onClick} />
+      <NeonSign scene={office.scene} director={director} host={host} reduced={reduced} />
       {drawerCard && card && (
         <CardFace surface={card} hotspot="hs_drawer" titleId={drawerCard.titleId}>
           {drawerCard.content}
@@ -422,6 +593,22 @@ function Office({ host, director, hover, overlay, drawerCard, crate, sleeveBack,
       {monitorScreen && screen && (
         <CardFace surface={screen} place="screen" widthPx={SCREEN_WIDTH_PX} hotspot="hs_monitor" titleId={monitorScreen.titleId}>
           {monitorScreen.content}
+        </CardFace>
+      )}
+      {/* titleId is only a placeholder: focus is off, and the reel's heading (and its region's name) is on the monitor, with the carousel */}
+      {reelWords?.place === "laptop" && laptop && (
+        <CardFace surface={laptop} place="screen" widthPx={LAPTOP_WIDTH_PX} hotspot="hs_monitor" titleId="reel-words" focus={false}>
+          {reelWords.content}
+        </CardFace>
+      )}
+      {reelWords?.place === "strip" && screen && (
+        <CardFace surface={screen} place="screen" widthPx={STRIP_WIDTH_PX} below={{ heightPx: STRIP_HEIGHT_PX, gapPx: STRIP_GAP_PX }} hotspot="hs_monitor" titleId="reel-words" focus={false}>
+          {reelWords.content}
+        </CardFace>
+      )}
+      {whiteboard.print && surface && (
+        <CardFace surface={surface} place="screen" widthPx={WHITEBOARD_WIDTH_PX} hotspot="hs_whiteboard" titleId={whiteboard.print.titleId}>
+          {whiteboard.print.content}
         </CardFace>
       )}
     </>

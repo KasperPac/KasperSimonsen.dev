@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { Box3, Euler, Quaternion, Vector3 } from "three";
-import { backFaceFor, faceFor, screenFaceFor } from "./face";
+import { backFaceFor, belowFaceFor, faceFor, screenFaceFor } from "./face";
 
 // The business card in its own glTF frame: 90 mm left to right, 3 mm thick (y up), 55 mm front to back.
 const card = new Box3(new Vector3(-0.045, -0.0015, -0.0275), new Vector3(0.045, 0.0015, 0.0275));
@@ -74,5 +74,29 @@ describe("screenFaceFor", () => {
     const f = screenFaceFor([...corners].reverse(), 640);
     const q = new Quaternion().setFromEuler(new Euler(...f.rotation));
     expect(new Vector3(0, 0, 1).applyQuaternion(q).z).toBeGreaterThan(0.99);
+  });
+});
+
+describe("belowFaceFor", () => {
+  // the monitor's 16:9 screen (0.604 x 0.33975 m), upright, facing +z, printed 640 px wide
+  const corners = [new Vector3(-0.302, -0.169875, 0), new Vector3(0.302, -0.169875, 0), new Vector3(0.302, 0.169875, 0), new Vector3(-0.302, 0.169875, 0)];
+  const screen = screenFaceFor(corners, 640);
+  it("hangs a print of the same width under the screen, gapPx below its bottom edge, in its plane", () => {
+    const k = screen.distanceFactor / 400;
+    const f = belowFaceFor(screen, 300, 12);
+    expect(f.distanceFactor).toBe(screen.distanceFactor);
+    expect(f.rotation).toEqual(screen.rotation);
+    expect(f.heightPx).toBe(300);
+    expect(f.position[0]).toBeCloseTo(screen.position[0], 9);
+    expect(f.position[1]).toBeCloseTo(-0.169875 - (12 + 150) * k, 9);
+    expect(f.position[2]).toBeCloseTo(screen.position[2], 9);
+  });
+  it("follows the screen's lean", () => {
+    // leaning back 5 degrees (about x by -0.0873): the screen's up is (0, cos, -sin), so going down it comes forward (+z)
+    const leaning = { ...screen, rotation: [-0.0873, 0, 0] as [number, number, number] };
+    const f = belowFaceFor(leaning, 300, 12);
+    const down = (screen.heightPx / 2 + 12 + 150) * (screen.distanceFactor / 400);
+    expect(f.position[1]).toBeCloseTo(screen.position[1] - down * Math.cos(0.0873), 9);
+    expect(f.position[2]).toBeCloseTo(screen.position[2] + down * Math.sin(0.0873), 9);
   });
 });

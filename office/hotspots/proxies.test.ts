@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { BoxGeometry, Group, Mesh, type MeshBasicMaterial, Raycaster, Vector3 } from "three";
 import { applyCleanEdges } from "@/office/style/cleanEdges";
-import { addHitProxies } from "./proxies";
+import { addHitProxies, NO_BOUNDS, outlineBox } from "./proxies";
 import { hitFor } from "./registry";
 
 /** A shelf seen face on: two ornaments 0.4 m apart, nothing between them. */
@@ -39,6 +39,18 @@ describe("addHitProxies", () => {
     const root = shelf();
     addHitProxies(root, () => false);
     expect(pointAt(root, 1)).toHaveLength(0);
+  });
+  it("leaves out what's flagged as no part of the outline (the whiteboard's ink)", () => {
+    const root = shelf();
+    const ink = new Mesh(new BoxGeometry(2, 2, 0.01));
+    ink.userData[NO_BOUNDS] = true;
+    ink.raycast = () => {}; // as on the board: it never takes the pointer itself
+    root.getObjectByName("hs_shelf")!.add(ink);
+    addHitProxies(root, () => true);
+    expect(pointAt(root, 1.5)).toHaveLength(0); // the 2 m ink would have reached x = 2
+    const box = outlineBox(root.getObjectByName("hs_shelf")!);
+    expect(box.min.x).toBeCloseTo(0.775);
+    expect(box.max.x).toBeCloseTo(1.225);
   });
   it("is never drawn, even when clean edges run after it", () => {
     const root = shelf();

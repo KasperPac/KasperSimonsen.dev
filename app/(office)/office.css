@@ -418,20 +418,8 @@ html.office-locked {
 /* The plaque beside a picked ornament: a focus target for the reader, not a control. */
 .office-card .office-card-title:focus { outline: none; }
 
-/* What's printed on the monitor's screen: laid out at 640 px, mapped onto the screen. */
-.office-screen { padding: 40px 46px; font-size: 22px; }
-.office-screen .office-card-title { font-size: 46px; }
-.office-gate-buttons { display: flex; gap: 16px; margin-top: 18px; }
-.office-screen .office-gate-buttons .office-card-cta { position: static; }
-.office-screen .office-card-cta[aria-pressed="false"] { background: transparent; color: var(--office-fg); outline: 1px solid rgba(232, 232, 232, 0.6); }
-/* The screen face is 640 x 352 whatever the camera: on phones the type stays large enough to read, so the margins give
-   way and the title keeps to one line. */
-@media (max-width: 700px), (orientation: portrait) {
-  .office-screen { padding: 26px 34px; font-size: 26px; }
-  .office-screen .office-card-eyebrow { margin-bottom: 10px; }
-  .office-screen .office-card-title { margin-bottom: 8px; font-size: 44px; }
-  .office-gate-buttons { margin-top: 14px; }
-}
+/* The monitor's print fills its screen edge to edge (.office-reel lays it out, with the carousel over it); the reel's words are .reel-words, on the laptop or a strip. */
+.office-screen { padding: 0; }
 
 /* A service's Read more ends with the two ways to work. */
 .article-model { margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(232, 232, 232, 0.2); }
@@ -443,3 +431,116 @@ html.office-locked {
 /* Standalone pages (a shared or refreshed link), in the office's style. */
 .standalone { max-width: 62ch; margin: 0 auto; padding: 48px 16px 80px; }
 .standalone-enter { display: inline-block; margin-bottom: 32px; color: var(--office-fg); font: 11px/1.2 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* The monitor's reel (spec 3.5): the screenshot edge to edge on the monitor, the next one sliding in over it from the
+   right, placed by --at (1 = off the right edge, 0 = covering the monitor). Its words are on the laptop, or
+   on portrait screens on a strip under the monitor. */
+.office-reel { position: relative; height: 100%; overflow: hidden; background: var(--office-bg); }
+.reel-shot { position: absolute; inset: 0; background: var(--office-bg); }
+.reel-shot > img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.reel-moving { transform: translateX(calc(var(--at, 0) * 100%)); box-shadow: -10px 0 24px rgba(0, 0, 0, calc(0.55 * (1 - var(--at, 0)))); }
+.reel-preload { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+/* The carousel over the print (spec 3.5): laid out at 1280 x 720, so shown at ~0.6 on a 1440-wide desktop and ~0.28 on a
+   390-wide phone. ‹ and › are tall zones at the edges, faint until hovered or focused on a mouse, always shown on touch.
+   The dots' bar lets clicks through to the screenshot (which opens full screen); only the dots themselves catch them. */
+.reel-open { position: absolute; inset: 0; cursor: zoom-in; }
+.reel-zone { position: absolute; top: 0; bottom: 96px; z-index: 2; width: 16%; padding: 0; border: 0; color: var(--office-fg); font: 140px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; opacity: 0.25; transition: opacity 0.2s; }
+.reel-zone--prev { left: 0; background: linear-gradient(to right, rgba(11, 11, 11, 0.55), transparent); }
+.reel-zone--next { right: 0; background: linear-gradient(to left, rgba(11, 11, 11, 0.55), transparent); }
+.office-reel:hover .reel-zone, .reel-zone:focus-visible { opacity: 1; }
+.reel-expand { position: absolute; top: 18px; right: 18px; z-index: 2; width: 72px; height: 72px; border: 1px solid rgba(232, 232, 232, 0.6); background: rgba(11, 11, 11, 0.6); color: var(--office-fg); font: 40px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; opacity: 0.25; transition: opacity 0.2s; }
+.office-reel:hover .reel-expand, .reel-expand:focus-visible { opacity: 1; }
+.reel-dots { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 22px; min-height: 96px; padding: 0 16%; box-sizing: border-box; background: linear-gradient(to top, rgba(11, 11, 11, 0.6), transparent); pointer-events: none; }
+.reel-dot { width: 26px; height: 26px; padding: 0; border: 2px solid var(--office-fg); border-radius: 50%; background: none; cursor: pointer; pointer-events: auto; }
+.reel-dot:focus-visible, .reel-expand:focus-visible { outline: 4px solid var(--accent); outline-offset: 4px; }
+/* a zone is the full height of the print and fills its edge, so its outline sits inside it */
+.reel-zone:focus-visible { outline: 4px solid var(--accent); outline-offset: -8px; }
+.reel-dot[aria-current="true"] { background: var(--accent); border-color: var(--accent); }
+.reel-pip { width: 30px; height: 30px; border: 3px solid var(--office-fg); border-radius: 50%; }
+.reel-pip[data-current] { background: var(--accent); border-color: var(--accent); }
+@media (hover: none) { .reel-zone, .reel-expand { opacity: 1; } }
+/* The expand button is ~20 px on a phone; there tapping the screenshot opens full screen. It is hidden visually, not removed
+   (display: none would take it out of the accessibility tree), so a screen reader can still open the view; a keyboard focus shows it. */
+@media (hover: none) and (pointer: coarse) {
+  .reel-expand:not(:focus-visible) { width: 1px; height: 1px; padding: 0; border: 0; overflow: hidden; clip-path: inset(50%); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) { .reel-zone, .reel-expand { transition: none; } }
+.reel-words { box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; height: 100%; padding: 22px 26px 18px; font-size: 22px; }
+.reel-label { display: flex; align-items: center; gap: 10px; margin: 0; font: 16px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; }
+.reel-label::before { content: ""; flex: none; width: 34px; height: 8px; background: radial-gradient(circle, rgba(232, 232, 232, 0.7) 3px, transparent 3.5px) 0 0 / 12px 8px repeat-x; }
+/* One line, however long the label: a wrapped one would push the headline down. The padding (taken back by the margin)
+   keeps descenders out of the clip without making the line taller. */
+.reel-label > span { min-width: 0; overflow: hidden; padding: 0.15em 0; margin: -0.15em 0; text-overflow: ellipsis; white-space: nowrap; }
+.reel-headline { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; margin: 0; overflow: hidden; line-height: 1.25; color: rgba(232, 232, 232, 0.85); }
+.reel-words .office-card-cta { position: static; align-self: flex-start; margin-top: auto; padding: 10px 16px; font-size: 17px; white-space: nowrap; }
+.reel-description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; margin: 0; overflow: hidden; line-height: 1.3; color: rgba(232, 232, 232, 0.7); }
+.reel-details { margin: 0; font: 15px/1.3 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.04em; color: rgba(232, 232, 232, 0.6); }
+/* On the laptop (~0.59 on a 1440 x 900 screen): the words fill its screen, label and headline reading at ~16 and ~22 px.
+   The print is 640 x ~432, 386 px inside its padding. Every part is bounded whatever the words, so any project fits: the label
+   is one line (27, ellipsis), the headline is clamped to two (2 x 38 px x 1.2 = 91), the description to three (3 x 24 px x 1.3 = 94),
+   the details to one line (19 px x 1.3 = 25, ellipsis) and the action is one line (~59, nowrap). Worst case 27 + 91 + 94 + 25 + 59 +
+   four gaps of 14 = 352, 34 px to spare. Nothing shrinks (flex: none), so a part can never be squeezed out, and the action
+   sits at the bottom on its margin-top: auto. (A three-line headline would be 398, over the 386: hence two.) */
+.reel-words--laptop { gap: 14px; padding: 26px 30px 20px; font-size: 38px; }
+.reel-words--laptop > * { flex: none; }
+.reel-words--laptop .reel-label { gap: 14px; font-size: 27px; }
+.reel-words--laptop .reel-label::before { width: 52px; height: 12px; background-size: 18px 12px; background-image: radial-gradient(circle, rgba(232, 232, 232, 0.7) 4.5px, transparent 5px); }
+.reel-words--laptop .reel-headline { -webkit-line-clamp: 2; line-height: 1.2; }
+.reel-words--laptop .office-card-cta { padding: 16px 24px; font-size: 27px; }
+.reel-words--laptop .reel-description { font-size: 24px; }
+.reel-words--laptop .reel-details { font-size: 19px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* The strip under the monitor (portrait screens): seen at about half size on a phone, so the action is made to be
+   tapped: 84 px tall, which at ~0.56 comes out over 40 px on screen. */
+.reel-words--strip { gap: 10px; padding: 16px 18px; font-size: 28px; border: 1px solid rgba(232, 232, 232, 0.6); background: var(--office-bg); }
+/* nothing in the strip may be squeezed: the print is sized to hold all of it (STRIP_HEIGHT_PX), headline at its two lines */
+.reel-words--strip > * { flex: none; }
+.reel-words--strip .reel-label { font-size: 22px; }
+.reel-words--strip .reel-headline { -webkit-line-clamp: 2; }
+.reel-words--strip .reel-description { -webkit-line-clamp: 2; font-size: 28px; line-height: 1.25; }
+.reel-words--strip .office-card-cta { min-height: 84px; padding: 0 22px; font-size: 28px; }
+
+/* The whiteboard (a hidden extra): a canvas to draw on, the tool strip along its bottom edge. */
+.office-whiteboard { position: relative; display: flex; flex-direction: column; height: 100%; }
+/* The board's canvas, laid in under the pointer: see-through, since the ink shows on the 3D board (under the held marker). */
+.whiteboard-ink { flex: none; touch-action: none; cursor: crosshair; }
+.whiteboard-canvas { display: block; opacity: 0; }
+.whiteboard-tools { display: flex; flex: none; align-items: center; gap: 18px; height: 96px; padding: 0 24px; border-top: 1px solid rgba(232, 232, 232, 0.25); }
+.whiteboard-swatch,
+.whiteboard-eraser { width: 56px; height: 56px; padding: 0; border: 2px solid rgba(232, 232, 232, 0.5); border-radius: 50%; background: var(--swatch, transparent); cursor: pointer; }
+.whiteboard-eraser { border-radius: 8px; background: repeating-linear-gradient(45deg, rgba(232, 232, 232, 0.6) 0 6px, transparent 6px 12px); }
+.whiteboard-swatch[aria-pressed="true"],
+.whiteboard-eraser[aria-pressed="true"] { outline: 3px solid var(--office-fg); outline-offset: 4px; }
+.whiteboard-wipe { margin-left: auto; padding: 14px 22px; background: none; border: 1px solid rgba(232, 232, 232, 0.6); color: var(--office-fg); font: 600 24px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; }
+/* Phones see the board at under half size (~0.45 at 390 px across), so every tool is made at least 40 px on screen to
+   tap. The strip grows with them; Whiteboard.tsx measures it, so the canvas takes what's left. A landscape phone
+   (too wide for the width query, not portrait) is coarse-pointer, so it gets the same sizes. The seven items and their
+   gaps must add up to under the board's 800 px. */
+@media (max-width: 700px), (orientation: portrait), (pointer: coarse) {
+  .whiteboard-tools { box-sizing: border-box; height: 116px; gap: 10px; padding: 0 14px; }
+  .whiteboard-swatch,
+  .whiteboard-eraser { flex: none; width: 96px; height: 96px; border-width: 3px; }
+  .whiteboard-swatch[aria-pressed="true"],
+  .whiteboard-eraser[aria-pressed="true"] { outline-width: 5px; outline-offset: 5px; }
+  .whiteboard-wipe { flex: none; box-sizing: border-box; min-width: 96px; height: 96px; padding: 0 8px; border-width: 2px; font-size: 30px; }
+}
+
+/* The reel's full-screen view (spec 3.5 3a): over everything (above the Read more scrim at 10), on black, the screenshot uncropped. */
+/* The top 54 px is kept for the label and close (close: 10 + 44); the screenshot is centred in the rest. */
+.reel-viewer { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding-top: 54px; background: #000; outline: none; animation: reel-viewer-in 0.2s ease-out; }
+.reel-viewer-shot { max-width: 100vw; max-height: calc(100vh - 54px); max-height: calc(100dvh - 54px); object-fit: contain; }
+.reel-viewer-label { position: absolute; top: 18px; left: 20px; margin: 0; font: 14px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; color: var(--office-fg); }
+.reel-viewer-close { position: absolute; top: 10px; right: 12px; min-width: 44px; min-height: 44px; padding: 0 14px; background: none; border: 1px solid rgba(232, 232, 232, 0.6); color: var(--office-fg); font: 14px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; cursor: pointer; }
+.reel-viewer-step { position: absolute; top: 50%; translate: 0 -50%; width: 56px; height: 96px; background: rgba(11, 11, 11, 0.55); border: 0; color: var(--office-fg); font: 48px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; }
+.reel-viewer-step--prev { left: 8px; }
+.reel-viewer-step--next { right: 8px; }
+/* On portrait screens ‹ › go in a bar under the image rather than over its edges, each at least 44 x 44. */
+@media (orientation: portrait) {
+  .reel-viewer { padding-bottom: 88px; }
+  .reel-viewer-shot { max-height: calc(100vh - 142px); max-height: calc(100dvh - 142px); }
+  .reel-viewer-step { top: auto; bottom: 16px; translate: none; width: 72px; height: 56px; }
+  .reel-viewer-step--prev { left: 16px; }
+  .reel-viewer-step--next { right: 16px; }
+}
+@keyframes reel-viewer-in { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .reel-viewer { animation: none; } }

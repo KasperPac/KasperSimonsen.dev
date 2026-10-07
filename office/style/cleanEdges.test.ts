@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { BoxGeometry, Color, DoubleSide, Group, IcosahedronGeometry, Mesh, Object3D, Raycaster, Vector3 } from "three";
 import type { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import type { LineSegments2 } from "three/addons/lines/LineSegments2.js";
-import { applyCleanEdges, fadeOpacity, setHighlight, setLineResolution, updateEdgeFades } from "./cleanEdges";
+import { applyCleanEdges, fadeOpacity, setHighlight, setLineResolution, setTint, updateEdgeFades } from "./cleanEdges";
 
 const opts = { background: "#000000", line: "#ffffff", lineWidth: 1.5, thresholdDeg: 20 };
 
@@ -306,5 +306,25 @@ describe("highlight groups", () => {
     const root = new Group();
     root.add(new Mesh(new BoxGeometry()));
     expect(applyCleanEdges(root, opts).highlights.size).toBe(0);
+  });
+});
+
+describe("setTint", () => {
+  it("keeps a group in its own colour, through a highlight and after it", () => {
+    const root = new Group();
+    const marker = new Mesh(new BoxGeometry());
+    marker.name = "hs_whiteboard__marker_01";
+    const crate = new Mesh(new BoxGeometry());
+    crate.name = "hs_crate";
+    root.add(marker, crate);
+    const handle = applyCleanEdges(root, { ...opts, highlightKey: (o) => o.name });
+    const hex = (key: string) => handle.highlights.get(key)!.color.getHexString();
+    setTint(handle, "hs_whiteboard__marker_01", "#C6FF3D");
+    expect(hex("hs_whiteboard__marker_01")).toBe("c6ff3d");
+    setHighlight(handle, "hs_whiteboard", "#e8e8e8");
+    expect(hex("hs_whiteboard__marker_01")).toBe("c6ff3d"); // lit with the board, still its colour
+    setHighlight(handle, null, "#e8e8e8");
+    expect(hex("hs_whiteboard__marker_01")).toBe("c6ff3d");
+    expect(hex("hs_crate")).toBe("ffffff"); // untinted groups go to the base
   });
 });

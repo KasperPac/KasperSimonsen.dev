@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useCallback, useEffect, useReducer, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import OfficeErrorBoundary from "./OfficeErrorBoundary";
 import { theme } from "./theme";
 import { COPY } from "./copy";
@@ -12,17 +12,27 @@ import { describeDirector, focusedHotspot, initialDirector, isLocked, reduceDire
 import { pathForTarget } from "./scene/targets";
 import { layerOf, sceneFor } from "./scene/location";
 import { clearLayer, pushLayer, replaceLayer, useOfficeLocation } from "./history";
-import { HOTSPOTS, labelFor, sameHit, type Hit, type HotspotName } from "./hotspots/registry";
+import { HOTSPOTS, labelFor, sameHit, type Hit, type SignpostName } from "./hotspots/registry";
 import type { OverlayElements } from "./OfficeCanvas";
 import BusinessCard from "./cards/BusinessCard";
 import SleeveBack from "./cards/SleeveBack";
 import Plaque from "./cards/Plaque";
-import AgeGate from "./cards/AgeGate";
+import ReelScreen from "./cards/ReelScreen";
+import ReelWords from "./cards/ReelWords";
+import ReelViewer from "./cards/ReelViewer";
+import Whiteboard, { type BoardPointer } from "./cards/Whiteboard";
+import { endStroke } from "./whiteboard/board";
+import type { ToolId } from "./whiteboard/marker";
+import { useReel } from "./monitor/useReel";
+import { wrap } from "./monitor/reel";
+import { usePortrait } from "./usePortrait";
+import { useCoarsePointer } from "./useCoarsePointer";
 import { clampDig } from "./objects/crate";
 import { canPull, digFor, swipeStep } from "./crate/dig";
 import { tourAt } from "./hints/tour";
 import { GLINT_SECONDS, glintGap, nextGlint } from "./hints/glint";
 import { findWork, work } from "@/content/work";
+import { slides } from "@/content/screens";
 import { findService, services } from "@/content/services";
 import type { Topic } from "@/content/contact";
 import Panel from "@/panels/Panel";
@@ -167,7 +177,61 @@ export default function OfficeExperience() {
   }, [state]);
 
   const focusedOn = state.kind === "focused" ? state.target.hotspot : null;
+  // The monitor's reel of past work (spec 3.5): runs while the monitor is open, and keeps its place between visits.
+  // Asked once, on the client: this page is also rendered on the server, where there is no matchMedia.
+  const reduced = useMemo(() => typeof window !== "undefined" && reducedMotion(), []);
+  // The reel's full-screen view (spec 3.5 3a) is the monitor's reading layer, as Read more is the others': Esc or Back
+  // closes it to the monitor. The reel holds still while it's open.
+  const viewing = scene.reading && scene.target?.hotspot === "hs_monitor";
+  const reel = useReel(focusedOn === "hs_monitor", slides.length, reduced, viewing);
+  const portraitScreen = usePortrait();
+  // Dots are tappable only where the screen is big and the pointer is fine: phones, either way up, get the marker.
+  const coarsePointer = useCoarsePointer();
+  // Opening the full-screen view settles the reel first, on the slide the visitor sees (the sliding one once it covers more than half
+  // the monitor): `tickReel` would otherwise finish a slide in progress before honouring the hold, and the view would switch as it lands.
+  const reelSettle = reel.settle;
+  const openViewer = useCallback(() => {
+    reelSettle();
+    read();
+  }, [reelSettle, read]);
+  const reelPlace = portraitScreen ? "strip" : "laptop";
+  const play = useCallback((slug: string) => activate({ hotspot: "hs_crate", item: slug }), [activate]);
+  // The reel's action plays the slide its words name: a crate record plays as picking it in the crate does, a page opens in a new tab.
+  const reelCurrent = reel.current;
+  const playReel = useCallback(() => {
+    const slide = slides[reelCurrent()];
+    if (slide.slug) play(slide.slug);
+    else if (slide.href) window.open(slide.href, "_blank", "noopener,noreferrer");
+  }, [play, reelCurrent]);
   const showCard = focusedOn === "hs_drawer" && drawerOpen;
+
+  // The whiteboard (whiteboard spec 3.2): the tool in hand, and where the pointer is on the board, read by the canvas each
+  // frame to move the held marker. The white marker comes off the tray once the camera is at the board.
+  const [tool, setTool] = useState<ToolId>(0);
+  const whiteboard = useRef<{ held: ToolId | null; pointer: BoardPointer }>({ held: null, pointer: { pt: null, pressing: false } });
+  whiteboard.current.held = focusedOn === "hs_whiteboard" ? tool : null;
+  // The print reads and writes the shared pointer through this, so the canvas sees every move without a render.
+  const boardPointer = useMemo(
+    () => ({
+      get current() {
+        return whiteboard.current.pointer;
+      },
+      set current(p: BoardPointer) {
+        whiteboard.current.pointer = p;
+      },
+    }),
+    [],
+  );
+  // Leaving mid-stroke (Esc or Back with the pointer down) closes the stroke and lets go of the board. The next visit
+  // to the board picks up the white marker again (whiteboard spec 3.2).
+  useEffect(() => {
+    if (focusedOn === "hs_whiteboard") return;
+    whiteboard.current.pointer = { pt: null, pressing: false };
+    endStroke();
+    setTool(0);
+  }, [focusedOn]);
+  // The print's height follows the board's surface, measured by the canvas once the model has loaded.
+  const [boardHeightPx, setBoardHeightPx] = useState(590);
 
   // The crate (spec 3.2): flick through the records, pull the front one out, read it on its back and in the panel.
   const pulledSlug = scene.target?.hotspot === "hs_crate" ? scene.target.item : null;
@@ -339,7 +403,7 @@ export default function OfficeExperience() {
   useEffect(() => {
     if (state.kind !== "idle" || hints !== "dots") return;
     let timer = 0;
-    let last: HotspotName | null = null;
+    let last: SignpostName | null = null;
     let lit = false;
     const wait = () => (timer = window.setTimeout(glint, glintGap(Math.random()) * 1000));
     const glint = () => {
@@ -366,7 +430,7 @@ export default function OfficeExperience() {
   const navProps = (hit: Hit) => ({ onFocus: () => onHover(hit), onBlur: () => onHover(null) });
 
   return (
-    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-presented={shelfSlug ?? ""} data-shelf="in" data-hints={hints} data-walking={walking}>
+    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-presented={shelfSlug ?? ""} data-shelf="in" data-notes="up" data-neon="off" data-whiteboard="shut" data-hints={hints} data-walking={walking}>
       {/* First in the page, so the keyboard reaches it first (spec 7.3). Shows only on the street. */}
       <div className="office-arrive">
         <button type="button" className="office-come-in" onClick={comeIn}>
@@ -396,7 +460,35 @@ export default function OfficeExperience() {
             onSleeveOut={setSleeveOut}
             shelf={shelf}
             plaque={plaqueRef}
-            monitorScreen={focusedOn === "hs_monitor" ? { titleId: "gate-title", content: <AgeGate titleId="gate-title" /> } : null}
+            monitorScreen={
+              focusedOn === "hs_monitor"
+                ? {
+                    titleId: "reel-title",
+                    content: (
+                      <ReelScreen
+                        titleId="reel-title"
+                        view={reel.view}
+                        hold={reel.hold}
+                        onStep={reel.step}
+                        onShow={reel.show}
+                        onOpen={openViewer}
+                        dots={portraitScreen || coarsePointer ? "marker" : "buttons"}
+                      />
+                    ),
+                  }
+                : null
+            }
+            reelWords={
+              focusedOn === "hs_monitor" ? { place: reelPlace, content: <ReelWords view={reel.view} hold={reel.hold} onPlay={playReel} place={reelPlace} /> } : null
+            }
+            whiteboard={{
+              print:
+                focusedOn === "hs_whiteboard"
+                  ? { titleId: "wb-title", content: <Whiteboard titleId="wb-title" heightPx={boardHeightPx} tool={tool} onTool={setTool} pointer={boardPointer} /> }
+                  : null,
+              state: whiteboard,
+            }}
+            onBoardHeight={setBoardHeightPx}
             onPresented={setOutIndex}
             onProgressCross={(value) => dispatch({ type: "progress", value })}
             onSettled={() => dispatch({ type: "settled" })}
@@ -434,6 +526,12 @@ export default function OfficeExperience() {
           <li>
             <button type="button" onClick={() => activate({ hotspot: "hs_monitor", item: null })} {...navProps({ hotspot: "hs_monitor", item: null })}>
               {COPY.labels.hs_monitor}
+            </button>
+          </li>
+          {/* A hidden extra: no dot, tour or glint, but the keyboard can still reach it (whiteboard spec 5). */}
+          <li>
+            <button type="button" onClick={() => activate({ hotspot: "hs_whiteboard", item: null })} {...navProps({ hotspot: "hs_whiteboard", item: null })}>
+              {COPY.whiteboard.nav}
             </button>
           </li>
         </ul>
@@ -528,6 +626,17 @@ export default function OfficeExperience() {
         <Plaque service={services[shelfIndex]} titleId="plaque-title" cardRef={plaqueRef} onReadMore={read} />
       )}
 
+      {/* over the whole window (never inside the monitor's print, which would confine it); ← → switch at once, mid-slide too */}
+      {viewing && (
+        <ReelViewer
+          index={reel.view.words}
+          titleId="reel-viewer-title"
+          returnTo="reel-title"
+          onStep={(d) => reel.show(wrap(reel.view.words + d, slides.length))}
+          onClose={back}
+        />
+      )}
+
       {scene.reading && scene.target?.hotspot === "hs_drawer" && (
         <Panel hotspot="hs_drawer" titleId="panel-title" onClose={back}>
           <ContactForm titleId="panel-title" level={2} />
@@ -553,7 +662,10 @@ export default function OfficeExperience() {
       )}
 
       <p className="office-hints-text" aria-hidden="true">
-        <span className="office-hints-wide">{COPY.hints}</span>
+        <span className="office-hints-wide">
+          {COPY.hints}
+          <span className="office-hints-more"> {COPY.hintsMore}</span>
+        </span>
         <span className="office-hints-tall">{COPY.hintsPan}</span>
       </p>
 

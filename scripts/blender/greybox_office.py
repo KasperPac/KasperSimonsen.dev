@@ -39,8 +39,11 @@ PORTRAIT_FOV_DEG = 54.0  # vertical, on a 0.64-aspect phone (narrower ones widen
 # Every line of visible text, in one place for Kasper to approve or swap.
 COPY = {
     "nameplate": "KASPER SIMONSEN.DEV",
+    # the whiteboard's writing: the site draws these now, as part of the drawing (office/copy.ts), not the model
     "whiteboard": "TODO: sleep",
     "whiteboard_note": "(next sprint)",
+    # on the sticky note beside it, the one in-world nudge that the hidden extras exist (DRAFT)
+    "whiteboard_hint": "some things in\nhere do more\nthan they look",
 }
 # The parts of build_desk_mess kept: the pen, can, paper balls and cables read only as stray lines from the standing
 # spot, so they're left out.
@@ -79,13 +82,26 @@ CHAIR = (-0.35, -0.75, math.pi - 0.35)  # x and y from the desk's centre, turn: 
 # Room-frame floor spots for the couch and the old TV on its stand: (centre x, centre y, rotation_z, width, depth).
 # Both face into the room, in view from cam_stand.
 RESERVED = {"couch": (-1.825, 4.2, math.pi / 2, 1.7, 0.85), "tv": (2.0, 4.0, -math.pi / 2, 0.7, 0.5)}
+WHITEBOARD = (-1.0, WALL + ROOM[1], 1.8)  # room frame: the whiteboard's centre on the back wall
+# room frame: the neon sign's centre on the left wall's face (2 cm off it) over the back half of the couch, and its size
+# (neon sign spec). Back towards the corner so a phone (390 x 844) sees all of it at the left end of its pan, ~20 px in
+NEON_SIGN = (-ROOM[0] / 2 + 0.02, 4.6, 1.78, 0.85)
 PILLOW_TURN = -math.pi / 2  # the pillow stood side-on to the couch, its top leaning into the far arm
+# Where the monitor's notes land on the desk when the site peels them off, one per note: (x, y, turn in degrees) for
+# hs_monitor__notes__note_NN's top centre, in the monitor's frame (origin under its foot, on the desk top). Found by a
+# search on a 2 cm grid over the desk top, turns 10-35 degrees either way: kept where the note lies flat and face up
+# NOTE_LIFT over the top, touches no other mesh (BVH overlap), has nothing within 0.3 m above any corner and is within
+# 0.45 m of the monitor's base; then four chosen 0.22 m or more apart, out of cam_focus_monitor's landscape shot and
+# each on the side of its place on the bezel. Re-run that search if the desk's layout changes.
+NOTE_RESTS = ((-0.16, -0.30, -25), (0.04, -0.16, 15), (-0.44, 0.0, 25), (0.30, -0.18, -20))
+NOTE_LIFT = 0.001  # a resting note's lowest point above the desk top
+MONITOR_H = 0.36775  # panel height: 0.008 bezel + 0.33975 screen + 0.02 chin, so the screen is 16:9 at the panel's 0.62 m width (spec 3.5)
 # Focus cameras (spec 3.5), room frame: (eye, look-at, vertical fov). Landscape frames (16:10) leave the right ~40% for
-# the panel, so the object's centre sits about a third in from the left; the monitor, the crate and the player have no
-# panel beside them and are centred. Portrait frames (390 x 844) centre the object, as the panel is a full-screen sheet
-# there. Every eye is at least 0.3 m from any mesh (the crate and monitor eyes pass closest, by the desk top and over
-# the chair), except the drawer's: it looks into the open drawer under the desk, 0.17 m from the drawer front on
-# portrait.
+# the panel, so the object's centre sits about a third in from the left; the monitor, the crate, the player and the
+# whiteboard have no panel beside them and are centred. Portrait frames (390 x 844) centre the object, as the panel is
+# a full-screen sheet there. Every eye is at least 0.3 m from any mesh (the crate and monitor eyes pass closest, by the
+# desk top and the chair's back), except the drawer's: it looks into the open drawer under the desk, 0.17 m from the
+# drawer front on portrait.
 FOCUS = {
     # square on to the crate's front and 63 degrees down: a flicked record stands upright against the corner posts, and
     # the next sleeve's logo only shows over its top from 57 degrees down (the front sleeve's label over the crate's
@@ -98,10 +114,17 @@ FOCUS = {
     # frame (45 degrees down); on portrait it is ~72% of the width with the back of the drawer above it (40 degrees)
     "drawer": {"land": ((0.3, 4.0357, 0.7963), (0.3, 4.368, 0.464), 24.0),
                "portrait": ((0.3, 4.1063, 0.734), (0.3, 4.428, 0.464), 42.0)},
-    # square on to the screen, just far enough back for the duck on top to fit (the screen is 56% of the width); the
-    # portrait eye rises over the chair's headrest to fit the monitor's width
-    "monitor": {"land": ((-0.25, 4.02, 1.04), (-0.25, 4.957, 1.04), 40.0),
-                "portrait": ((-0.25, 3.75, 1.75), (-0.25, 4.95, 1.0), 65.0)},
+    # square on to the 16:9 screen (looking 5 degrees down, along its lean) so the reel's screenshots print on it without
+    # keystone. On 16:10 the eye is on the screen's centre line, slid right to bring in the laptop, which carries the
+    # reel's words: the monitor's screen is 55% of the width (5% in from the left) and 49% of the height, centred 1%
+    # below the middle, and the laptop's wholly in shot beside it, 28% (to 93%), with the duck on top just cut; the
+    # desk's front is below the frame, so the fallen notes lie out of shot (the nearest 1% under it). On portrait the
+    # screen is 92% of the width (37-61% down) with the strip the site hangs under it (0.306 m tall, 0.026 m below its
+    # bottom edge, in its plane) ending 15% above the frame's bottom, not 5%: a 390 x 664 phone keeps the width and
+    # crops 11% off the top and bottom, which still leaves it a ~5% margin. The portrait eye is between the chair's
+    # back and the desk, 0.32 m off the chair
+    "monitor": {"land": ((-0.06, 4.015, 1.111), (-0.06, 4.956, 1.029), 40.0),
+                "portrait": ((-0.25, 3.958, 1.099), (-0.25, 4.954, 1.012), 70.7)},
     # square on to the wall, a little above the ornaments: the plaque goes beside a picked one on 16:10, so the four
     # span half the width with the shelf's centre a third in (the outer one 8.5% in) and the right ~40% clear. On
     # portrait the plaque docks at the bottom, so the eye looks 18 degrees down to put them in the upper third,
@@ -113,6 +136,12 @@ FOCUS = {
     # back reads: on 16:10 it is 42% of the height with the platter in shot beside it, on portrait 80% of the width
     "player": {"land": ((1.286, 3.976, 1.191), (1.464, 4.858, 0.916), 45.0),
                "portrait": ((1.471, 4.178, 1.219), (1.734, 4.85, 1.066), 60.0)},
+    # the whiteboard, drawn on: square on and level, so the print lies flat on the screen and the canvas maps without
+    # keystone. On 16:10 the writing surface is 80% of the height (68% of the width) with the tray's markers showing
+    # over its lip below and the hint note in shot on the right (the eye sits 1.5 cm right of the board's centre for
+    # it); on portrait the surface is 92% of the width across the middle, the tray under it. Eyes 0.69 and 0.64 m clear
+    "whiteboard": {"land": ((-0.985, 4.37, 1.78), (-0.985, 5.1, 1.78), 40.0),
+                   "portrait": ((-1.0, 3.93, 1.78), (-1.0, 5.1, 1.78), 60.0)},
 }
 
 
@@ -256,17 +285,18 @@ def furnish(room, col, w, back):
     props.build_pedestal("hs_drawer", (desk.x + 0.4, desk.y - 0.04, 0), 0, room, col, card=True)
     # on the desk, where build_desk_mess expects them: monitor back left of centre, laptop to its right
     monitor = on_desk(-0.15, 0.2)
-    screen = props.build_monitor("hs_monitor", monitor, 0, room, col)
+    screen = props.build_monitor("hs_monitor", monitor, 0, room, col, height=MONITOR_H)
     # the notes stuck round its bezel are part of the monitor hotspot, so they light up with it
-    props.build_monitor_notes("hs_monitor__notes", (0, 0, 0), 0, screen, col, count=4)
-    # the duck sits side-on along the top of the bezel
-    props.build_rubber_duck("prop_rubber_duck", monitor + Vector((0.1, 0.051, 0.441)), -math.pi / 2, room, col)
+    notes = props.build_monitor_notes("hs_monitor__notes", (0, 0, 0), 0, screen, col, count=len(NOTE_RESTS), height=MONITOR_H)
+    # the duck sits side-on along the top of the bezel, its tail clear of the top right note's corner
+    props.build_rubber_duck("prop_rubber_duck", monitor + Vector((0.085, 0.051, 0.441 + (MONITOR_H - 0.36))), -math.pi / 2, room, col)
     props.build_laptop("prop_laptop", on_desk(0.32, 0.1), -0.25, room, col)
     props.build_keyboard("prop_keyboard", on_desk(-0.05, -0.15), 0, room, col)
     props.build_mouse("prop_mouse", on_desk(0.08, -0.29), 0.1, room, col)
     props.build_desk_mess("prop_desk_mess", on_desk(0, 0), 0, room, col, parts=DESK_MESS)
     props.build_desk_lamp("prop_desk_lamp", on_desk(0.6, 0.2), 0.3, room, col)
     props.build_mug("prop_mug", on_desk(0.03, 0.03), 0, room, col)
+    note_rests(notes, col)
     chair_x, chair_y, chair_turn = CHAIR
     props.build_chair("prop_chair", (desk.x + chair_x, desk.y + chair_y, 0), chair_turn, room, col)
     props.build_bin("prop_bin", (0.85, 3.95, 0), 0.3, room, col, missed=False, balls=3)
@@ -286,8 +316,9 @@ def furnish(room, col, w, back):
 
     # on the back wall: the clock over the desk, the whiteboard and a note left of it, the Victory poster over the couch
     props.build_wall_clock("prop_wall_clock", (desk.x, back, 2.25), 0, room, col)
-    props.build_whiteboard("prop_whiteboard", (-1.0, back, 1.8), 0, room, col, text=COPY["whiteboard"], note=COPY["whiteboard_note"])
-    props.build_sticky_note("prop_sticky_note", (-0.6, back, 1.72), 0.05, room, col)
+    # the whiteboard is a hidden extra: blank, the site draws on it, with markers and an eraser in its tray
+    props.build_whiteboard("hs_whiteboard", WHITEBOARD, 0, room, col, drawable=True)
+    props.build_sticky_note("prop_sticky_note", (-0.64, back, 1.72), 0.05, room, col, text=COPY["whiteboard_hint"])
     props.build_poster_victory("prop_poster_victory", (-w + 0.5, back, 1.65), 0, room, col)
 
     # the couch on the street side, cushions straight and one pillow stood against its far arm, facing the room's
@@ -306,8 +337,25 @@ def furnish(room, col, w, back):
     props.build_snake_plant("prop_snake_plant", at_tv @ Vector((-0.17, 0.13, 0.89)), tv[2], room, col)
     props.build_plant_wilted("prop_plant_wilted", at_tv @ Vector((0.14, 0.12, 0.89)), tv[2], room, col)
     props.build_poster_hang_in_there("prop_poster_hang", (w, tv[1], 1.7), -math.pi / 2, room, col)
+    # the neon sign over the couch (neon sign spec 6): only its anchor, as the site draws the tubes. Turned like every
+    # prop here so its -y faces into the room (glTF: +z out of the wall, +y up, +x along the wall towards the back).
+    sign = common.empty("prop_neon_sign", NEON_SIGN[:3], room, col)
+    sign.rotation_euler.z = math.pi / 2
+    sign.scale = (NEON_SIGN[3],) * 3
 
     props.build_monstera("prop_monstera", (-w + 0.73, WALL + 0.65, 0), 0, room, col)  # by the window, 5 cm off both walls
+
+
+def note_rests(notes, col):
+    """hs_monitor__notes__rest_NN beside each note: an empty holding the transform that lays the note on the desk
+    (NOTE_RESTS), face up with its sticky edge to the back, its size kept. The notes stay on the bezel."""
+    flat = Matrix.Rotation(-math.pi / 2, 4, "X")
+    for i, (x, y, deg) in enumerate(NOTE_RESTS):
+        note = bpy.data.objects[f"{notes.name}__note_{i:02d}"]
+        turn = Matrix.Rotation(math.radians(deg), 4, "Z") @ flat @ Matrix.Diagonal(note.matrix_basis.to_scale()).to_4x4()
+        low = min((turn @ v.co).z for v in note.data.vertices)
+        rest = common.empty(f"{notes.name}__rest_{i:02d}", (0, 0, 0), notes, col)
+        rest.matrix_basis = Matrix.Translation((x, y, NOTE_LIFT - low)) @ turn
 
 
 def build_corridor(root, col, lobby_north):

@@ -1,5 +1,6 @@
 import { test, expect, type Page } from "@playwright/test";
 import { services } from "../content/services";
+import { COPY } from "../office/copy";
 
 /**
  * How long to wait for the camera, the director or an object to arrive. On a GPU these take about a second; under
@@ -90,6 +91,7 @@ test("on arrival the office names what you can use, then keeps a dot over each",
   await expect(office(page)).toHaveAttribute("data-hints", "dots", { timeout: MOVE_WAIT });
   await expect(page.locator(".office-marker").first()).toBeVisible();
   await expect(page.getByText(COPY_HINTS)).toBeVisible();
+  await expect(page.getByText(COPY.hintsMore)).toBeVisible(); // and, once, that there's more to find than the dots
   await page.getByRole("button", { name: "The work" }).focus(); // looking around changes nothing
   await expect(office(page)).toHaveAttribute("data-hints", "dots");
   await page.keyboard.press("Enter"); // opening something ends the glints and the line of text

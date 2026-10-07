@@ -32,15 +32,27 @@ export function basePose(walkIn: Pose, standPortrait: Pose | null, progress: num
 export const FOCUS_PORTRAIT_ASPECT = 390 / 844;
 
 /**
+ * How much of the monitor's portrait close-up must stay in view, top to bottom, as a fraction of its authored height
+ * (390 x 844) measured out from the centre. The strip under the 16:9 monitor ends ~0.69 of the way to the frame's bottom
+ * edge (measured in Blender at 390 x 844: its bottom edge at y 714, 292 px below the centre's 422), so 0.75 keeps it, and
+ * its ‹ ›, on screen with a margin. A phone (aspect under ~0.62) already sees that much, so this only widens squarer
+ * portrait screens: tablets, near-square windows.
+ */
+export const MONITOR_MIN_HEIGHT = 0.75;
+
+/**
  * A hotspot's focus camera: its portrait variant on portrait screens when there is one, keeping its width across phones
  * (a shorter one, a browser's toolbars showing, would otherwise see more around it and print the card or sleeve too
- * small to read without pinching: Kasper's card "appears blank"), else the landscape one, widened.
+ * small to read without pinching: Kasper's card "appears blank"), else the landscape one, widened. Keeping the width
+ * sees less of the authored height as the screen gets squarer (0.462 / aspect of it); `minHeight` (a fraction of that
+ * height, from the centre) widens the view when it would see less, for a close-up that needs its whole frame: the
+ * monitor's strip.
  */
-export function focusPose(land: Pose, portrait: Pose | null, aspect: number, out: Pose): Pose {
+export function focusPose(land: Pose, portrait: Pose | null, aspect: number, out: Pose, minHeight = 0): Pose {
   if (aspect < 1 && portrait) {
     copyPose(portrait, out);
-    const half = (portrait.fov * Math.PI) / 360;
-    out.fov = (Math.atan((Math.tan(half) * FOCUS_PORTRAIT_ASPECT) / aspect) * 360) / Math.PI;
+    const tall = Math.tan((portrait.fov * Math.PI) / 360);
+    out.fov = (Math.atan(Math.max((tall * FOCUS_PORTRAIT_ASPECT) / aspect, tall * minHeight)) * 360) / Math.PI;
     return out;
   }
   copyPose(land, out);
