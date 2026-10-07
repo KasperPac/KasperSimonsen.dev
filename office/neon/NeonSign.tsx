@@ -46,11 +46,14 @@ export default function NeonSign({ scene, director, host, reduced }: Props) {
     applyFrame(sign, neonFrame(power.current, t.current, seed, reduced));
     anchor.add(sign.root);
     signRef.current = sign;
+    const el = host.current;
+    if (el && el.dataset.neon !== power.current) el.dataset.neon = power.current;
     return () => {
       disposeSign(sign);
       signRef.current = null;
+      if (el && el.dataset.neon !== "off") el.dataset.neon = "off";
     };
-  }, [anchor, seed, reduced, get]);
+  }, [anchor, seed, reduced, get, host]);
 
   useEffect(() => {
     if (signRef.current) setSignResolution(signRef.current, width, height);
@@ -64,8 +67,10 @@ export default function NeonSign({ scene, director, host, reduced }: Props) {
     if (next !== power.current) {
       power.current = next;
       t.current = 0;
-      if (host.current) host.current.dataset.neon = next;
     }
+    // Whenever it differs, not only on a transition: a remount, or a host that wasn't there yet, can't leave it stale.
+    const el = host.current;
+    if (el && el.dataset.neon !== power.current) el.dataset.neon = power.current;
     applyFrame(sign, neonFrame(power.current, t.current, seed, reduced));
   });
 

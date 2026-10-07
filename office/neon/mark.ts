@@ -3,9 +3,6 @@
  * its 240-unit design grid with y down, as the logo prototypes drew it. This is the one place its letterforms live:
  * the finished drawing replaces K, S, their tubes and HEAD here, and the site's logo can read them later.
  */
-/** The office model's anchor for the sign: the left wall over the couch, +z into the room (neon sign spec 6). */
-export const NEON_NODE = "prop_neon_sign";
-
 export type Pt = readonly [number, number];
 export type Polyline = Pt[];
 
@@ -76,7 +73,8 @@ export function headRing(segments = 32): Polyline {
 
 /**
  * The rope at `step` of STEPS, as seen from the front: theta = step x 60 degrees about the hands' line, 0 overhead, 180
- * under the feet. Its middle sits at hands height - ROPE_OFFSET cos(theta), as a cubic from hand to hand.
+ * under the feet. A cubic from hand to hand whose two control points sit at hands height - ROPE_OFFSET cos(theta); the
+ * curve's middle reaches 0.75 of that offset.
  */
 export function rope(step: number, samples = 96): Polyline {
   const theta = ((((step % STEPS) + STEPS) % STEPS) * 2 * Math.PI) / STEPS;
@@ -136,3 +134,6 @@ export function tubeLines(tube: TubeId): Polyline[] {
   const up = (s: Polyline): Polyline => s.map(([x, y]) => [x, y - lift] as Pt);
   return clipOutside(rope(step), [up(K), up(S), up(headRing())]);
 }
+
+/** The office model's anchor for the sign: the left wall over the couch, +z into the room (neon sign spec 6). */
+export const NEON_NODE = "prop_neon_sign";

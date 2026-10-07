@@ -58,7 +58,6 @@ export type Sign = {
 
 function line(points: number[], material: LineMaterial, order: number): Line2 {
   const l = new Line2(new LineGeometry().setPositions(points), material);
-  l.computeLineDistances();
   l.raycast = () => {}; // decoration (spec 2), and Line2's own raycast needs raycaster.camera
   l.renderOrder = order;
   return l;

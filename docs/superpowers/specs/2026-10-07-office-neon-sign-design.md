@@ -21,7 +21,7 @@ the prototype redraw; the finished drawing replaces them later in one file (sect
 | Topic | Decision |
 |---|---|
 | Where | The left wall, over the back half of the couch, seen at an angle like a bar sign (Kasper picked spot C of three mocked on the real standing view; it moved back towards the corner so a phone sees all of it, 3.5) |
-| Colour | White neon (warm white tubes, soft glow). Unlit tubes are faint grey. No section colour, so the one-colour rule holds |
+| Colour | White neon (warm white tubes: a dim opaque glow band under a bright core). Unlit tubes are faint grey. No section colour, so the one-colour rule holds |
 | Motion | Steps, like the real sign: six rope positions, one lit at a time |
 | On and off | Switches itself: off during the walk-in, powers up on arrival, off again on leaving. Nothing to click |
 | Flicker | A stutter on power-up and an occasional bad tube while on |
@@ -34,10 +34,11 @@ the prototype redraw; the finished drawing replaces them later in one file (sect
 
 `.office` carries `data-neon`:
 
-- **`off`**: during the walk-in, and whenever the visitor is out of the standing spot (walk-in progress below
+- **`off`**: during the walk-in, and whenever the director is back in the walk-in (progress below
   `LEAVE_AT`, 0.97). All tubes show as unlit glass: faint grey, no glow.
-- **`powering`**: on arrival at the standing spot (progress reaches 1 and the director is idle), ~0.6 s. The tubes
-  stutter on unevenly: the letters and the head first, then the rope.
+- **`powering`**: when the director reaches the room (progress reaches `IDLE_AT`, 0.995, and it goes idle; it leaves
+  the walk-in below `LEAVE_AT`, 0.97), ~0.6 s. Any director state but the walk-in counts, so a direct visit that
+  opens an object powers it up too. The tubes stutter on unevenly: the letters and the head first, then the rope.
 - **`on`**: the rope steps round; the occasional bad tube.
 
 Leaving (progress below `LEAVE_AT`) switches it straight to `off`; coming back powers it up again. Opening an object
@@ -113,7 +114,8 @@ flashes a second, and reduced motion removes it.
   No three.js, no React.
 - **`office/neon/NeonSign.tsx`:** an R3F component. It finds the anchor node in the loaded office, builds one
   `Line2` pair (core and glow) per tube from `mark.ts` (letters, head, six ropes), scales the 160-unit box to the
-  anchor's size, and each frame applies `neonFrame` (brightness to line colour, hop to the letters' and head's group). It reads walk-in progress and the director state that the experience already has, and writes `data-neon`.
+  anchor's size, and each frame applies `neonFrame` (brightness to line colour, hop to the letters' and head's group). It reads only the
+  director state that the experience already has (anything but the walk-in is in the room), and writes `data-neon`.
 - **Blender:** `scripts/blender/greybox_office.py` places an empty, `prop_neon_sign`, in the room frame on the left
   wall's face: centre (x −2.25 + 0.02, y 4.6, z 1.78), facing into the room (+x), its scale giving the 0.85 m size. It
   first sat at y 4.2, the couch's middle; a phone at the left end of its pan saw only half of it there. At 4.6 it is
@@ -134,9 +136,12 @@ None. The sign has no text beyond the mark.
 - **Unit (`sequence.test.ts`):** `off` lights nothing; `powering` ends with every letter tube lit; `on` steps every
   ~0.2 s through all six positions in order; the hop is non-zero only on step 3; bad-tube events fall 8–20 s apart,
   last ~0.3 s and repeat for the same seed; reduced motion holds step 0, full brightness, no hop.
-- **End-to-end (`e2e/office-neon.spec.ts`, run on its own, `--workers=1`):** `data-neon` is `off` during the walk-in,
-  becomes `on` after arriving, goes `off` after scrolling back past `LEAVE_AT`, and is `on` again on return; with
-  reduced motion it goes straight to `on`. Opening the drawer leaves it `on`.
+- **End-to-end (`e2e/office-neon.spec.ts`, run on its own, `--workers=1`):** it records every value `data-neon` takes.
+  - Across arriving, leaving and returning the record is `["powering", "on", "off", "powering", "on"]`.
+  - While an object opens from the standing spot nothing is recorded: it never leaves `on`.
+  - A direct visit that opens an object starts at `off`, records `"powering"` first, never records `"off"`, and
+    ends `on`.
+  - With reduced motion the record is `["on"]`: no power-up.
 
 ## 9. Milestone
 
