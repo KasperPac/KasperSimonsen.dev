@@ -86,4 +86,29 @@ describe("runtime node names are required by the manifest", () => {
     // the screen leans back about x, so its height lies in the y-z plane
     expect(span(0) / Math.hypot(span(1), span(2))).toBeCloseTo(1.7778, 2);
   });
+
+  it("the neon sign's anchor hangs on the left wall over the couch, facing into the room (neon sign spec 6)", async () => {
+    expect(manifest.office.nodes).toContain("prop_neon_sign");
+    const doc = await (await createIO()).read("public/models/office.glb");
+    const nodes = doc.getRoot().listNodes();
+    const sign = nodes.find((n) => n.getName() === "prop_neon_sign")!;
+    const stand = nodes.find((n) => n.getName() === "cam_stand")!;
+    const couch = nodes.find((n) => n.getName() === "prop_couch")!;
+    const m = sign.getWorldMatrix(); // column-major 4x4
+    const axis = (c: number) => [m[c * 4], m[c * 4 + 1], m[c * 4 + 2]];
+    const len = (v: number[]) => Math.hypot(...v);
+    const unit = (v: number[]) => v.map((x) => x / len(v));
+    const dot = (a: number[], b: number[]) => a.reduce((s, x, i) => s + x * b[i], 0);
+    const at = sign.getWorldTranslation();
+    const toStand = unit(stand.getWorldTranslation().map((x, i) => x - at[i]));
+    // ~0.85 m, uniform
+    for (const c of [0, 1, 2]) expect(len(axis(c))).toBeCloseTo(0.85, 2);
+    // up is up, and it faces the room: the standing spot is in front of it, not behind or edge-on
+    expect(dot(unit(axis(1)), [0, 1, 0])).toBeGreaterThan(0.999);
+    expect(dot(unit(axis(2)), toStand)).toBeGreaterThan(0.3);
+    // over the couch: within the couch's footprint along the wall, ~1.78 m up
+    const c = couch.getWorldTranslation();
+    expect(Math.hypot(at[0] - c[0], at[2] - c[2])).toBeLessThan(1.0);
+    expect(at[1]).toBeCloseTo(1.78, 1);
+  });
 });
