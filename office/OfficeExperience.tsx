@@ -430,7 +430,7 @@ export default function OfficeExperience() {
   const navProps = (hit: Hit) => ({ onFocus: () => onHover(hit), onBlur: () => onHover(null) });
 
   return (
-    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-presented={shelfSlug ?? ""} data-shelf="in" data-notes="up" data-whiteboard="shut" data-hints={hints} data-walking={walking}>
+    <div ref={host} className="office" data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-presented={shelfSlug ?? ""} data-shelf="in" data-notes="up" data-neon="off" data-whiteboard="shut" data-hints={hints} data-walking={walking}>
       {/* First in the page, so the keyboard reaches it first (spec 7.3). Shows only on the street. */}
       <div className="office-arrive">
         <button type="button" className="office-come-in" onClick={comeIn}>

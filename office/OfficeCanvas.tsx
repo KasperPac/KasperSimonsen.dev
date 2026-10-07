@@ -34,6 +34,7 @@ import { CARD_NODE, findMotionNodes, ObjectMotion, SCREEN_NODE } from "./objects
 import { CrateMotion, findCrateNodes, type PlayerPoses } from "./objects/crate";
 import { findShelfNodes, ShelfMotion } from "./objects/shelf";
 import { findNotesNodes, NotesMotion } from "./objects/notes";
+import NeonSign from "./neon/NeonSign";
 import type { Placement } from "./objects/shelf";
 import { screenRect } from "./overlay/screenRect";
 import { placeCard } from "./overlay/place";
@@ -578,6 +579,7 @@ function Office({
   return (
     <>
       <primitive object={office.scene} onPointerMove={onPointerMove} onPointerOut={onPointerOut} onClick={onClick} />
+      <NeonSign scene={office.scene} director={director} host={host} reduced={reduced} />
       {drawerCard && card && (
         <CardFace surface={card} hotspot="hs_drawer" titleId={drawerCard.titleId}>
           {drawerCard.content}

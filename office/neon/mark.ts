@@ -3,6 +3,9 @@
  * its 240-unit design grid with y down, as the logo prototypes drew it. This is the one place its letterforms live:
  * the finished drawing replaces K, S and HEAD here, and the site's logo can read them later.
  */
+/** The office model's anchor for the sign: the left wall over the couch, +z into the room (neon sign spec 6). */
+export const NEON_NODE = "prop_neon_sign";
+
 export type Pt = readonly [number, number];
 export type Polyline = Pt[];
 

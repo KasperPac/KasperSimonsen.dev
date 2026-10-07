@@ -4,6 +4,7 @@ import { WALKIN_CAMERA } from "./walkin/cameraPose";
 import { PLATTER_NODE, SLEEVE_NODE } from "./idle/turntable";
 import { POSE_NODE } from "./walkin/skippingGirl";
 import { CARD_NODE, DRAWER_NODE, SCREEN_NODE } from "./objects/motion";
+import { NEON_NODE } from "./neon/mark";
 import { work } from "@/content/work";
 import { services } from "@/content/services";
 import sleeves from "@/art/sleeves.json";
@@ -88,10 +89,10 @@ describe("runtime node names are required by the manifest", () => {
   });
 
   it("the neon sign's anchor hangs on the left wall over the couch, facing into the room (neon sign spec 6)", async () => {
-    expect(manifest.office.nodes).toContain("prop_neon_sign");
+    expect(manifest.office.nodes).toContain(NEON_NODE);
     const doc = await (await createIO()).read("public/models/office.glb");
     const nodes = doc.getRoot().listNodes();
-    const sign = nodes.find((n) => n.getName() === "prop_neon_sign")!;
+    const sign = nodes.find((n) => n.getName() === NEON_NODE)!;
     const stand = nodes.find((n) => n.getName() === "cam_stand")!;
     const couch = nodes.find((n) => n.getName() === "prop_couch")!;
     const m = sign.getWorldMatrix(); // column-major 4x4
