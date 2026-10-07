@@ -38,6 +38,8 @@ test("the sign is off in the walk-in, powers up on arrival, goes off on leaving 
 
   await arrive(page);
   await expect(office(page)).toHaveAttribute("data-neon", "on", { timeout: MOVE_WAIT });
+  // coming back powers it up again, not straight to on
+  expect(await seen()).toEqual(["powering", "on", "off", "powering", "on"]);
 });
 
 test("opening an object leaves the sign on", async ({ page }) => {
@@ -45,11 +47,13 @@ test("opening an object leaves the sign on", async ({ page }) => {
   await expect(office(page)).toHaveAttribute("data-scene-ready", "true", { timeout: 60_000 });
   await arrive(page);
   await expect(office(page)).toHaveAttribute("data-neon", "on", { timeout: MOVE_WAIT });
+  const seen = await recordNeon(page);
   const link = page.getByRole("link", { name: "Get in touch" });
   await link.focus();
   await page.keyboard.press("Enter");
   await expect(office(page)).toHaveAttribute("data-director", "focused:hs_drawer", { timeout: MOVE_WAIT });
   await expect(office(page)).toHaveAttribute("data-neon", "on");
+  expect(await seen()).toEqual([]); // it never left on
 });
 
 test("a direct visit that opens an object powers the sign up too", async ({ page }) => {
@@ -57,9 +61,16 @@ test("a direct visit that opens an object powers the sign up too", async ({ page
   await expect(office(page)).toHaveAttribute("data-scene-ready", "true", { timeout: 60_000 });
   const link = page.getByRole("link", { name: "Get in touch" });
   await link.focus();
+  // still out in the walk-in, with the sign off
+  await expect(office(page)).toHaveAttribute("data-neon", "off");
+  expect(await progress(page)).toBeLessThan(0.97);
+  const seen = await recordNeon(page);
   await page.keyboard.press("Enter");
   await expect(office(page)).toHaveAttribute("data-director", /focus(ing|ed):hs_drawer/, { timeout: MOVE_WAIT });
-  await expect(office(page)).toHaveAttribute("data-neon", /powering|on/, { timeout: MOVE_WAIT });
+  await expect(office(page)).toHaveAttribute("data-neon", "on", { timeout: MOVE_WAIT });
+  const values = await seen();
+  expect(values[0]).toBe("powering");
+  expect(values).not.toContain("off");
 });
 
 test.describe("reduced motion", () => {
