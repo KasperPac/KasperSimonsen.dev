@@ -20,7 +20,7 @@ the prototype redraw; the finished drawing replaces them later in one file (sect
 
 | Topic | Decision |
 |---|---|
-| Where | The left wall, centred over the couch, seen at an angle like a bar sign (Kasper picked spot C of three mocked on the real standing view) |
+| Where | The left wall, over the back half of the couch, seen at an angle like a bar sign (Kasper picked spot C of three mocked on the real standing view; it moved back towards the corner so a phone sees all of it, 3.5) |
 | Colour | White neon (warm white tubes, soft glow). Unlit tubes are faint grey. No section colour, so the one-colour rule holds |
 | Motion | Steps, like the real sign: six rope positions, one lit at a time |
 | On and off | Switches itself: off during the walk-in, powers up on arrival, off again on leaving. Nothing to click |
@@ -65,12 +65,23 @@ is concept 6. Leaving still switches it `off`.
 
 ### 3.5 Phones
 
-Nothing special. The sign is off to the left of the portrait standing view; a sideways drag brings it in.
+Nothing special. The sign is off to the left of the portrait standing view; a sideways drag brings it in. At the left
+end of the pan the whole sign is on screen: on a 390 × 844 phone it sits about 20 px in from the left edge. The pan
+itself is unchanged; the sign moved to fit it (section 6).
 
 ## 4. Look
 
-- **Lit tube:** a core line in warm white (`#FFF4E2`) ~2 px, over a wider (~8 px), low-opacity line of the same colour
-  for the glow. Additive blending; no post-processing.
+- **Lit tube:** a core line in warm white (`#FFF4E2`) ~2 px, over a wider (~8 px) line in the same colour at about a
+  third of the brightness, for the glow. Both are opaque, and brightness is carried by their colour (a dimmed tube is a
+  darker colour, off is hidden). No transparency, no additive blending, no post-processing.
+- **Why opaque:** a fat line is drawn segment by segment, and the segments overlap at their round caps. A see-through
+  line doubles up at every overlap, so the rope and the letters looked beaded. An opaque line looks the same however
+  often it overlaps itself.
+- **Draw order, not depth:** the sign's lines don't write depth; they test it only against the room. They are drawn in
+  layers, back to front: the unlit glass, the back ropes, the letters, the gap a front rope cuts in them, the front
+  ropes, the head; each glow before its core. The layers are millimetres apart, and on a wall seen this steeply a fat
+  line's caps are out by centimetres, so depth can't order them.
+- **The gap:** 12 px, wider than the glow, so a front rope shows a thin dark edge where it crosses a letter.
 - **Unlit tube:** one ~1.5 px line in a dark grey (`#3A3A3A`), no glow.
 - **Size:** ~0.85 m square on the wall (the mark's 160-unit box, section 6), 2 cm off the wall face.
 - The sign's lines are not part of the edge pipeline: they don't fade with distance, don't take the hover highlight
@@ -84,21 +95,30 @@ flashes a second, and reduced motion removes it.
 
 ## 6. Architecture
 
-- **`office/neon/mark.ts`:** the mark as pure geometry in its 240-unit design grid (the prototype's coordinates): the
-  K and S outlines as closed polylines, the head as a sampled circle, and `rope(step)` as a sampled polyline from hand
-  to hand (hands at (56, 132) and (192, 132), control offset 72). Also the 160-unit box the sign's size maps to
-  (44–204 on both axes). It is the one place the letterforms live; the finished drawing replaces them here, and the
-  site's logo can read it later.
+- **`office/neon/mark.ts`:** the mark as pure geometry in its 240-unit design grid (the prototype's coordinates), y
+  down:
+  - **The letters' tubes** (`K_TUBES`, `S_TUBES`): single strokes bent along each letter's centre line, as real neon
+    is made. Tracing the block outline doubled every stroke, and the S's narrow slots made it read as an F or E. The K
+    is a stem (76, 119)–(76, 179) and an arm and leg meeting at the stem, (116, 119)–(78, 149)–(116, 179). The S is
+    (179, 125)–(141, 125)–(141, 149)–(173, 149)–(173, 173)–(135, 173), its four corners bent round a 7-unit radius.
+  - **The outlines** (`K`, `S`): the block letters as closed polylines. They aren't drawn; they are where the letters
+    hide a rope that passes behind them, so the back ropes are cut against them.
+  - The head as a sampled circle, and `rope(step)` as a sampled polyline from hand to hand (hands at (56, 132) and
+    (192, 132), control offset 72). Also the 160-unit box the sign's size maps to (44–204 on both axes).
+
+  It is the one place the letterforms live; the finished drawing replaces them here, and the site's logo can read it
+  later.
 - **`office/neon/sequence.ts`:** a pure timeline. `neonFrame(state, t, seed, reduced)` returns the lit rope step,
   each tube's brightness (0–1) and the hop height. `state` and `t` (seconds since entering it) come from the caller.
   No three.js, no React.
 - **`office/neon/NeonSign.tsx`:** an R3F component. It finds the anchor node in the loaded office, builds one
   `Line2` pair (core and glow) per tube from `mark.ts` (letters, head, six ropes), scales the 160-unit box to the
-  anchor's size, and each frame applies `neonFrame` (brightness to material opacity, hop to the letters' and head's
-  group). It reads walk-in progress and the director state that the experience already has, and writes `data-neon`.
+  anchor's size, and each frame applies `neonFrame` (brightness to line colour, hop to the letters' and head's group). It reads walk-in progress and the director state that the experience already has, and writes `data-neon`.
 - **Blender:** `scripts/blender/greybox_office.py` places an empty, `prop_neon_sign`, in the room frame on the left
-  wall's face: centre (x −2.25 + 0.02, y 4.2, z 1.78), facing into the room (+x), its scale giving the 0.85 m size.
-  Re-export `office.glb` and update `office/manifest.json` as for any scene change.
+  wall's face: centre (x −2.25 + 0.02, y 4.6, z 1.78), facing into the room (+x), its scale giving the 0.85 m size. It
+  first sat at y 4.2, the couch's middle; a phone at the left end of its pan saw only half of it there. At 4.6 it is
+  still over the couch (y 3.35–5.05), its tubes end 14 cm short of the back corner, and the phone sees all of it with
+  about 20 px to spare. Re-export `office.glb` and update `office/manifest.json` as for any scene change.
 
 ## 7. Content and copy
 
@@ -106,8 +126,11 @@ None. The sign has no text beyond the mark.
 
 ## 8. Testing
 
-- **Unit (`mark.test.ts`):** the K and S outlines close; every rope starts and ends at the hands; the overhead rope
-  clears the top of the head; the under-feet rope clears the letters' bottom with the hop applied.
+- **Unit (`mark.test.ts`):** the K and S outlines close; each letter's tubes are open strokes lying inside its
+  outline; every rope starts and ends at the hands; the overhead rope clears the top of the head; the under-feet rope
+  clears the letters' bottom with the hop applied; the back ropes stay out of the outlines.
+- **Unit (`sign.test.ts`):** every line is opaque and doesn't write depth, layered in the order above; off leaves the
+  unlit lines showing and hides the lit ones; a lit tube's core is the lit colour and its glow a third as bright.
 - **Unit (`sequence.test.ts`):** `off` lights nothing; `powering` ends with every letter tube lit; `on` steps every
   ~0.2 s through all six positions in order; the hop is non-zero only on step 3; bad-tube events fall 8–20 s apart,
   last ~0.3 s and repeat for the same seed; reduced motion holds step 0, full brightness, no hop.

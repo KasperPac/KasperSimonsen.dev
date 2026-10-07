@@ -83,8 +83,9 @@ CHAIR = (-0.35, -0.75, math.pi - 0.35)  # x and y from the desk's centre, turn: 
 # Both face into the room, in view from cam_stand.
 RESERVED = {"couch": (-1.825, 4.2, math.pi / 2, 1.7, 0.85), "tv": (2.0, 4.0, -math.pi / 2, 0.7, 0.5)}
 WHITEBOARD = (-1.0, WALL + ROOM[1], 1.8)  # room frame: the whiteboard's centre on the back wall
-# room frame: the neon sign's centre on the left wall's face (2 cm off it) over the couch, and its size (neon sign spec)
-NEON_SIGN = (-ROOM[0] / 2 + 0.02, 4.2, 1.78, 0.85)
+# room frame: the neon sign's centre on the left wall's face (2 cm off it) over the back half of the couch, and its size
+# (neon sign spec). Back towards the corner so a phone (390 x 844) sees all of it at the left end of its pan, ~20 px in
+NEON_SIGN = (-ROOM[0] / 2 + 0.02, 4.6, 1.78, 0.85)
 PILLOW_TURN = -math.pi / 2  # the pillow stood side-on to the couch, its top leaning into the far arm
 # Where the monitor's notes land on the desk when the site peels them off, one per note: (x, y, turn in degrees) for
 # hs_monitor__notes__note_NN's top centre, in the monitor's frame (origin under its foot, on the desk top). Found by a
