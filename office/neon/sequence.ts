@@ -39,27 +39,93 @@ function dipped(at: number, dips: readonly (readonly [number, number])[]): numbe
   return dips.some(([s, l]) => at >= s && at < s + l) ? DIP : 1;
 }
 
+type Dips = readonly (readonly [number, number])[];
+type Plan = { on: number; dips: Dips };
+type BadKind = "k" | "s" | "head" | "rope";
+type BadTube = { at: number; tube: BadKind };
+
 /** Each powered tube's stutter: it comes on at `on`, then dips twice, all done before POWER_UP_S. */
-function powerUp(seed: number) {
+function buildPowerUp(seed: number): [TubeId, Plan][] {
   const r = random(seed ^ 0x9e3779b9);
-  const plan = (lo: number, hi: number) => {
+  const plan = (lo: number, hi: number): Plan => {
     const on = between(r, lo, hi);
     const d1 = on + between(r, 0.04, 0.08);
     const d2 = d1 + between(r, 0.08, 0.12);
-    return { on, dips: [[d1, between(r, 0.03, 0.05)], [d2, between(r, 0.03, 0.05)]] as const };
+    return { on, dips: [[d1, between(r, 0.03, 0.05)], [d2, between(r, 0.03, 0.05)]] };
   };
   // the letters and the head first, then the rope
-  return { k: plan(0, 0.12), s: plan(0, 0.12), head: plan(0.02, 0.14), rope0: plan(0.18, 0.3) };
+  return [["k", plan(0, 0.12)], ["s", plan(0, 0.12)], ["head", plan(0.02, 0.14)], ["rope0", plan(0.18, 0.3)]];
 }
 
-export function badTubes(seed: number, until: number): { at: number; tube: "k" | "s" | "head" | "rope" }[] {
-  const r = random(seed);
-  const kinds = ["k", "s", "head", "rope"] as const;
-  const out: { at: number; tube: (typeof kinds)[number] }[] = [];
-  for (let at = between(r, ...BAD_TUBE_GAP_S); at <= until; at += between(r, ...BAD_TUBE_GAP_S)) {
-    out.push({ at, tube: kinds[Math.floor(r() * kinds.length) % kinds.length] });
+const KINDS: readonly BadKind[] = ["k", "s", "head", "rope"];
+
+/**
+ * What a seed has worked out so far. A seed's bad tubes and power-up plan never change, so they are made once and
+ * kept: the events grow as time does, and nothing is regenerated from zero on a frame. `next` is the time of the
+ * event after the last one in `events`, already drawn from `rand`, so extending carries on exactly where it stopped.
+ */
+type SeedCache = { rand: () => number; next: number; events: BadTube[]; powerUp?: [TubeId, Plan][] };
+const MAX_SEEDS = 4; // one sign uses one seed; a few more cover a remount or a test
+const caches = new Map<number, SeedCache>();
+const stats = { events: 0, powerUps: 0 };
+
+function cacheFor(seed: number): SeedCache {
+  let c = caches.get(seed);
+  if (!c) {
+    if (caches.size >= MAX_SEEDS) caches.delete(caches.keys().next().value as number); // the oldest
+    const rand = random(seed);
+    c = { rand, next: between(rand, ...BAD_TUBE_GAP_S), events: [] };
+    caches.set(seed, c);
   }
-  return out;
+  return c;
+}
+
+/** Generate the seed's events up to `until`, in the same order of draws as always. */
+function extend(c: SeedCache, until: number) {
+  while (c.next <= until) {
+    c.events.push({ at: c.next, tube: KINDS[Math.floor(c.rand() * KINDS.length) % KINDS.length] });
+    c.next += between(c.rand, ...BAD_TUBE_GAP_S);
+    stats.events++;
+  }
+}
+
+/** How many of the (sorted) events are at or before `t`. */
+function countUpTo(events: BadTube[], t: number): number {
+  let lo = 0;
+  let hi = events.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >>> 1;
+    if (events[mid].at <= t) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+function powerUp(seed: number): [TubeId, Plan][] {
+  const c = cacheFor(seed);
+  if (!c.powerUp) {
+    c.powerUp = buildPowerUp(seed);
+    stats.powerUps++;
+  }
+  return c.powerUp;
+}
+
+/** Every bad tube at or before `until`, the same list for the same seed. */
+export function badTubes(seed: number, until: number): BadTube[] {
+  const c = cacheFor(seed);
+  extend(c, until);
+  return c.events.slice(0, countUpTo(c.events, until));
+}
+
+/** For tests only: forget the per-seed caches, and what they have counted. */
+export function __resetNeonCaches() {
+  caches.clear();
+  stats.events = 0;
+  stats.powerUps = 0;
+}
+/** For tests only: how many bad tubes and power-up plans have been generated since the last reset. */
+export function __neonCacheStats() {
+  return { ...stats, seeds: caches.size };
 }
 
 const dark = (): Record<TubeId, number> => Object.fromEntries(TUBES.map((t) => [t, 0])) as Record<TubeId, number>;
@@ -72,14 +138,16 @@ export function neonFrame(power: NeonPower, t: number, seed: number, reduced: bo
     return { step: 0, brightness, hop: 0 };
   }
   if (power === "powering") {
-    for (const [tube, { on, dips }] of Object.entries(powerUp(seed)) as [TubeId, ReturnType<typeof powerUp>["k"]][]) {
+    for (const [tube, { on, dips }] of powerUp(seed)) {
       brightness[tube] = t < on ? 0 : dipped(t, dips);
     }
     return { step: 0, brightness, hop: 0 };
   }
   const step = Math.floor(t / STEP_S) % STEPS;
   for (const tube of ["k", "s", "head", `rope${step}`] as TubeId[]) brightness[tube] = 1;
-  const bad = badTubes(seed, t).at(-1);
+  const c = cacheFor(seed);
+  extend(c, t);
+  const bad = c.events[countUpTo(c.events, t) - 1];
   if (bad && t < bad.at + BAD_TUBE_S) {
     const r = random(seed ^ Math.floor(bad.at * 1000));
     const d1 = between(r, 0.02, 0.08);

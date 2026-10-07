@@ -1,6 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { TUBES, type TubeId } from "./mark";
-import { BAD_TUBE_GAP_S, BAD_TUBE_S, POWER_UP_S, STEP_S, badTubes, neonFrame, nextPower } from "./sequence";
+import {
+  BAD_TUBE_GAP_S,
+  BAD_TUBE_S,
+  POWER_UP_S,
+  STEP_S,
+  __neonCacheStats,
+  __resetNeonCaches,
+  badTubes,
+  neonFrame,
+  nextPower,
+} from "./sequence";
 
 const lit = (f: ReturnType<typeof neonFrame>) => TUBES.filter((t) => f.brightness[t] > 0);
 
@@ -86,5 +96,75 @@ describe("the frame (neon sign spec 3.2-3.4)", () => {
       expect(lit(f)).toEqual(["k", "s", "head", "rope0"]);
       for (const tube of lit(f)) expect(f.brightness[tube]).toBe(1);
     }
+  });
+});
+
+/** The generator as it was before the per-seed cache: every call starts from zero. */
+function legacyBadTubes(seed: number, until: number) {
+  let a = seed >>> 0;
+  const r = () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  const gap = () => BAD_TUBE_GAP_S[0] + (BAD_TUBE_GAP_S[1] - BAD_TUBE_GAP_S[0]) * r();
+  const kinds = ["k", "s", "head", "rope"] as const;
+  const out: { at: number; tube: (typeof kinds)[number] }[] = [];
+  for (let at = gap(); at <= until; at += gap()) out.push({ at, tube: kinds[Math.floor(r() * kinds.length) % kinds.length] });
+  return out;
+}
+
+describe("the per-seed cache", () => {
+  const seed = 1234;
+
+  it("gives the same bad tubes as generating from zero, whatever order it is asked in", () => {
+    __resetNeonCaches();
+    for (const until of [7200, 30, 86400 + 50, 0, 600, 86400, 12.5]) expect(badTubes(seed, until)).toEqual(legacyBadTubes(seed, until));
+  });
+
+  it("gives the same frame as the uncached computation, a day in and inside a bad tube", () => {
+    __resetNeonCaches();
+    const day = 86400;
+    const event = legacyBadTubes(seed, day + 120).at(-1)!;
+    const times = [day + 0.1, day + 33.37, event.at, event.at + 0.07, event.at + 0.15, event.at + BAD_TUBE_S + 0.01, 5, 3600.2];
+    // cold: a cache that has only ever seen this one time, so it was generated from zero for it
+    const cold = times.map((t) => {
+      __resetNeonCaches();
+      return neonFrame("on", t, seed, false);
+    });
+    __resetNeonCaches();
+    const warm = times.map((t) => neonFrame("on", t, seed, false));
+    expect(warm).toEqual(cold);
+    // inside the event the bad tube is dipped at some moment: the cache did not lose it
+    const tube = (f: ReturnType<typeof neonFrame>) => (event.tube === "rope" ? (`rope${f.step}` as TubeId) : (event.tube as TubeId));
+    const during = Array.from({ length: 60 }, (_, i) => neonFrame("on", event.at + (i / 60) * BAD_TUBE_S, seed, false));
+    expect(during.some((f) => f.brightness[tube(f)] < 1)).toBe(true);
+  });
+
+  it("generates each bad tube once as time grows, not again from zero every frame", () => {
+    __resetNeonCaches();
+    const until = 7200;
+    for (let t = 0; t <= until; t += 0.25) neonFrame("on", t, seed, false);
+    expect(__neonCacheStats().events).toBe(legacyBadTubes(seed, until).length);
+    const before = __neonCacheStats().events;
+    neonFrame("on", until, seed, false);
+    neonFrame("on", 10, seed, false); // going back costs nothing either
+    expect(badTubes(seed, 100)).toEqual(legacyBadTubes(seed, 100));
+    expect(__neonCacheStats().events).toBe(before);
+  });
+
+  it("builds the power-up plan once", () => {
+    __resetNeonCaches();
+    for (let i = 0; i < 100; i++) neonFrame("powering", (i / 100) * POWER_UP_S, seed, false);
+    expect(__neonCacheStats().powerUps).toBe(1);
+  });
+
+  it("keeps only a few seeds, dropping the oldest", () => {
+    __resetNeonCaches();
+    for (let s = 1; s <= 6; s++) neonFrame("on", 1, s, false);
+    expect(__neonCacheStats().seeds).toBe(4);
+    expect(badTubes(1, 500)).toEqual(legacyBadTubes(1, 500)); // an evicted seed still gives the same answer
   });
 });
