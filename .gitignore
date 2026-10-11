@@ -57,3 +57,6 @@ art/export/
 
 # python bytecode (Blender scripts)
 __pycache__/
+
+# private, supplemental agent instructions
+**/AGENTS.local.md

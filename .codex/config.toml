@@ -1,0 +1,20 @@
+# Project migration defaults. Host/managed policy and invocation overrides take precedence.
+# Exact legacy permissions and non-equivalences: docs/codex-migration.md.
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+
+[sandbox_workspace_write]
+network_access = true
+
+# No project MCP declarations existed. Reuse authenticated host/plugin servers;
+# do not duplicate their transport definitions or put credentials in this file.
+
+[[hooks.SessionStart]]
+matcher = "startup|resume|compact|clear"
+
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "node -e \"const p=require('node:path'); const r=require('node:child_process').execFileSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).trim(); import(require('node:url').pathToFileURL(p.join(r,'.codex/hooks/session-start.mjs')).href)\""
+command_windows = "node -e \"const p=require('node:path'); const r=require('node:child_process').execFileSync('git',['rev-parse','--show-toplevel'],{encoding:'utf8'}).trim(); import(require('node:url').pathToFileURL(p.join(r,'.codex/hooks/session-start.mjs')).href)\""
+timeout = 10
+statusMessage = "Loading project history and handoff pointers"
