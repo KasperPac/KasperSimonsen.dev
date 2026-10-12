@@ -33,17 +33,17 @@ export const currently: Project[] = [
     statusType: "building",
     yearRange: "2025 → present",
     year: "2025",
-    category: "LLM Systems",
-    headline: "Code that stays in spec.",
+    category: "Engineering software",
+    headline: "Engineering projects, kept together.",
     description:
-      "Eight AI agents for Siemens TIA Portal projects — turning functional specs into compiling SCL and HMI, and turning legacy projects back into editable specs. Pattern library grows with every correction.",
+      "Pac Hub is a workspace for industrial engineering projects. It keeps the job's documents, requirements and approvals together, and helps turn an agreed design into the code that controls a machine.",
     pills: ["React 19", "Claude API", ".NET 4.8", "Supabase"],
     stackSummary: "React 19 · Claude API · .NET 4.8",
     integration: "TIA Openness (V17–V20)",
     statusNote: "Primary focus",
     githubRepo: "pac-forge",
-    title: "CODE THAT STAYS IN SPEC",
-    displayName: "Forja",
+    title: "ENGINEERING PROJECTS, KEPT TOGETHER",
+    displayName: "Pac Hub",
     logo: "/forja.svg",
     role: "Sole engineer",
     stack: [
@@ -84,16 +84,16 @@ export const currently: Project[] = [
     yearRange: "2026", // src: git first commit 2026-10-05, latest 2026-10-05 (37 commits)
     year: "2026",
     category: "Website",
-    headline: "One place to change a price.",
+    headline: "A salon website that makes booking easy.",
     description:
-      "A website for a one-chair hair salon in West End, Brisbane. One page built for an older audience: large type, high contrast, and booking always in reach. Services and prices are read from the salon's Square catalogue, so the owner changes a price in one place and the site follows.",
+      "A website for a hair salon in West End, Brisbane. Clients can browse services and prices, book an appointment or call the salon. Large text and clear buttons make it easy to use on a phone.",
     // src: spec §1 Problem, §2 Goals, §4.2 Services data
     pills: ["Astro", "TypeScript", "Square", "Vercel"], // src: package.json (astro, @astrojs/vercel, typescript)
     stackSummary: "Astro · Square · Vercel",
     integration: "Square Catalog API · Square Appointments", // src: src/lib/square/client.ts; spec §4.2 (the Book link is the Appointments booking page)
     statusNote: "Pre-launch",
     githubRepo: "Mariannes-Hair", // src: README "Deployment" (github.com/KasperPac/Mariannes-Hair, private; owner differs from lib/github's GITHUB_USERNAME)
-    title: "ONE PLACE TO CHANGE A PRICE",
+    title: "A SALON WEBSITE THAT MAKES BOOKING EASY",
     displayName: "Marianne's Hair",
     logo: "/mariannes-hair-mark.svg", // a white, mark-only SVG (no navy square), from Mariannes-Hair/public/favicon.svg
     role: "Sole engineer", // src: git shortlog, one author. [inferred] the mark itself comes from the designer's master (commit MHAIR-48), not from this repo's author
@@ -124,8 +124,7 @@ export const currently: Project[] = [
       "Every animation is off under reduced motion, and no content waits on one", // src: spec §3.5
     ],
   },
-  // DRAFT for Kasper: Pac Technologies website, from .superpowers/sdd/2026-10-02-office-interactions-m2/content-drafts.md §3.2,
-  // verbatim. Open questions in that file (§1.5 rebuilt or built, §1.6 publishing the 45/100 baseline) are still yours to settle.
+  // Product description adapted from the existing company-site content for a non-technical audience.
   {
     slug: "pac-technologies",
     statusLabel: "LIVE",
@@ -133,16 +132,16 @@ export const currently: Project[] = [
     yearRange: "2026", // src: git first 2026-05-08, latest 2026-09-15
     year: "2026",
     category: "Marketing Site",
-    headline: "Static pages, structured for search.",
+    headline: "An engineering business, clearly explained.",
     description:
-      "The public website for Pac Technologies, an Australian industrial automation firm. Hand-written static HTML on the company design system, structured data across the site, an llms.txt for AI search, and a library of technical articles written for plant managers and controls engineers.",
+      "The website for Pac Technologies, an Australian industrial automation firm. It explains the company's services and past projects, with practical guides to help plant managers plan improvements and find the right support.",
     // src: CLAUDE.md; github.md; llms.txt; seo/audit/2026-05-17/HANDOVER.md
     pills: ["HTML", "CSS", "JSON-LD", "llms.txt"],
     stackSummary: "Static HTML · CSS · JSON-LD",
     integration: "Schema.org JSON-LD + IndexNow", // src: HANDOVER.md Sprint 2; root IndexNow key file
     statusNote: "Live",
     githubRepo: "pac-market-website", // src: remote github.com/kasperpac/pac-market-website
-    title: "STATIC PAGES, STRUCTURED FOR SEARCH",
+    title: "AN ENGINEERING BUSINESS, CLEARLY EXPLAINED",
     displayName: "Pac Technologies",
     logo: "/PacTechnologiesEdit_White.png", // already in KasperSimonsen.dev/public; raster lockup
     liveUrl: "https://www.pac-technologies.com.au",
@@ -178,16 +177,16 @@ export const currently: Project[] = [
     yearRange: "2024 → present",
     year: "2024",
     category: "Multi-tenant SaaS",
-    headline: "Manufacturing operations, under the storefront.",
+    headline: "From customer orders to the factory floor.",
     description:
-      "Manufacturing-operations software for Shopify-native product brands. Inventory, multi-level BOMs, production orders, purchasing, stocktake, reports, and capacity planning in one connected system — replacing the spreadsheets and bolted-together MRP those brands typically end up running.",
+      "Manuva helps product brands manage the work behind what they sell. It brings customer orders, materials and production together, so the team can see what to make, what to buy and what each job costs.",
     pills: ["Next.js 16", "Supabase", "Shopify API", "Multi-tenant"],
     stackSummary: "Next.js 16 · Supabase · Shopify",
     integration: "Shopify OAuth + order webhooks",
     statusNote: "Rebuild in progress",
     v1ShippedYear: "2024",
     githubRepo: "assemblio",
-    title: "MANUFACTURING OPERATIONS UNDER THE STOREFRONT",
+    title: "FROM CUSTOMER ORDERS TO THE FACTORY FLOOR",
     displayName: "Manuva",
     logo: "/manuva.png",
     liveUrl: "https://manuva.app",
@@ -236,15 +235,15 @@ export const previously: Project[] = [
     yearRange: "2023",
     year: "2023",
     category: "Industrial Automation",
-    headline: "Every gram, signed for.",
+    headline: "Every ingredient, accounted for.",
     description:
-      "Full-stack batching for food and feed manufacturers — ERP orders in, Omron PLC on the floor, NFC-signed weighing, bulk-bag Android scanner, SQL audit log, live dashboard. Case study: a feed plant running on Silio since 2023.",
+      "Silio manages weighing and batching for food and animal-feed manufacturers. It checks ingredients against the recipe, records what went into each batch and gives the office a live view of production.",
     pills: ["Omron PLC", "SQL", "React Native", "React"],
     stackSummary: "Omron PLC · SQL · React Native · React",
     integration: "Tencia ERP + Omron PLC",
     statusNote: "In production",
     githubRepo: "silio",
-    title: "EVERY GRAM, SIGNED FOR",
+    title: "EVERY INGREDIENT, ACCOUNTED FOR",
     displayName: "Silio",
     logo: "/silio.svg",
     liveUrl: "https://pac-technologies.com.au/products/silio",

@@ -3,8 +3,8 @@
 import type { WorkItem } from "@/content/work";
 import { COPY } from "@/office/copy";
 
-/** A case study in the Read more panel: the intro, every section, the stack and the live link. */
-export default function CaseStudy({ item, titleId }: { item: WorkItem; titleId: string }) {
+/** A product description, with an optional shortcut to its screenshots in the office. */
+export default function CaseStudy({ item, titleId, onShowOnMonitor }: { item: WorkItem; titleId: string; onShowOnMonitor?: () => void }) {
   return (
     <article className="article">
       <p className="article-eyebrow">
@@ -14,6 +14,13 @@ export default function CaseStudy({ item, titleId }: { item: WorkItem; titleId: 
         {item.name}
       </h2>
       <p className="article-lede">{item.headline}</p>
+      {onShowOnMonitor && (
+        <p>
+          <button type="button" className="article-cta" onClick={onShowOnMonitor}>
+            {COPY.caseStudy.monitor}
+          </button>
+        </p>
+      )}
       {item.intro.map((p, i) => (
         <p key={i}>{p}</p>
       ))}
@@ -25,12 +32,6 @@ export default function CaseStudy({ item, titleId }: { item: WorkItem; titleId: 
           ))}
         </section>
       ))}
-      <h3>{COPY.caseStudy.stack}</h3>
-      <ul className="article-stack">
-        {item.stack.map((s) => (
-          <li key={s}>{s}</li>
-        ))}
-      </ul>
       {item.liveUrl && (
         <p>
           <a href={item.liveUrl} target="_blank" rel="noreferrer">

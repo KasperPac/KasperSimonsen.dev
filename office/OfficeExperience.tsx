@@ -196,6 +196,12 @@ export default function OfficeExperience() {
   }, [reelSettle, read]);
   const reelPlace = portraitScreen ? "strip" : "laptop";
   const play = useCallback((slug: string) => activate({ hotspot: "hs_crate", item: slug }), [activate]);
+  const reelShow = reel.show;
+  const showOnMonitor = useCallback((slide: number) => {
+    reelShow(slide);
+    // Add a new layer so Back restores the product's open reading panel.
+    activate({ hotspot: "hs_monitor", item: null });
+  }, [reelShow, activate]);
   // The reel's action plays the slide its words name: a crate record plays as picking it in the crate does, a page opens in a new tab.
   const reelCurrent = reel.current;
   const playReel = useCallback(() => {
@@ -236,6 +242,7 @@ export default function OfficeExperience() {
   // The crate (spec 3.2): flick through the records, pull the front one out, read it on its back and in the panel.
   const pulledSlug = scene.target?.hotspot === "hs_crate" ? scene.target.item : null;
   const pulledIndex = pulledSlug ? work.findIndex((w) => w.slug === pulledSlug) : -1;
+  const productSlide = pulledSlug ? slides.findIndex((slide) => slide.slug === pulledSlug) : -1;
   const [sleeveOut, setSleeveOut] = useState(false);
   const browsing = focusedOn === "hs_crate" && !pulledSlug && !scene.reading;
   browsingRef.current = browsing;
@@ -645,7 +652,11 @@ export default function OfficeExperience() {
 
       {scene.reading && pulledSlug && findWork(pulledSlug) && (
         <Panel hotspot="hs_crate" titleId="case-title" onClose={back}>
-          <CaseStudy item={findWork(pulledSlug)!} titleId="case-title" />
+          <CaseStudy
+            item={findWork(pulledSlug)!}
+            titleId="case-title"
+            onShowOnMonitor={productSlide >= 0 ? () => showOnMonitor(productSlide) : undefined}
+          />
         </Panel>
       )}
 

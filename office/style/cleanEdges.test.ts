@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { BoxGeometry, Color, DoubleSide, Group, IcosahedronGeometry, Mesh, Object3D, Raycaster, Vector3 } from "three";
+import { BoxGeometry, Color, DoubleSide, Group, IcosahedronGeometry, Mesh, MeshBasicMaterial, Object3D, Raycaster, Vector3 } from "three";
 import type { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import type { LineSegments2 } from "three/addons/lines/LineSegments2.js";
 import { applyCleanEdges, fadeOpacity, setHighlight, setLineResolution, setTint, updateEdgeFades } from "./cleanEdges";
@@ -21,6 +21,25 @@ function scene() {
 const edgesOf = (mesh: Mesh) => mesh.getObjectByName(`${mesh.name}__edges`) as LineSegments2;
 
 describe("applyCleanEdges", () => {
+  it("renders a flat door decal in the line colour, without outlines or glow, attached to its door", () => {
+    const { root, crate: door } = scene();
+    const decal = new Mesh(new BoxGeometry(0.4, 0.001, 0.3));
+    decal.name = "prop_office_door__sign";
+    decal.userData.flat_mark = true;
+    decal.position.set(0, 0, 1.55);
+    door.add(decal);
+    applyCleanEdges(root, opts);
+    const material = decal.material as MeshBasicMaterial;
+    expect(material.isMeshBasicMaterial).toBe(true);
+    expect(material.color.getHex()).toBe(0xffffff);
+    expect(material.transparent).toBe(false);
+    expect(decal.children).toHaveLength(0);
+    expect(decal.parent).toBe(door);
+    expect(decal.position.toArray()).toEqual([0, 0, 1.55]);
+    applyCleanEdges(root, opts);
+    expect(decal.material).toBe(material);
+  });
+
   it("gives each mesh the shared fill and a child carrying only its real edges", () => {
     const { root, crate } = scene();
     const handle = applyCleanEdges(root, opts);

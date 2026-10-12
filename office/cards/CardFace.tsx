@@ -56,7 +56,9 @@ export default function CardFace({
     const el = section.current;
     if (!el || el.dataset.placed !== undefined) return;
     el.dataset.placed = "";
-    if (focus) document.getElementById(titleId)?.focus({ preventScroll: true });
+    // A returning sleeve can mount after its reading panel. The modal owns focus while it is open.
+    if (focus && !document.querySelector('[role="dialog"][aria-modal="true"]'))
+      document.getElementById(titleId)?.focus({ preventScroll: true });
   });
   // Prints are overlays drawn over the canvas, never hidden behind geometry: the reel's strip relies on it (its plane reaches below the desk top).
   return createPortal(

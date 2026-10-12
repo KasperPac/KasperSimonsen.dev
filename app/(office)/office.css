@@ -302,14 +302,11 @@ html.office-locked {
 .office-sleeve-back { padding: 46px 48px; font-size: 22px; }
 .office-sleeve-back .office-card-title { font-size: 52px; }
 .office-sleeve-headline { margin: 0 0 18px; font-size: 26px; font-weight: 600; line-height: 1.2; }
-.office-sleeve-label { margin: 18px 0 6px; font: 14px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
-.office-sleeve-stack { margin: 0; padding: 0; list-style: none; display: flex; flex-wrap: wrap; gap: 4px 16px; font: 17px/1.4 var(--font-mono), ui-monospace, monospace; color: rgba(232, 232, 232, 0.8); }
 .office-sleeve-back .office-card-cta { right: 48px; bottom: 46px; }
 .article-eyebrow { margin: 0; font: 11px/1.2 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); }
 /* a section heading: h3 in a panel, h2 on a standalone page (not the title, which is an h2 in a panel) */
 .article h2:not(.article-title),
 .article h3 { margin: 28px 0 8px; font-size: 18px; font-weight: 600; }
-.article-stack { padding-left: 18px; color: rgba(232, 232, 232, 0.8); }
 /* the crate's hint, bottom centre while browsing it */
 .office-hint { position: fixed; left: 16px; right: 16px; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 3; text-align: center; font: 11px/1.5 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.7); }
 /* The crate says how to use it in the visitor's own terms: hover and click with a pointer, swipe and tap on a phone. */
@@ -334,8 +331,6 @@ html.office-locked {
   .office-sleeve-back .office-card-title { font-size: 58px; }
   .office-sleeve-headline { font-size: 30px; }
   .office-sleeve-back .office-card-text { display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden; }
-  .office-sleeve-label,
-  .office-sleeve-stack { display: none; }
   .office-sleeve-back .office-card-cta { font-size: 23px; }
 }
 

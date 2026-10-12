@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { Quaternion, Vector3 } from "three";
+import { Matrix4, PerspectiveCamera, Quaternion, Vector3 } from "three";
 import { makePose } from "./pose";
+import { basePose } from "./basePose";
 import { applyPan, clampPan, dragPan, inView, isPanGesture, PAN_TRUCK_M, panFor } from "./pan";
 
 const forward = (q: Quaternion) => new Vector3(0, 0, -1).applyQuaternion(q);
@@ -32,6 +33,27 @@ describe("isPanGesture", () => {
 });
 
 describe("applyPan", () => {
+  it("keeps the centred wall sign fully in a phone's leftward view", () => {
+    // Authored room-space camera and the full 0.85 m sign box, independent of the pan implementation.
+    const stand = makePose();
+    stand.position.set(0.1, 1.95, -1.5);
+    stand.quaternion.setFromRotationMatrix(new Matrix4().lookAt(stand.position, new Vector3(0.1, 1.05, -4.6), new Vector3(0, 1, 0)));
+    stand.fov = 54;
+    for (const aspect of [390 / 844, 360 / 800]) {
+      const view = basePose(stand, stand, 1, aspect, makePose(), -1);
+      const camera = new PerspectiveCamera(view.fov, aspect, 0.01, 100);
+      camera.position.copy(view.position);
+      camera.quaternion.copy(view.quaternion);
+      camera.updateMatrixWorld();
+      for (const y of [1.355, 2.205]) for (const z of [-4.625, -3.775]) {
+        const point = new Vector3(-2.23, y, z).project(camera);
+        expect(point.x).toBeGreaterThan(-0.9); // at least 5% of the viewport inside the edge
+        expect(point.x).toBeLessThan(0.9);
+        expect(Math.abs(point.y)).toBeLessThan(0.9);
+      }
+    }
+  });
+
   const base = makePose(); // at the origin, looking down -z
   it("leaves the pose alone in the middle", () => {
     const out = applyPan(base, 0, makePose());

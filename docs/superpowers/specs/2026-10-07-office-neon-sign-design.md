@@ -5,7 +5,7 @@
 - **Builds on:** `2026-10-02-office-interactions-design.md` (the director, the standing spot and `LEAVE_AT`, the
   one-colour rule, the state attributes on `.office`). Everything there still holds; this adds a lit object that isn't
   a hotspot.
-- **Status:** agreed in brainstorming with Kasper on 2026-10-07, awaiting his review of this document
+- **Status:** implemented and accepted by Kasper on 2026-10-12, including centred placement and the static door logo
 
 ## 1. Goal
 
@@ -13,14 +13,15 @@ The new KS mark hangs in the office as a neon sign, a nod to the Skipping Girl s
 sequential neon frames, and the KS and its head hop as it passes under. It is decoration. It powers up as the visitor
 arrives, stutters now and then like an old tube, and never competes with the four objects that are the way in.
 
-The mark is concept 6 from the logo rounds (block KS, a dot for a head, a rope arc over it). Its letterforms are still
-the prototype redraw; the finished drawing replaces them later in one file (section 6).
+The mark is concept 6 from the logo rounds (block KS, a circle for a head, a rope arc over it). The letters and circle
+are neon outlines, following Kasper's final request. The existing block silhouettes supply the visible letter paths
+directly; there is no separate centre-line redraw (section 6).
 
 ## 2. Decisions
 
 | Topic | Decision |
 |---|---|
-| Where | The left wall, over the back half of the couch, seen at an angle like a bar sign (Kasper picked spot C of three mocked on the real standing view; it moved back towards the corner so a phone sees all of it, 3.5) |
+| Where | Centred on the solid left-wall panel above the couch, seen at an angle like a bar sign. Kasper requested centring on 2026-10-12; the phone's left pan turns further to keep it visible (3.5) |
 | Colour | White neon (warm white tubes: a dim opaque glow band under a bright core). Unlit tubes are faint grey. No section colour, so the one-colour rule holds |
 | Motion | Steps, like the real sign: six rope positions, one lit at a time |
 | On and off | Switches itself: off during the walk-in, powers up on arrival, off again on leaving. Nothing to click |
@@ -66,9 +67,10 @@ is concept 6. Leaving still switches it `off`.
 
 ### 3.5 Phones
 
-Nothing special. The sign is off to the left of the portrait standing view; a sideways drag brings it in. At the left
-end of the pan the whole sign is on screen: on a 390 × 844 phone it sits about 20 px in from the left edge. The pan
-itself is unchanged; the sign moved to fit it (section 6).
+The sign is off to the left of the portrait standing view; a sideways drag brings it in. The left endpoint turns
+0.3 radians, retaining the existing 1 m sideways travel, so the centred sign fits on screen. The right endpoint
+keeps its 0.18-radian turn. A projection regression checks the full sign box with margins on 390 × 844 and
+360 × 800 phone viewports.
 
 ## 4. Look
 
@@ -98,17 +100,15 @@ flashes a second, and reduced motion removes it.
 
 - **`office/neon/mark.ts`:** the mark as pure geometry in its 240-unit design grid (the prototype's coordinates), y
   down:
-  - **The letters' tubes** (`K_TUBES`, `S_TUBES`): single strokes bent along each letter's centre line, as real neon
-    is made. Tracing the block outline doubled every stroke, and the S's narrow slots made it read as an F or E. The K
-    is a stem (76, 119)–(76, 179) and an arm and leg meeting at the stem, (116, 119)–(78, 149)–(116, 179). The S is
-    (179, 125)–(141, 125)–(141, 149)–(173, 149)–(173, 173)–(135, 173), its four corners bent round a 7-unit radius.
-  - **The outlines** (`K`, `S`): the block letters as closed polylines. They aren't drawn; they are where the letters
-    hide a rope that passes behind them, so the back ropes are cut against them.
+  - **The letters' tubes** (`K_TUBES`, `S_TUBES`): the complete closed block outlines, sourced directly from `K` and
+    `S`. Letter interiors remain hollow. Preserve every corner and the S's narrow slots; tune rendering rather than
+    changing the letterforms if clarity needs improvement.
+  - **The silhouettes** (`K`, `S`): the same closed polylines also hide a rope that passes behind the letters, so the
+    back ropes are cut against them.
   - The head as a sampled circle, and `rope(step)` as a sampled polyline from hand to hand (hands at (56, 132) and
     (192, 132), control offset 72). Also the 160-unit box the sign's size maps to (44–204 on both axes).
 
-  It is the one place the letterforms live; the finished drawing replaces them here, and the site's logo can read it
-  later.
+  It is the one place the sign's letterforms live. Navigation and favicon adoption remain separate work.
 - **`office/neon/sequence.ts`:** a pure timeline. `neonFrame(state, t, seed, reduced)` returns the lit rope step,
   each tube's brightness (0–1) and the hop height. `state` and `t` (seconds since entering it) come from the caller.
   No three.js, no React.
@@ -117,10 +117,15 @@ flashes a second, and reduced motion removes it.
   anchor's size, and each frame applies `neonFrame` (brightness to line colour, hop to the letters' and head's group). It reads only the
   director state that the experience already has (anything but the walk-in is in the room), and writes `data-neon`.
 - **Blender:** `scripts/blender/greybox_office.py` places an empty, `prop_neon_sign`, in the room frame on the left
-  wall's face: centre (x −2.25 + 0.02, y 4.6, z 1.78), facing into the room (+x), its scale giving the 0.85 m size. It
-  first sat at y 4.2, the couch's middle; a phone at the left end of its pan saw only half of it there. At 4.6 it is
-  still over the couch (y 3.35–5.05), its tubes end 14 cm short of the back corner, and the phone sees all of it with
-  about 20 px to spare. Re-export `office.glb` and update `office/manifest.json` as for any scene change.
+  wall's face: centre (x −2.25 + 0.02, y 4.2, z 1.78), facing into the room (+x), its scale giving the 0.85 m size.
+  The solid wall panel spans y 3.3–5.1, from the window's back edge to the back wall. Its midpoint is also the
+  couch's centre. The phone pan accommodates this placement (3.5). Re-export `office.glb` and validate the manifest
+  contracts as for any scene change.
+
+  The door's `prop_office_door__sign` mesh is a separate static decal, replacing the website lettering and plate.
+  `scripts/models/ks-mark.mjs` supplies the same K/S, head and overhead rope geometry to the Blender builder. The
+  mark is 0.4 m wide, centred on the corridor face at 1.55 m, and parented to the animated door. Its `flat_mark`
+  extra tells the scene renderer to use a solid, unlit material in the line colour, without glow or edge lines.
 
 ## 7. Content and copy
 
@@ -128,8 +133,8 @@ None. The sign has no text beyond the mark.
 
 ## 8. Testing
 
-- **Unit (`mark.test.ts`):** the K and S outlines close; each letter's tubes are open strokes lying inside its
-  outline; every rope starts and ends at the hands; the overhead rope clears the top of the head; the under-feet rope
+- **Unit (`mark.test.ts`):** the K and S outlines close; the visible letter paths preserve all the block mark's edges;
+  every rope starts and ends at the hands; the overhead rope clears the top of the head; the under-feet rope
   clears the letters' bottom with the hop applied; the back ropes stay out of the outlines.
 - **Unit (`sign.test.ts`):** every line is opaque and doesn't write depth, layered in the order above; off leaves the
   unlit lines showing and hides the lit ones; a lit tube's core is the lit colour and its glow a third as bright.
@@ -145,6 +150,9 @@ None. The sign has no text beyond the mark.
 
 ## 9. Milestone
 
-Done when the sign hangs over the couch, powers up on arrival, steps and stutters as above, and the tests pass. Kasper
-reviews it on desktop and on his phone. Swapping in the finished letterforms is a separate, later change to
-`mark.ts`.
+Done when the sign hangs over the couch, traces the block KS and head as hollow outlines, powers up on arrival,
+steps and stutters as above, and the tests pass. Kasper reviews it on desktop and on his phone. Adoption of the
+same mark in navigation and the favicon is separate work.
+
+Kasper accepted the final neon placement and door logo on 2026-10-12: "looks good, I think this part is done".
+This milestone is complete. Real-device Safari checks remain part of the broader site verification.

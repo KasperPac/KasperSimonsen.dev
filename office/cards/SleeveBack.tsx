@@ -19,12 +19,6 @@ export default function SleeveBack({ item, titleId, onReadMore }: { item: WorkIt
       </h2>
       <p className="office-sleeve-headline">{item.headline}</p>
       <p className="office-card-text">{leadOf(item.intro)}</p>
-      <p className="office-sleeve-label">{COPY.sleeve.stack}</p>
-      <ul className="office-sleeve-stack">
-        {item.stack.slice(0, 6).map((s) => (
-          <li key={s}>{s}</li>
-        ))}
-      </ul>
       <button type="button" className="office-card-cta" onClick={onReadMore}>
         {COPY.sleeve.readMore}
       </button>

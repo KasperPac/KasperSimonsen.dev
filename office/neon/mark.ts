@@ -1,38 +1,11 @@
 /**
- * The KS mark as neon tubes (neon sign spec 6): concept 6, the block KS with a dot for a head and a skipping rope, in
- * its 240-unit design grid with y down, as the logo prototypes drew it. This is the one place its letterforms live:
- * the finished drawing replaces K, S, their tubes and HEAD here, and the site's logo can read them later.
+ * The KS mark as neon outlines (neon sign spec 6): the block KS, head ring and skipping rope, in its 240-unit design
+ * grid with y down. K and S supply both the visible tubes and the silhouettes that hide a rope behind the letters.
  */
 export type Pt = readonly [number, number];
 export type Polyline = Pt[];
 
 const closed = (pts: Pt[]): Polyline => [...pts, pts[0]];
-
-/** `pts` with each inner corner bent round a quarter circle of radius `r` (the corners are right angles). */
-function fillet(pts: Pt[], r: number, samples = 6): Polyline {
-  const out: Polyline = [pts[0]];
-  for (let i = 1; i < pts.length - 1; i++) {
-    const [p, c, n] = [pts[i - 1], pts[i], pts[i + 1]];
-    const unit = (a: Pt, b: Pt): Pt => {
-      const l = Math.hypot(b[0] - a[0], b[1] - a[1]);
-      return [(b[0] - a[0]) / l, (b[1] - a[1]) / l];
-    };
-    const [a, b] = [unit(c, p), unit(c, n)];
-    const from: Pt = [c[0] + a[0] * r, c[1] + a[1] * r];
-    const to: Pt = [c[0] + b[0] * r, c[1] + b[1] * r];
-    const centre: Pt = [c[0] + (a[0] + b[0]) * r, c[1] + (a[1] + b[1]) * r];
-    const a0 = Math.atan2(from[1] - centre[1], from[0] - centre[0]);
-    let a1 = Math.atan2(to[1] - centre[1], to[0] - centre[0]);
-    if (a1 - a0 > Math.PI) a1 -= 2 * Math.PI;
-    if (a0 - a1 > Math.PI) a1 += 2 * Math.PI;
-    for (let k = 0; k <= samples; k++) {
-      const t = a0 + ((a1 - a0) * k) / samples;
-      out.push([centre[0] + r * Math.cos(t), centre[1] + r * Math.sin(t)]);
-    }
-  }
-  out.push(pts[pts.length - 1]);
-  return out;
-}
 
 export const K: Polyline = closed([
   [66, 116], [86, 116], [86, 140], [106, 116], [128, 116], [102, 146], [128, 182], [105, 182], [88, 158], [86, 160], [86, 182], [66, 182],
@@ -42,17 +15,9 @@ export const S: Polyline = closed([
 ]);
 export const HEAD = { cx: 129, cy: 98, r: 8 } as const;
 
-/**
- * The letters' tubes: one bent tube down each letter's centre line, as real neon is made. K and S above stay as the
- * block outlines, only as the shapes a rope behind the letters is hidden by.
- */
-export const K_TUBES: Polyline[] = [
-  [[76, 119], [76, 179]], // the stem
-  [[116, 119], [78, 149], [116, 179]], // the arm and the leg, meeting at the stem
-];
-export const S_TUBES: Polyline[] = [
-  fillet([[179, 125], [141, 125], [141, 149], [173, 149], [173, 173], [135, 173]], 7),
-];
+/** Trace the complete block mark; the letter interiors stay hollow. */
+export const K_TUBES: Polyline[] = [K];
+export const S_TUBES: Polyline[] = [S];
 
 /** Where the rope is held: it turns about the line through these. */
 export const HANDS = { left: [56, 132] as Pt, right: [192, 132] as Pt };

@@ -46,8 +46,8 @@ export const COPY = {
     eraser: "Eraser",
     wipe: "Wipe it",
   },
-  sleeve: { readMore: "Read more", stack: "Built with" },
-  caseStudy: { stack: "Built with", live: "See it live" },
+  sleeve: { readMore: "Read more" },
+  caseStudy: { monitor: "See on the monitor", live: "See it live" },
   crate: {
     label: (name: string, n: number, of: number) => `Record crate: ${name}, ${n} of ${of}. Arrow keys flick, Enter puts it on.`,
     hint: "Hover a record to flick to it. Click it to put it on.",

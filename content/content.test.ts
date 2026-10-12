@@ -34,12 +34,14 @@ describe("work", () => {
       expect(w.intro.length).toBeGreaterThan(0);
     }
   });
-  it("gives every item a description, and details: its years, role and stack summary, joined by a dot", () => {
+  it("gives every item a description and keeps technology out of the reel's details", () => {
     for (const p of [...currently, ...previously]) {
       const w = findWork(p.slug)!;
       expect(w.description, p.slug).not.toBe("");
       expect(w.description, p.slug).toBe(p.description);
-      expect(w.details, p.slug).toBe([p.yearRange, p.role, p.stackSummary].filter(Boolean).join(" · "));
+      expect(w.details, p.slug).toContain(p.yearRange);
+      expect(w.details, p.slug).toContain(p.role);
+      expect(w.details, p.slug).not.toContain(p.stackSummary);
       expect(w.details, p.slug).not.toMatch(/^ · | · $| ·  · /);
     }
   });

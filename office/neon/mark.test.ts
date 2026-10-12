@@ -1,10 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { BOX, HANDS, HEAD, HOP, K, K_TUBES, S, S_TUBES, STEPS, TUBES, TubeId, clipOutside, headRing, inside, rope, ropeSide, tubeLines, type Polyline } from "./mark";
+import { BOX, HANDS, HEAD, HOP, K, K_TUBES, S, S_TUBES, STEPS, TUBES, TubeId, clipOutside, headRing, inside, rope, ropeSide, tubeLines } from "./mark";
 
 const ys = (l: { 1: number }[]) => l.map((p) => p[1]);
-/** Every point along a polyline's segments, `n` per segment. */
-const along = (l: Polyline, n = 20) =>
-  l.slice(1).flatMap(([x, y], i) => Array.from({ length: n }, (_, k) => [l[i][0] + ((x - l[i][0]) * k) / n, l[i][1] + ((y - l[i][1]) * k) / n] as const)).concat([l.at(-1)!]);
 
 describe("the mark (neon sign spec 6)", () => {
   it("keeps the K and the S as closed outlines, and the head as a closed ring, inside the sign's box", () => {
@@ -14,16 +11,16 @@ describe("the mark (neon sign spec 6)", () => {
     }
   });
 
-  it("bends each letter's tubes along its centre line, inside its outline", () => {
-    for (const [tubes, outline] of [[K_TUBES, K], [S_TUBES, S]] as const) {
-      expect(tubes.length).toBeGreaterThan(0);
-      for (const tube of tubes) {
-        expect(tube.length).toBeGreaterThanOrEqual(2);
-        for (const p of along(tube)) expect(inside(p, outline)).toBe(true);
-      }
-    }
-    // single strokes, not outlines: no tube closes on itself
-    for (const tube of [...K_TUBES, ...S_TUBES]) expect(tube[0]).not.toEqual(tube.at(-1));
+  it("draws the complete approved letter outlines, including the S's narrow slots", () => {
+    // Hand-checked against the block mark: a centre-line redraw loses these edges.
+    expect(tubeLines("k")).toEqual([[
+      [66, 116], [86, 116], [86, 140], [106, 116], [128, 116], [102, 146],
+      [128, 182], [105, 182], [88, 158], [86, 160], [86, 182], [66, 182], [66, 116],
+    ]]);
+    expect(tubeLines("s")).toEqual([[
+      [132, 116], [182, 116], [182, 134], [150, 134], [150, 140], [182, 140],
+      [182, 182], [132, 182], [132, 164], [164, 164], [164, 158], [132, 158], [132, 116],
+    ]]);
   });
 
   it("swings every rope from hand to hand", () => {

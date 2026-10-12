@@ -12,6 +12,8 @@ import type { SignpostName } from "../hotspots/registry";
 export const PAN_TRUCK_M = 1.0;
 /** How far it turns outward at either end, in radians. */
 export const PAN_YAW = 0.18;
+/** The left wall's centred sign needs a little more turn to stay wholly visible on a phone. */
+export const PAN_LEFT_YAW = 0.3;
 /** Pan per screen width dragged: the whole room in a little over a screen's width. */
 export const PAN_PER_SCREEN = 1.7;
 /** A drag counts as panning once it has gone this far sideways, mostly sideways. */
@@ -43,7 +45,7 @@ export function applyPan(pose: Pose, pan: number, out: Pose): Pose {
   if (p === 0) return out;
   right.set(1, 0, 0).applyQuaternion(pose.quaternion).setY(0);
   if (right.lengthSq() > 1e-9) out.position.addScaledVector(right.normalize(), p * PAN_TRUCK_M);
-  out.quaternion.premultiply(turn.setFromAxisAngle(UP, -p * PAN_YAW));
+  out.quaternion.premultiply(turn.setFromAxisAngle(UP, -p * (p < 0 ? PAN_LEFT_YAW : PAN_YAW)));
   return out;
 }
 

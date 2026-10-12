@@ -13,6 +13,7 @@ import bisect
 import importlib
 import json
 import math
+import subprocess
 import sys
 from pathlib import Path
 
@@ -38,7 +39,6 @@ PORTRAIT_FOV_DEG = 54.0  # vertical, on a 0.64-aspect phone (narrower ones widen
 
 # Every line of visible text, in one place for Kasper to approve or swap.
 COPY = {
-    "nameplate": "KASPER SIMONSEN.DEV",
     # the whiteboard's writing: the site draws these now, as part of the drawing (office/copy.ts), not the model
     "whiteboard": "TODO: sleep",
     "whiteboard_note": "(next sprint)",
@@ -83,9 +83,8 @@ CHAIR = (-0.35, -0.75, math.pi - 0.35)  # x and y from the desk's centre, turn: 
 # Both face into the room, in view from cam_stand.
 RESERVED = {"couch": (-1.825, 4.2, math.pi / 2, 1.7, 0.85), "tv": (2.0, 4.0, -math.pi / 2, 0.7, 0.5)}
 WHITEBOARD = (-1.0, WALL + ROOM[1], 1.8)  # room frame: the whiteboard's centre on the back wall
-# room frame: the neon sign's centre on the left wall's face (2 cm off it) over the back half of the couch, and its size
-# (neon sign spec). Back towards the corner so a phone (390 x 844) sees all of it at the left end of its pan, ~20 px in
-NEON_SIGN = (-ROOM[0] / 2 + 0.02, 4.6, 1.78, 0.85)
+# room frame: centred on the solid left-wall panel above the couch, between the window and the back wall.
+NEON_SIGN = (-ROOM[0] / 2 + 0.02, (ROOM_WINDOW[0] + ROOM_WINDOW[1] / 2 + WALL + ROOM[1]) / 2, 1.78, 0.85)
 PILLOW_TURN = -math.pi / 2  # the pillow stood side-on to the couch, its top leaning into the far arm
 # Where the monitor's notes land on the desk when the site peels them off, one per note: (x, y, turn in degrees) for
 # hs_monitor__notes__note_NN's top centre, in the monitor's frame (origin under its foot, on the desk top). Found by a
@@ -189,7 +188,7 @@ DESCENT_EASE = 0.06
 DESCENT_CLOSING = 0.09
 LOBBY_DOOR_SWING = (0.405, 0.465, 100.0)
 OFFICE_DOOR_SWING = (0.83, 0.88, -90.0)
-NAMEPLATE = (0.08, 1.55)  # font size (~5.6 cm capitals) and height of the plate's centre
+DOOR_MARK = (0.4, 1.55)  # overall logo width and centre height, metres; a flat door decal
 # Heritage rooftop signs, each standing on the OSM roof below it and turned to the opening camera. Pelaco and the
 # Skipping Girl are artistic licence, as their real spots are behind that camera: (world x, y, scale) on big flat roofs
 # either side of The Commons' sightline. The girl is on the left, with open ground behind her at frame 0 and sky lower
@@ -675,11 +674,9 @@ def lobby_door(fp, street):
     return leaf("prop_lobby_door", parts, hinge, turn, street), hand
 
 
-def office_door(frame, street):
-    """prop_office_door: a solid interior door with lever handles, hinged on the office doorway's west jamb and
-    opening into the office, with the nameplate on its corridor face. It lives in street so it shares the walk-in's
-    timeline. Origin on the hinge, on the room-side face of the wall."""
-    door_x, width, height = ROOM_DOOR
+def office_door_parts():
+    """The leaf and its handles, without the old website nameplate."""
+    _, width, height = ROOM_DOOR
     leaf_w, leaf_h, thick = width - 0.006, height - 0.008, 0.04
 
     def part(size, centre):
@@ -693,11 +690,39 @@ def office_door(frame, street):
         parts += [part((0.05, 0.01, 0.05), (handle_x, face + out * 0.005, 1.0)),  # rose
                   part((0.02, 0.03, 0.02), (handle_x, face + out * 0.02, 1.0)),  # neck
                   part((0.13, 0.02, 0.02), (handle_x + 0.055, face + out * 0.04, 1.0))]  # lever
-    size, plate_z = NAMEPLATE
-    parts.append(part((leaf_w - 0.08, 0.004, 0.1), (-leaf_w / 2, -thick - 0.002, plate_z)))
+    return parts
+
+
+def office_door_mark(door, street):
+    """The static KS mark on the corridor face, following the animated door; no glow or light source."""
+    mark = json.loads(subprocess.run(
+        ["node", str(common.REPO / "scripts" / "models" / "ks-mark.mjs")],
+        cwd=common.REPO, check=True, capture_output=True, text=True,
+    ).stdout)
+    width, height = DOOR_MARK
+    # The rope's 4-unit stroke extends 2 units past the hands. Centre the whole visible mark, not just its letters.
+    points = [p for shape in mark.values() for p in shape]
+    x0, x1 = min(p[0] for p in points) - 2, max(p[0] for p in points) + 2
+    y0, y1 = min(p[1] for p in points) - 2, max(p[1] for p in points)
+    k, cx, cy = width / (x1 - x0), (x0 + x1) / 2, (y0 + y1) / 2
+    xy = lambda shape: [((x - cx) * k, (cy - y) * k) for x, y in shape]
+    bm = bmesh.new()
+    for name in ("k", "s", "head"):
+        office_props._poly(bm, [(x, y, 0) for x, y in xy(mark[name])], office_props.WALL)
+    office_props._stroke(bm, xy(mark["rope"]), 4 * k, 0.0001, office_props.WALL)
+    leaf_w = ROOM_DOOR[1] - 0.006
+    obj = office_props._part("prop_office_door__sign", bm, door, street,
+                             location=(-leaf_w / 2, -0.0405, height))
+    obj["flat_mark"] = True
+    return obj
+
+
+def office_door(frame, street):
+    """The solid office door with a static KS decal, hinged on the west jamb and sharing the walk-in timeline."""
+    door_x, width, _ = ROOM_DOOR
     hinge = frame @ ROOM_FRAME
-    door = leaf("prop_office_door", parts, hinge @ Vector((door_x + width / 2 - 0.003, WALL, 0)), hinge.to_euler().z, street)
-    common.text_mesh("prop_office_door__sign", COPY["nameplate"], size, 0.004, (-leaf_w / 2, -thick - 0.004, plate_z), door, street)
+    door = leaf("prop_office_door", office_door_parts(), hinge @ Vector((door_x + width / 2 - 0.003, WALL, 0)), hinge.to_euler().z, street)
+    office_door_mark(door, street)
     return door
 
 

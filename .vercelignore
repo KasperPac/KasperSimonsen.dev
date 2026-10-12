@@ -1,0 +1,17 @@
+# Source artwork, private material and local agent state are not deployment inputs.
+art/
+public/screenshots/
+.claude/
+.codex/
+.agents/
+.superpowers/
+docs/
+e2e/
+test-results/
+playwright-report/
+.env*
+**/AGENTS.local.md
+**/*.test.ts
+**/*.test.mjs
+scripts/blender/
+scripts/osm/

@@ -64,6 +64,7 @@ export function fadeOpacity(distance: number, near: number, far: number, min: nu
  * A mesh (or its nearest ancestor) with `userData.edge_threshold_deg` in (0, 180) overrides `opts.thresholdDeg`.
  * `opts.highlightKey` groups meshes into recolourable line materials, driven by `setHighlight`.
  * `edge_fade_near`/`edge_fade_far`/`edge_fade_min` give it a distance fade, driven by `updateEdgeFades`.
+ * `flat_mark: true` keeps signage as a solid decal in the line colour, without edge lines.
  */
 export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanEdgesHandle {
   const existing = handles.get(root);
@@ -76,6 +77,7 @@ export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanE
     polygonOffsetUnits: 1,
   });
   const line = new LineMaterial({ color: opts.line, linewidth: opts.lineWidth, fog: true });
+  let flatMark: MeshBasicMaterial | null = null;
   const fades = new Map<string, EdgeFadeGroup>();
   const highlights = new Map<string, LineMaterial>();
   const edgeCache = new Map<BufferGeometry, Map<number, LineSegmentsGeometry>>();
@@ -87,6 +89,12 @@ export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanE
   });
 
   for (const mesh of meshes) {
+    if (mesh.userData.flat_mark === true) {
+      flatMark ??= new MeshBasicMaterial({ color: opts.line, side: DoubleSide, fog: true });
+      mesh.material = flatMark;
+      mesh.userData.cleanEdgesApplied = true;
+      continue;
+    }
     mesh.material = fill;
     const threshold = thresholdFor(mesh, opts.thresholdDeg);
     let byThreshold = edgeCache.get(mesh.geometry);
