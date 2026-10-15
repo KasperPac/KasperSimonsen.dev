@@ -50,7 +50,7 @@ body {
 }
 
 /* Scrolling would replay the walk-in under an open object. */
-html.office-locked {
+html.office-locked, html.office-menu-open {
   overflow: hidden;
 }
 
@@ -89,6 +89,64 @@ html.office-locked {
   cursor: pointer;
 }
 .office-nav :focus-visible { outline: 1px solid var(--office-fg); outline-offset: 3px; }
+
+/* A conventional route through the same content, available before the walk-in too. */
+.office-menu-toggle {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 14px;
+  background: var(--office-bg);
+  color: var(--office-fg);
+  border: 1px solid rgba(232, 232, 232, 0.35);
+  font: 12px/1 var(--font-mono), ui-monospace, monospace;
+  cursor: pointer;
+}
+.office-menu {
+  position: fixed;
+  inset: 0 0 0 auto;
+  margin: 0;
+  width: min(100%, 420px);
+  height: 100dvh;
+  max-width: 100%;
+  max-height: 100dvh;
+  padding: max(16px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: var(--office-bg);
+  color: var(--office-fg);
+  border: 0;
+  border-left: 1px solid rgba(232, 232, 232, 0.25);
+}
+.office-menu::backdrop { background: rgba(11, 11, 11, 0.75); }
+.office-menu[open] { animation: office-menu-in 0.2s ease-out; }
+.office-menu-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; background: var(--office-bg); }
+.office-menu-head h2 { margin: 0; font: 12px/1.4 var(--font-mono), ui-monospace, monospace; color: rgba(232, 232, 232, 0.7); }
+.office-menu-head button { min-width: 44px; min-height: 44px; border: 0; padding: 0 10px; background: none; color: inherit; font: 12px/1 var(--font-mono), ui-monospace, monospace; cursor: pointer; }
+.office-menu a { display: flex; align-items: center; justify-content: space-between; min-height: 44px; color: inherit; text-decoration: none; }
+.office-menu section { padding: 14px 0; border-top: 1px solid rgba(232, 232, 232, 0.2); }
+.office-menu h3 { margin: 0; font-size: 20px; font-weight: 500; }
+.office-menu ul { padding: 0; margin: 4px 0 0; list-style: none; }
+.office-menu li a { font-size: 16px; color: rgba(232, 232, 232, 0.75); }
+.office-menu-primary { padding: 12px 0; font-size: 20px; border-top: 1px solid rgba(232, 232, 232, 0.2); }
+.office-menu-primary:first-child { border-top: 0; }
+.office-menu :focus-visible, .office-menu-toggle:focus-visible, .office-back:focus-visible { outline: 2px solid var(--office-fg); outline-offset: 3px; }
+@media (hover: hover) {
+  .office-menu a:hover, .office-menu-head button:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+  .office-menu-toggle:hover, .office-back:hover { border-color: var(--office-fg); }
+}
+.office-menu a:active, .office-menu-head button:active, .office-menu-toggle:active { opacity: 0.65; }
+@keyframes office-menu-in { from { opacity: 0; translate: 16px 0; } }
+@media (prefers-reduced-motion: reduce) { .office-menu[open] { animation: none; } }
+
+/* The canvas owns these gestures only while an object is open. Panels retain browser scrolling and zoom. */
+.office:is([data-director^="focused:"], [data-director^="focusing:"]) .office-stage { touch-action: none; }
+.panel { touch-action: pan-y pinch-zoom; }
 
 /* Hover/focus label, positioned by the canvas. */
 .office-label {
@@ -217,9 +275,11 @@ html.office-locked {
 .office-back {
   position: fixed;
   left: 16px;
-  top: 16px;
+  top: max(16px, env(safe-area-inset-top));
   z-index: 4;
   padding: 8px 12px;
+  min-width: 44px;
+  min-height: 44px;
   background: var(--office-bg);
   color: var(--office-fg);
   border: 1px solid rgba(232, 232, 232, 0.35);
@@ -227,6 +287,18 @@ html.office-locked {
   letter-spacing: 0.1em;
   text-transform: uppercase;
   cursor: pointer;
+}
+.office-back-hint {
+  position: fixed;
+  left: 16px;
+  top: max(62px, calc(env(safe-area-inset-top) + 46px));
+  z-index: 4;
+  max-width: calc(100vw - 32px);
+  margin: 0;
+  padding: 6px 8px;
+  background: var(--office-bg);
+  color: rgba(232, 232, 232, 0.7);
+  font: 10px/1.5 var(--font-mono), ui-monospace, monospace;
 }
 
 /* Content cards beside their object (desktop: positioned by the canvas; narrow: docked). */

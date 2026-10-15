@@ -64,7 +64,7 @@ GIRL_POSES = (  # rope angle from overhead, turning towards the street; jump, kn
     (180.0, 0.12, 1.0, 0.06),
     (270.0, 0.05, 0.4, 0.02),
 )
-GIRL_TEXT = (("SKIPPING GIRL", 0.9, 3.1), ("VINEGAR", 1.6, 1.0))  # line, letter height, baseline
+GIRL_TEXT = (("VINEGAR", 1.6, 1.0),)  # line, letter height, baseline
 # Nylex: on a cross-braced frame about 15 m high: PLASTICS, NYLEX above it, crowned by the clock and temperature.
 NYLEX = {"width": 16.0, "depth": 2.0, "legs": 5.0, "plastics": (1.9, 5.4), "nylex": (3.6, 7.9),
          "display": (2.2, 12.2, "21°"), "top": 15.0}
@@ -332,27 +332,33 @@ def _girl(bm, pose):
     bm.faces.new(rings[-1])
 
 
+def skipping_girl_text(scale=1.0):
+    """VINEGAR lettering, jump tubes and frame, independently rebuildable without touching the girl or her poses."""
+    g, h = GIRL, GIRL["height"]
+    bm = bmesh.new()
+    widest = max(_text_width(line, size) for line, size, _ in GIRL_TEXT)
+    for line, size, z in GIRL_TEXT:
+        _text(bm, line, size, -_text_width(line, size) / 2, z, -0.1, 0.0)
+    panel_bottom = min(z for _, _, z in GIRL_TEXT) - 0.3
+    panel_top = max(z + size for _, size, z in GIRL_TEXT) + 0.2
+    _box(bm, (-widest / 2 - 0.4, 0.0, panel_bottom), (widest / 2 + 0.4, 0.15, panel_top))
+    for k in range(3):  # the tubes under her feet that light in turn as she jumps
+        z = g["feet"] - 0.2 - 0.27 * k
+        _box(bm, (-0.22 * h, -0.08, z - 0.06), (0.22 * h, 0.04, z + 0.06))
+    # the lettering's frame, braced below the panel, and one spine up behind the girl, hidden by her cut-out
+    _lattice(bm, (-widest / 2, 0.0, widest / 2), (0.0, panel_bottom, panel_top), (0.3, 1.2), brace=[(0, 0), (1, 0)])
+    _beam(bm, (0.0, 0.3, panel_top), (0.0, 0.3, g["feet"] + 0.7 * h))
+    _beam(bm, (-0.22 * h, 0.3, g["feet"] - 0.2), (0.22 * h, 0.3, g["feet"] - 0.2))  # carries the jump tubes
+    return _scaled(bm, scale)
+
+
 def skipping_girl(location, rotation_z, col, scale=1.0):
     """prop_skipping_girl (an empty) with children: __text, the lettering, jump tubes and frame, always shown; and
     __pose_00 to __pose_03, the girl and her rope round the cycle (overhead, out towards the street, under her feet,
     behind), stacked in one place for the site to show one at a time."""
     _remove("prop_skipping_girl")
     root = _root("prop_skipping_girl", location, rotation_z, col)
-    g, h = GIRL, GIRL["height"]
-    bm = bmesh.new()
-    widest = max(_text_width(line, size) for line, size, _ in GIRL_TEXT)
-    for line, size, z in GIRL_TEXT:
-        _text(bm, line, size, -_text_width(line, size) / 2, z, -0.1, 0.0)
-    _box(bm, (-widest / 2 - 0.4, 0.0, GIRL_TEXT[1][2] - 0.3), (widest / 2 + 0.4, 0.15, GIRL_TEXT[0][2] + GIRL_TEXT[0][1] + 0.2))
-    for k in range(3):  # the tubes under her feet that light in turn as she jumps
-        z = g["feet"] - 0.2 - 0.27 * k
-        _box(bm, (-0.22 * h, -0.08, z - 0.06), (0.22 * h, 0.04, z + 0.06))
-    # the lettering's frame, braced below the panel, and one spine up behind the girl, hidden by her cut-out
-    panel_top = GIRL_TEXT[0][2] + GIRL_TEXT[0][1] + 0.2
-    _lattice(bm, (-widest / 2, 0.0, widest / 2), (0.0, GIRL_TEXT[1][2] - 0.3, panel_top), (0.3, 1.2), brace=[(0, 0), (1, 0)])
-    _beam(bm, (0.0, 0.3, panel_top), (0.0, 0.3, g["feet"] + 0.7 * h))
-    _beam(bm, (-0.22 * h, 0.3, g["feet"] - 0.2), (0.22 * h, 0.3, g["feet"] - 0.2))  # carries the jump tubes
-    _mesh("prop_skipping_girl__text", _scaled(bm, scale), col, root)
+    _mesh("prop_skipping_girl__text", skipping_girl_text(scale), col, root)
     for k, pose in enumerate(GIRL_POSES):
         bm = bmesh.new()
         _girl(bm, pose)

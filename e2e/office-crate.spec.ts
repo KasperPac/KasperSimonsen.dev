@@ -163,7 +163,7 @@ test.describe("phone", () => {
 
 test.describe("touch", () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
-  test("a swipe up across the crate flicks exactly one record", async ({ page }) => {
+  test("a swipe down across the crate flicks exactly one record", async ({ page }) => {
     await standInOffice(page);
     await openCrate(page);
     await expect(office(page)).toHaveAttribute("data-camera", "focus", { timeout: MOVE_WAIT });
@@ -171,14 +171,14 @@ test.describe("touch", () => {
       const m = /([-\d.]+)px ([-\d.]+)px/.exec((document.querySelector(".office-marker") as HTMLElement).style.translate)!;
       return { x: Number(m[1]), y: Number(m[2]) };
     });
-    // one finger dragged up the crate: down, a run of moves, up (the canvas's event source is its parent)
+    // One finger dragged down the crate: press, moves, release (the canvas's event source is its parent).
     await page.evaluate(({ x, y }) => {
       const target = document.querySelector(".office-stage canvas")!.parentElement!;
       const fire = (type: string, cy: number) =>
         target.dispatchEvent(new PointerEvent(type, { pointerType: "touch", pointerId: 7, isPrimary: true, clientX: x, clientY: cy, bubbles: true }));
-      fire("pointerdown", y + 70);
-      for (let d = 70; d >= -70; d -= 10) fire("pointermove", y + d);
-      fire("pointerup", y - 70);
+      fire("pointerdown", y - 70);
+      for (let d = -70; d <= 70; d += 10) fire("pointermove", y + d);
+      fire("pointerup", y + 70);
     }, at);
     await expect(office(page)).toHaveAttribute("data-dig", "1");
     await page.waitForTimeout(500);

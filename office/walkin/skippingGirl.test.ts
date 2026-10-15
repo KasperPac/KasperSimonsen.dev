@@ -1,21 +1,21 @@
 import { describe, it, expect, vi } from "vitest";
 import { Group, Object3D } from "three";
-import { applySkippingGirl, findSkippingGirl, skipPose } from "./skippingGirl";
+import { applySkippingGirl, findSkippingGirl, SKIP_SECONDS, skipPose } from "./skippingGirl";
 
 describe("skipPose", () => {
   it("starts on pose 0", () => expect(skipPose(0, 5)).toBe(0));
 
   it("steps through every pose once per cycle", () => {
     const count = 5;
-    const seen = Array.from({ length: count }, (_, i) => skipPose((i + 0.5) / count / 24, count));
+    const seen = Array.from({ length: count }, (_, i) => skipPose((i + 0.5) / count * SKIP_SECONDS, count));
     expect(seen).toEqual([0, 1, 2, 3, 4]);
     // the next cycle starts over
-    expect(skipPose(1 / 24, count)).toBe(0);
+    expect(skipPose(SKIP_SECONDS, count)).toBe(0);
   });
 
-  it("takes a cycle count", () => expect(skipPose(0.5, 4, 2)).toBe(0));
+  it("takes a cycle duration", () => expect(skipPose(0.75, 4, 2)).toBe(1));
 
-  it("stays in range at and beyond both ends", () => {
+  it("keeps skipping after the walk-in would have ended", () => {
     for (const p of [0, 1, 0.999999, -0.5, 1.7]) {
       const i = skipPose(p, 5);
       expect(Number.isInteger(i)).toBe(true);
@@ -23,13 +23,16 @@ describe("skipPose", () => {
       expect(i).toBeLessThan(5);
     }
     expect(skipPose(-0.5, 5)).toBe(skipPose(0, 5));
-    expect(skipPose(1.7, 5)).toBe(skipPose(1, 5));
+    expect(skipPose(100 * SKIP_SECONDS + SKIP_SECONDS * 0.3, 5)).toBe(1);
+    expect(skipPose(100 * SKIP_SECONDS + SKIP_SECONDS * 0.7, 5)).toBe(3);
   });
 
   it("handles NaN and count <= 1 without throwing", () => {
     expect(skipPose(Number.NaN, 5)).toBe(0);
     expect(skipPose(0.5, 1)).toBe(0);
     expect(skipPose(0.5, 0)).toBe(0);
+    expect(skipPose(Infinity, 5)).toBe(0);
+    expect(skipPose(1, 5, 0)).toBe(0);
   });
 });
 
@@ -52,14 +55,14 @@ describe("applySkippingGirl", () => {
   it("shows only the current pose and never touches the text", () => {
     const { root, poses, text } = rig();
     const found = findSkippingGirl(root)!;
-    applySkippingGirl(found, 1.5 / 4 / 24, false);
+    applySkippingGirl(found, 1.5 / 4 * SKIP_SECONDS, false);
     expect(poses.map((p) => p.visible)).toEqual([false, true, false, false]);
     expect(text.visible).toBe(true);
   });
 
   it("shows pose 0 only under reduced motion", () => {
     const { root, poses } = rig();
-    applySkippingGirl(findSkippingGirl(root)!, 1.5 / 4 / 24, true);
+    applySkippingGirl(findSkippingGirl(root)!, 1.5 / 4 * SKIP_SECONDS, true);
     expect(poses.map((p) => p.visible)).toEqual([true, false, false, false]);
   });
 });

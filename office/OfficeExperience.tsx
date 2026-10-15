@@ -12,6 +12,8 @@ import { describeDirector, focusedHotspot, initialDirector, isLocked, reduceDire
 import { pathForTarget } from "./scene/targets";
 import { layerOf, sceneFor } from "./scene/location";
 import { clearLayer, pushLayer, replaceLayer, useOfficeLocation } from "./history";
+import OfficeMenu from "./navigation/OfficeMenu";
+import { useOfficeGestures } from "./navigation/useOfficeGestures";
 import { HOTSPOTS, labelFor, sameHit, type Hit, type SignpostName } from "./hotspots/registry";
 import type { OverlayElements } from "./OfficeCanvas";
 import BusinessCard from "./cards/BusinessCard";
@@ -28,7 +30,7 @@ import { wrap } from "./monitor/reel";
 import { usePortrait } from "./usePortrait";
 import { useCoarsePointer } from "./useCoarsePointer";
 import { clampDig } from "./objects/crate";
-import { canPull, digFor, swipeStep } from "./crate/dig";
+import { canPull, digFor } from "./crate/dig";
 import { tourAt } from "./hints/tour";
 import { GLINT_SECONDS, glintGap, nextGlint } from "./hints/glint";
 import { findWork, work } from "@/content/work";
@@ -159,6 +161,22 @@ export default function OfficeExperience() {
     if (s.target && l.reading && l.topic !== topic) pushLayer({ focus: s.target.hotspot, reading: true, topic });
   }, []);
 
+  // Menu shortcuts open the content itself; they don't require picking up the scene's objects first.
+  const navigate = useCallback((hit: Hit | null, reading = false) => {
+    stopWalk.current?.();
+    stopWalk.current = null;
+    setWalking(false);
+    markUsed();
+    interacted.current = true;
+    trigger.current = host.current?.querySelector<HTMLButtonElement>(".office-menu-toggle") ?? null;
+    toEnd();
+    const current = live();
+    const next = { focus: hit?.hotspot ?? null, reading, topic: null };
+    const path = hit ? pathForTarget(hit) ?? "/" : "/";
+    if (window.location.pathname === path && current.layer.focus === next.focus && current.layer.reading === reading && !current.layer.topic) return;
+    pushLayer(next, path);
+  }, [markUsed]);
+
   // Esc backs out one layer. With focus inside the panel, its own handler takes Esc and stops it reaching here.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -283,6 +301,7 @@ export default function OfficeExperience() {
   }, [state.kind]);
 
   const flick = useCallback((step: number) => setDig((d) => clampDig(d + step, work.length)), []);
+  useOfficeGestures(host, { enabled: state.kind === "focused", browsing, reading: scene.reading, onBack: back, onFlick: flick });
   const pull = useCallback(() => {
     if (!canPull(focusedHotspot(director.current), live().scene.target?.item ?? null)) return;
     activate({ hotspot: "hs_crate", item: work[crate.current.dig].slug });
@@ -297,7 +316,8 @@ export default function OfficeExperience() {
     let start: { x: number; y: number; pan: number } | null = null;
     const onDown = (e: PointerEvent) => {
       panning.current = false;
-      start = window.innerWidth < window.innerHeight ? { x: e.clientX, y: e.clientY, pan: pan.current } : null;
+      const inScene = e.target instanceof Element && !!e.target.closest(".office-stage");
+      start = inScene && window.innerWidth < window.innerHeight ? { x: e.clientX, y: e.clientY, pan: pan.current } : null;
     };
     const onMove = (e: PointerEvent) => {
       if (!start) return;
@@ -324,27 +344,6 @@ export default function OfficeExperience() {
       window.clearTimeout(clear);
     };
   }, [state.kind]);
-
-  // Swipes flick while browsing the crate on a touch screen (hovering does it with a pointer).
-  useEffect(() => {
-    if (!browsing) return;
-    let startY: number | null = null;
-    const onDown = (e: PointerEvent) => {
-      if (e.pointerType === "touch") startY = e.clientY;
-    };
-    const onUp = (e: PointerEvent) => {
-      if (startY === null) return;
-      const step = swipeStep(e.clientY - startY);
-      startY = null;
-      if (step) flick(step);
-    };
-    window.addEventListener("pointerdown", onDown);
-    window.addEventListener("pointerup", onUp);
-    return () => {
-      window.removeEventListener("pointerdown", onDown);
-      window.removeEventListener("pointerup", onUp);
-    };
-  }, [browsing, flick]);
 
   // Keyboard flicks show the front record's label, as hovering it would.
   useEffect(() => {
@@ -447,6 +446,8 @@ export default function OfficeExperience() {
           {COPY.arrive.scroll}
         </p>
       </div>
+
+      <OfficeMenu onNavigate={navigate} />
 
       <div className="office-stage">
         <OfficeErrorBoundary host={host}>
@@ -573,9 +574,10 @@ export default function OfficeExperience() {
       ))}
 
       {focusedOn && !scene.reading && (
-        <button type="button" className="office-back" onClick={back}>
-          {COPY.back}
-        </button>
+        <div className="office-back-controls">
+          <button type="button" className="office-back" onClick={back}><span aria-hidden="true">← </span>{COPY.back}</button>
+          <p className="office-back-hint"><span className="office-hint-pointer">{COPY.backHint}</span><span className="office-hint-touch">{COPY.backHintTouch}</span></p>
+        </div>
       )}
 
       {browsing && (

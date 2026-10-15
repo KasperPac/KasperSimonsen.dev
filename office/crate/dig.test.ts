@@ -16,7 +16,7 @@ describe("canPull", () => {
 });
 
 describe("swipeStep", () => {
-  it("flicks forward on a swipe up", () => expect(swipeStep(-80)).toBe(1));
-  it("flicks back on a swipe down", () => expect(swipeStep(80)).toBe(-1));
+  it("flicks forward on a swipe down", () => expect(swipeStep(80)).toBe(1));
+  it("flicks back on a swipe up", () => expect(swipeStep(-80)).toBe(-1));
   it("ignores a tap", () => expect(swipeStep(5)).toBe(0));
 });

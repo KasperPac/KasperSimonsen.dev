@@ -12,6 +12,9 @@ export const COPY = {
     hs_whiteboard: "Have a go",
   },
   back: "Back",
+  backHint: "Scroll up to step back",
+  backHintTouch: "Swipe right or pinch in to step back",
+  menu: { open: "Menu", title: "Go straight to", office: "Look around the office" },
   close: "Close",
   card: {
     eyebrow: "Contact",
@@ -51,7 +54,7 @@ export const COPY = {
   crate: {
     label: (name: string, n: number, of: number) => `Record crate: ${name}, ${n} of ${of}. Arrow keys flick, Enter puts it on.`,
     hint: "Hover a record to flick to it. Click it to put it on.",
-    hintTouch: "Swipe to flick through. Tap one to put it on.",
+    hintTouch: "Swipe down for the next record. Tap to put it on.",
   },
   shelf: {
     label: "Shelf",

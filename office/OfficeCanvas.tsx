@@ -167,6 +167,7 @@ function Street({ progress, pan, host, director, onProgressCross, onSettled, inf
     return { duration: clip.duration, sample: makeClipSampler(clip, street.scene), source: findCamera(street.scene, WALKIN_CAMERA) };
   }, [street]);
   const skippingGirl = useMemo(() => findSkippingGirl(street.scene), [street]);
+  const skipTime = useRef(0);
   const reduced = useMemo(reducedMotion, []);
   const rig = useMemo(() => new CameraRig(), []);
   const poses = useMemo(() => ({ walk: makePose(), base: makePose(), focus: makePose(), now: makePose(), out: makePose() }), []);
@@ -179,7 +180,12 @@ function Street({ progress, pan, host, director, onProgressCross, onSettled, inf
   useFrame((_, dt) => {
     const p = progress.current;
     walkIn.sample(progressToTime(p, walkIn.duration));
-    if (skippingGirl) applySkippingGirl(skippingGirl, p, reduced);
+    skipTime.current += dt;
+    if (skippingGirl) {
+      const pose = String(applySkippingGirl(skippingGirl, skipTime.current, reduced));
+      const el = host.current;
+      if (el && el.dataset.skippingGirlPose !== pose) el.dataset.skippingGirlPose = pose;
+    }
     readPose(walkIn.source, poses.walk);
     const office = info.current;
     // The pan follows the finger closely but not rigidly (under reduced motion, exactly).

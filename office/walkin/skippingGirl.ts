@@ -3,10 +3,13 @@ import type { Object3D } from "three";
 /** The Skipping Girl's pose nodes (street.glb; required by office/manifest.json). */
 export const POSE_NODE = /^prop_skipping_girl__pose_(\d\d)$/;
 
-/** Pose index for walk-in progress: `count` poses per rope cycle, `cycles` cycles over the whole walk-in. */
-export function skipPose(progress: number, count: number, cycles = 24): number {
-  if (!Number.isFinite(progress) || count <= 1) return 0;
-  const x = Math.min(1, Math.max(0, progress)) * cycles;
+/** Seconds per full rope cycle, independent of the walk-in's scroll position. */
+export const SKIP_SECONDS = 1.2;
+
+/** Loop the sign's stepped poses using elapsed animation time. */
+export function skipPose(seconds: number, count: number, cycleSeconds = SKIP_SECONDS): number {
+  if (!Number.isFinite(seconds) || count <= 1 || !Number.isFinite(cycleSeconds) || cycleSeconds <= 0) return 0;
+  const x = Math.max(0, seconds) / cycleSeconds;
   const frac = Math.max(0, x - Math.floor(x + 1e-9)); // the epsilon absorbs float error at cycle boundaries
   return Math.min(count - 1, Math.floor(frac * count));
 }
@@ -30,8 +33,9 @@ export function findSkippingGirl(root: Object3D): Object3D[] | null {
   return found.sort((a, b) => a.n - b.n).map((f) => f.obj);
 }
 
-/** Shows only the pose for this progress; pose 0 alone under reduced motion. */
-export function applySkippingGirl(poses: Object3D[], progress: number, reducedMotion: boolean): void {
-  const current = reducedMotion ? 0 : skipPose(progress, poses.length);
+/** Shows only the pose for this elapsed time; pose 0 alone under reduced motion. */
+export function applySkippingGirl(poses: Object3D[], seconds: number, reducedMotion: boolean): number {
+  const current = reducedMotion ? 0 : skipPose(seconds, poses.length);
   poses.forEach((p, i) => (p.visible = i === current));
+  return current;
 }

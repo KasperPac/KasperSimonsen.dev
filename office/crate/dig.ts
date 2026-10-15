@@ -15,7 +15,7 @@ export function canPull(focused: HotspotName | null, pulledSlug: string | null):
 
 export const SWIPE_PX = 40;
 
-/** A vertical swipe on a touch screen: up flicks forward, down flicks back, a tap is nothing. */
+/** A vertical swipe on a touch screen: down flicks forward, up flicks back, a tap is nothing. */
 export function swipeStep(dy: number): -1 | 0 | 1 {
-  return Math.abs(dy) < SWIPE_PX ? 0 : dy < 0 ? 1 : -1;
+  return Math.abs(dy) < SWIPE_PX ? 0 : dy > 0 ? 1 : -1;
 }
