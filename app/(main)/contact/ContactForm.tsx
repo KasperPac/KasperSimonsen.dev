@@ -205,10 +205,6 @@ export default function ContactForm() {
           {/* Availability */}
           <div className="px-8 py-8" style={{ borderBottom: "0.5px solid var(--border)" }}>
             <p className="text-[10px] tracking-[0.1em] uppercase mb-3" style={{ ...mono, color: "var(--accent)" }}>Availability</p>
-            <div className="flex items-center gap-2 mb-2">
-              <span className="pulse-dot-o" style={{ margin: 0 }} />
-              <span className="text-sm font-black uppercase" style={{ ...display, letterSpacing: "-0.02em", color: "var(--text-primary)" }}>Available Q2 2026</span>
-            </div>
             <p className="text-xs leading-relaxed" style={{ ...body, color: "var(--text-dim)" }}>
               Taking new projects now. Selective — I only take on work I can do well, not everything that comes through the door.
             </p>
