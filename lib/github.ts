@@ -1,5 +1,5 @@
 const GITHUB_TOKEN    = process.env.GITHUB_TOKEN;
-const GITHUB_USERNAME = process.env.GITHUB_USERNAME ?? "kaspersimonsen";
+const GITHUB_USERNAME = process.env.GITHUB_USERNAME ?? "KasperPac";
 
 export type RepoMeta = {
   lastCommit: { sha: string; message: string; date: string } | null;

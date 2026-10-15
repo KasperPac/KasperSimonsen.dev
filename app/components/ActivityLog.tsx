@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { CONTACT_GITHUB_URL } from "@/content/contact";
 
 const GITHUB_TOKEN    = process.env.GITHUB_TOKEN;
-const GITHUB_USERNAME = process.env.GITHUB_USERNAME ?? "kaspersimonsen";
+const GITHUB_USERNAME = process.env.GITHUB_USERNAME ?? "KasperPac";
 
 const mono = { fontFamily: "var(--font-geist-mono), ui-monospace, monospace" };
 
@@ -73,7 +74,7 @@ export default async function ActivityLog() {
         .slice(0, 4)
     : FALLBACK;
 
-  const githubUrl = `https://github.com/${GITHUB_USERNAME}`;
+  const githubUrl = CONTACT_GITHUB_URL;
 
   return (
     <section>

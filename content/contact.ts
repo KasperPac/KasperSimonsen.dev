@@ -1,4 +1,5 @@
 export const CONTACT_EMAIL = "hello@kaspersimonsen.dev";
+export const CONTACT_GITHUB_URL = "https://github.com/KasperPac";
 
 /** `?topic=` values the contact form knows: the two engagement models. */
 export const TOPICS = ["tools", "platforms"] as const;
@@ -22,4 +23,4 @@ export function subjectForTopic(topic: string | undefined): string {
 export const CONTACT_NAME = "Kasper Simonsen";
 
 /** Links on the business card. LinkedIn goes here when Kasper sends the URL. */
-export const CONTACT_LINKS: { label: string; href: string }[] = [{ label: "GitHub", href: "https://github.com/kaspersimonsen" }];
+export const CONTACT_LINKS: { label: string; href: string }[] = [{ label: "GitHub", href: CONTACT_GITHUB_URL }];
