@@ -13,6 +13,12 @@ describe("ServiceArticle", () => {
     expect(out).toContain(`id="t"`);
     expect(out).toMatch(/<h2[^>]*id="t"/);
     for (const p of services[0].body) expect(out).toContain(esc(p));
+    for (const section of services[0].sections) {
+      expect(out).toContain(`<h3>${esc(section.title)}</h3>`);
+      for (const p of section.paragraphs) expect(out).toContain(`<p>${esc(p)}</p>`);
+      for (const item of section.items ?? []) expect(out).toContain(`<li>${esc(item)}</li>`);
+      expect(out.indexOf(esc(section.title))).toBeLessThan(out.indexOf("Two ways to work with me"));
+    }
     expect(out).toContain("Two ways to work with me");
     for (const m of engagementModels) {
       expect(out).toContain(esc(m.description));
@@ -25,6 +31,7 @@ describe("ServiceArticle", () => {
     expect(office).not.toContain("/contact?topic=");
     const page = renderToStaticMarkup(createElement(ServiceArticle, { service: services[1], titleId: "t", level: 1 }));
     expect(page).toMatch(/<h1[^>]*id="t"/);
+    expect(page).toContain(`<h2>${esc(services[1].sections[0].title)}</h2>`);
     for (const m of engagementModels) expect(page).toContain(`href="/contact?topic=${m.topic}"`);
   });
 });

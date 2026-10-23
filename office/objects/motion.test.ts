@@ -73,6 +73,29 @@ describe("helpers", () => {
 });
 
 describe("ObjectMotion", () => {
+  it("lays out the globe, phone, computer and gear in service order without changing their node identities", () => {
+    const root = new Group();
+    const ornaments = [0, 1, 2, 3].map((i) => {
+      const o = new Group();
+      o.name = `hs_shelf__ornament_0${i}`;
+      o.position.set(-0.36 + i * 0.24, 0.05, 0.1);
+      root.add(o);
+      return o;
+    });
+    const nodes = findMotionNodes(root);
+    expect(nodes.ornaments).toEqual([ornaments[1], ornaments[2], ornaments[3], ornaments[0]]);
+    nodes.ornaments.forEach((o, i) => {
+      expect(o.position.x).toBeCloseTo(-0.36 + i * 0.24);
+      expect(o.position.y).toBe(0.05);
+      expect(o.position.z).toBe(0.1);
+    });
+    // Rediscovery (including React's development remount) must not rotate the slots again.
+    const positions = nodes.ornaments.map((o) => o.position.toArray());
+    const again = findMotionNodes(root);
+    expect(again.ornaments.map((o) => o.position.toArray())).toEqual(positions);
+    expect(root.getObjectByName("hs_shelf__ornament_00")).toBe(ornaments[0]);
+  });
+
   it("opens the drawer over DRAWER_SECONDS along its axis and closes it again", () => {
     const s = scene();
     const nodes = findMotionNodes(s.root);

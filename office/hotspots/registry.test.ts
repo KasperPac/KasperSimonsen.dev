@@ -45,7 +45,7 @@ describe("hitFor", () => {
   });
   it("focused on the crate: other hotspots are nothing", () => expect(hitFor(s.drawer, "hs_crate")).toBeNull());
   it("focused on the shelf: an ornament with content is that service", () =>
-    expect(hitFor(s.orn1, "hs_shelf")).toEqual({ hotspot: "hs_shelf", item: services[1].slug }));
+    expect(hitFor(s.orn1, "hs_shelf")).toEqual({ hotspot: "hs_shelf", item: "websites" }));
   it("nothing under the pointer is nothing", () => expect(hitFor(null, null)).toBeNull());
 });
 
@@ -62,23 +62,27 @@ describe("pickHit (everything under the pointer, nearest first)", () => {
 });
 
 describe("items", () => {
-  it("maps records to work and ornaments to services, in order", () => {
+  it("maps records to work and keeps each modelled ornament attached to its service", () => {
     expect(itemAt("hs_crate", 0)).toBe(work[0].slug);
     expect(itemAt("hs_crate", work.length)).toBeNull();
-    expect(itemAt("hs_shelf", 1)).toBe(services[1].slug);
+    expect(itemAt("hs_shelf", 0)).toBe("industrial-automation");
+    expect(itemAt("hs_shelf", 1)).toBe("websites");
+    expect(itemAt("hs_shelf", 2)).toBe("apps");
+    expect(itemAt("hs_shelf", 3)).toBe("desktop-software");
     expect(itemAt("hs_shelf", services.length)).toBeNull();
     expect(itemAt("hs_drawer", 0)).toBeNull();
   });
   it("finds the node behind a slug", () => {
     expect(itemNode("hs_crate", work[2].slug)).toBe("hs_crate__record_02");
-    expect(itemNode("hs_shelf", services[0].slug)).toBe("hs_shelf__ornament_00");
+    expect(itemNode("hs_shelf", "websites")).toBe("hs_shelf__ornament_01");
+    expect(itemNode("hs_shelf", "industrial-automation")).toBe("hs_shelf__ornament_00");
     expect(itemNode("hs_crate", "nope")).toBeNull();
   });
   it("has room in the crate and on the shelf for all the content", () => {
     expect(ORNAMENTS).toBe(4);
     expect(services.length).toBe(ORNAMENTS); // every ornament carries a service
     expect(work.length).toBeLessThanOrEqual(RECORDS);
-    expect(itemAt("hs_shelf", 3)).toBe(services[3].slug);
+    expect(itemAt("hs_shelf", 3)).toBe("desktop-software");
     expect(itemAt("hs_shelf", 4)).toBeNull();
   });
 });

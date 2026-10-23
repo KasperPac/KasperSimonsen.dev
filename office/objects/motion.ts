@@ -1,6 +1,7 @@
 import { Vector3, type Object3D } from "three";
 import { work } from "@/content/work";
-import type { HotspotName } from "../hotspots/registry";
+import { services } from "@/content/services";
+import { itemNode, type HotspotName } from "../hotspots/registry";
 
 /** Runtime node names (office.glb). office/nodes.test.ts keeps them required by the manifest. */
 export const DRAWER_NODE = "hs_drawer__drawer";
@@ -63,7 +64,7 @@ export type MotionNodes = {
   screen: Object3D | null;
 };
 
-/** Finds the moving parts by name and remembers where they rest. Missing parts are simply absent. */
+/** Finds moving parts and arranges the shelf in service order. Missing parts are simply absent. */
 export function findMotionNodes(root: Object3D): MotionNodes {
   const records: { i: number; o: Object3D }[] = [];
   const ornaments: { i: number; o: Object3D }[] = [];
@@ -76,7 +77,14 @@ export function findMotionNodes(root: Object3D): MotionNodes {
   const byIndex = (a: { i: number }, b: { i: number }) => a.i - b.i;
   const drawer = root.getObjectByName(DRAWER_NODE) ?? null;
   const sortedRecords = records.sort(byIndex).map((x) => x.o);
-  const sortedOrnaments = ornaments.sort(byIndex).map((x) => x.o);
+  const slots = ornaments.map(({ o }) => o.position.x).sort((a, b) => a - b);
+  const sortedOrnaments = services.flatMap((s) => {
+    const ornament = ornaments.find(({ o }) => o.name === itemNode("hs_shelf", s.slug));
+    return ornament ? [ornament.o] : [];
+  });
+  // Reuse the model's slots, keeping each ornament's name, geometry, height and orientation intact.
+  // Sorting the slots makes rediscovery safe: the same order produces the same layout.
+  sortedOrnaments.forEach((o, i) => { o.position.x = slots[i]; });
   return {
     drawer,
     drawerRest: drawer ? drawer.position.clone() : new Vector3(),

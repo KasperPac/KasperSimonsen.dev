@@ -5,61 +5,159 @@ export type Service = {
   slug: string;
   number: string;
   name: string;
-  /** The ornament it stands as on the shelf (office_props.py builds them in this order). */
+  /** Its ornament in the model; independent of the order the services are displayed. */
   ornament: "gear" | "globe" | "phone" | "computer";
   /** Two or three lines on the plaque. */
   summary: string;
-  /** The Read more, a paragraph each. */
+  /** Introduction to the full service. */
   body: string[];
+  /** Service-specific scope, approach and handover, before the engagement models. */
+  sections: { title: string; paragraphs: string[]; items?: string[] }[];
 };
 
 export const services: Service[] = [
   {
-    slug: "industrial-automation",
-    number: "01",
-    name: "Industrial automation",
-    ornament: "gear",
-    summary: "PLC and HMI work, mostly Siemens and Omron, and the software that joins the machines up to the rest of the business.",
-    body: [
-      "Machines don't care how nice your dashboard looks. They care whether the code is right, and whether someone can fault-find it at 2 am without ringing me.",
-      "I write and change PLC and HMI code, do safety upgrades on lines that are already running, and build the software around them: production tracking, reporting, and getting machine data into the systems the office already uses.",
-      "Brownfield's fine. Most of the job is changing something that works, carefully, and writing down what changed.",
-    ],
-  },
-  {
     slug: "websites",
-    number: "02",
+    number: "01",
     name: "Websites",
     ornament: "globe",
-    summary: "Sites that load fast, say plainly what you do, and that you can update yourself without ringing me. Next.js mostly.",
+    summary: "Business websites and online stores that explain what you do, bring in enquiries, and let you update your own content.",
     body: [
-      "Most business sites need less than they're sold: a clear page about what you do, and an easy way to get hold of you.",
-      "I build them in Next.js on Vercel, with the words and pictures somewhere you can edit them yourself. Shopify when you're selling things.",
-      "If the site has to do something odd behind the scenes, that's where I'm most useful.",
+      "Someone visiting your site should be able to work out what you do, whether it's right for them, and how to get in touch. That's where I start.",
+      "I design and build new sites, replace ones that have become difficult to use, and add the bits a business needs as it grows. You'll deal with me from the first conversation through to launch.",
+    ],
+    sections: [
+      {
+        title: "What I build",
+        paragraphs: [],
+        items: [
+          "Business and service websites with clear pages for your work, services and enquiries.",
+          "Online stores, including product catalogues and the connections needed to manage orders.",
+          "Booking and enquiry forms that send information to the people who need it.",
+          "Content editing for things you change regularly, such as services, articles and project photos.",
+        ],
+      },
+      {
+        title: "From first draft to launch",
+        paragraphs: [
+          "We work out who the site is for and what they need to do there. Then I plan the pages, work through the content with you, and build a version you can try on your own phone and computer.",
+          "I check page speed, keyboard access, mobile layouts and the basics that help search engines understand your pages. Forms and any connections to other systems get tested before launch.",
+        ],
+      },
+      {
+        title: "A site you can look after",
+        paragraphs: [
+          "Handover covers editing your content, access to the site and hosting, and how everything is connected. We agree which updates you want to handle yourself and what you'd like me to look after. Ongoing work is scoped separately so you know what you're paying for.",
+        ],
+      },
     ],
   },
   {
     slug: "apps",
-    number: "03",
+    number: "02",
     name: "Apps",
     ornament: "phone",
-    summary: "Web apps, and iPhone and Android apps. Built for the people who'll actually use them, gloves and patchy wifi included.",
+    summary: "Web, iPhone and Android apps for running a business or building a product. Jobs, stock, customer portals, and the workflows in between.",
     body: [
-      "An app is usually a spreadsheet that's outgrown itself. Inventory, production, jobs, quotes: whatever the business runs on that's held together by one person's macros.",
-      "I build web apps in Next.js and phone apps in React Native, so one codebase covers iPhone and Android. Warehouse scanners and plant-floor tablets too.",
-      "It keeps working when the wifi drops, keeps each customer's data to itself, and doesn't fall over the week after launch.",
+      "A lot of app projects start with the same problem: the business has outgrown its spreadsheets, and people are spending too much of the day copying information between systems.",
+      "I build apps for that work, and products that customers use directly. We choose web, mobile or both around where people will use it and what they need access to.",
+    ],
+    sections: [
+      {
+        title: "What I build",
+        paragraphs: [],
+        items: [
+          "Internal tools for jobs, quoting, inventory, scheduling and reporting.",
+          "Customer portals where people can submit requests, follow progress or manage their account.",
+          "iPhone and Android apps for work away from a desk, including tablets and warehouse scanners.",
+          "Subscription products with accounts, access permissions and separate data for each customer.",
+        ],
+      },
+      {
+        title: "Built around the actual job",
+        paragraphs: [
+          "I start by walking through the work with the people doing it. We pick a useful first version, then build in chunks you can try as we go. Awkward steps are much easier to fix while they're still small.",
+          "Connections to existing systems, moving old data, and who can see or change what are part of the scope. If the app needs to work with patchy reception, we plan what it stores on the device and how it catches up when the connection returns.",
+        ],
+      },
+      {
+        title: "Getting it into use",
+        paragraphs: [
+          "Delivery includes testing the agreed workflows, setting up the live app and documenting how to run it. For phone apps, we agree the distribution route, including any app store submission work. You'll have access to the code and accounts, with support and further features agreed separately.",
+        ],
+      },
     ],
   },
   {
     slug: "desktop-software",
-    number: "04",
+    number: "03",
     name: "Desktop software",
     ornament: "computer",
     summary: "Windows software for when a browser won't do: talking to hardware, running offline on a plant PC, or chewing through files locally.",
     body: [
       "Some jobs don't belong in a browser. The PC's bolted to a machine, the network comes and goes, or the files are too big to upload anywhere.",
-      "I write desktop tools that talk to serial devices, PLCs and label printers, run without an internet connection, and install without a fight with IT.",
-      "Usually it's a small utility someone's been wishing existed for years. Sometimes it's the whole operator station.",
+      "I build Windows tools for those situations. Sometimes it's a small utility that saves someone hours every week. Sometimes it's the interface an operator uses for a whole shift.",
+    ],
+    sections: [
+      {
+        title: "What I build",
+        paragraphs: [],
+        items: [
+          "Utilities for importing, checking, converting and exporting files in bulk.",
+          "Software that talks to serial devices, PLCs, scanners and label printers.",
+          "Local data collection, reporting and operator tools for plant PCs.",
+          "Replacements for ageing utilities and macros that have become difficult to maintain.",
+        ],
+      },
+      {
+        title: "Made for the PC it runs on",
+        paragraphs: [
+          "I check the Windows version, hardware connections, file formats and IT restrictions before choosing how to build it. An application tested on my laptop still needs to work on the machine where you'll use it.",
+          "We agree what must work offline, where data is kept, and what should happen if a device disconnects or a file is incomplete. I test against representative files and available hardware, with any site checks included in the scope.",
+        ],
+      },
+      {
+        title: "Installation and handover",
+        paragraphs: [
+          "You get the application, an agreed installation process, and notes covering setup, settings and common faults. I document its dependencies and how to recover or move its data. Updates and ongoing support are agreed around how the PC is managed.",
+        ],
+      },
+    ],
+  },
+  {
+    slug: "industrial-automation",
+    number: "04",
+    name: "Industrial automation",
+    ornament: "gear",
+    summary: "PLC and HMI programming, upgrades to existing machinery, and production data connected to the rest of the business. Mostly Siemens and Omron.",
+    body: [
+      "Machines don't care how nice your dashboard looks. They care whether the code is right, and whether someone can fault-find it at 2 am without ringing me.",
+      "I write and change PLC and HMI code, work on existing production lines, and build the software around them. Brownfield work means understanding what's already running before changing it.",
+    ],
+    sections: [
+      {
+        title: "Where I can help",
+        paragraphs: [],
+        items: [
+          "PLC programming and fault-finding, mostly on Siemens and Omron systems.",
+          "HMI screens, alarms and diagnostics that help operators understand what the machine is doing.",
+          "Changes to existing sequences and interlocks, including control changes within a scoped safety upgrade.",
+          "Production tracking, reporting and getting machine data into the systems the office already uses.",
+        ],
+      },
+      {
+        title: "Changing a running machine",
+        paragraphs: [
+          "I start with the existing code, drawings and a conversation about how the line actually runs. We agree the change, the available downtime, the checks needed and how to get back to the previous version if something isn't right.",
+          "Safety-related work needs an agreed scope and validation responsibilities. Testing, commissioning and sign-off are planned around the machine and the people responsible for it.",
+        ],
+      },
+      {
+        title: "Leaving a useful record",
+        paragraphs: [
+          "Handover includes the agreed source files and backups, a record of what changed, and the test results and operator notes relevant to the work. The next person looking after the line should be able to understand what was done.",
+        ],
+      },
     ],
   },
 ];

@@ -54,11 +54,11 @@ describe("work", () => {
 
 describe("services", () => {
   it("has the four shelf services, in shelf order, with url-safe slugs", () => {
-    expect(services.map((s) => s.slug)).toEqual(["industrial-automation", "websites", "apps", "desktop-software"]);
+    expect(services.map((s) => s.slug)).toEqual(["websites", "apps", "desktop-software", "industrial-automation"]);
     for (const s of services) expect(s.slug).toMatch(/^[a-z0-9-]+$/);
   });
-  it("gives each one its ornament: gear, globe, phone, desktop computer", () =>
-    expect(services.map((s) => s.ornament)).toEqual(["gear", "globe", "phone", "computer"]));
+  it("gives each one its ornament: globe, phone, desktop computer, gear", () =>
+    expect(services.map((s) => s.ornament)).toEqual(["globe", "phone", "computer", "gear"]));
   it("numbers them 01 to 04", () => expect(services.map((s) => s.number)).toEqual(["01", "02", "03", "04"]));
   it("keeps each plaque summary to two or three lines", () => {
     for (const s of services) {

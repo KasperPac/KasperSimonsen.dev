@@ -1,6 +1,6 @@
 import type { Object3D } from "three";
 import { findWork, work } from "@/content/work";
-import { findService, services } from "@/content/services";
+import { findService, services, type Service } from "@/content/services";
 
 /** The four objects the office signposts (dots, tour, glints, the visible nav): the ways in. */
 export const HOTSPOTS = ["hs_crate", "hs_drawer", "hs_monitor", "hs_shelf"] as const;
@@ -32,6 +32,14 @@ export const ORNAMENTS = 4;
 
 const ITEM = /^(hs_crate)__record_(\d\d)$|^(hs_shelf)__ornament_(\d\d)$/;
 
+/** Model identities stay fixed when the display order changes (office_props.py). */
+const ORNAMENT_NODES: Record<Service["ornament"], string> = {
+  gear: "hs_shelf__ornament_00",
+  globe: "hs_shelf__ornament_01",
+  phone: "hs_shelf__ornament_02",
+  computer: "hs_shelf__ornament_03",
+};
+
 function isHotspot(name: string): name is HotspotName {
   return (ALL_HOTSPOTS as readonly string[]).includes(name);
 }
@@ -39,7 +47,10 @@ function isHotspot(name: string): name is HotspotName {
 /** Content slug behind a record or ornament index; null for blank sleeves and other hotspots. */
 export function itemAt(hotspot: HotspotName, index: number): string | null {
   if (hotspot === "hs_crate") return work[index]?.slug ?? null;
-  if (hotspot === "hs_shelf") return services[index]?.slug ?? null;
+  if (hotspot === "hs_shelf") {
+    const node = `hs_shelf__ornament_${String(index).padStart(2, "0")}`;
+    return services.find((s) => ORNAMENT_NODES[s.ornament] === node)?.slug ?? null;
+  }
   return null;
 }
 
@@ -51,8 +62,8 @@ export function itemNode(hotspot: HotspotName, slug: string): string | null {
     return i < 0 ? null : `hs_crate__record_${pad(i)}`;
   }
   if (hotspot === "hs_shelf") {
-    const i = services.findIndex((s) => s.slug === slug);
-    return i < 0 ? null : `hs_shelf__ornament_${pad(i)}`;
+    const service = findService(slug);
+    return service ? ORNAMENT_NODES[service.ornament] : null;
   }
   return null;
 }

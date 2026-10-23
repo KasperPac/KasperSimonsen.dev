@@ -22,6 +22,17 @@ export default function ServiceArticle({ service, titleId, level, onWrite }: { s
       {service.body.map((p, i) => (
         <p key={i}>{p}</p>
       ))}
+      {service.sections.map((section) => (
+        <section key={section.title}>
+          <Ways>{section.title}</Ways>
+          {section.paragraphs.map((p) => <p key={p}>{p}</p>)}
+          {section.items && (
+            <ul>
+              {section.items.map((item) => <li key={item}>{item}</li>)}
+            </ul>
+          )}
+        </section>
+      ))}
       <Ways>{COPY.service.ways}</Ways>
       {engagementModels.map((m) => (
         <section key={m.slug} className="article-model">

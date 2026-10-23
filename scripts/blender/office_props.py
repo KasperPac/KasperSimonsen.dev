@@ -753,7 +753,7 @@ def build_shelf(name, location, rotation_z, parent, col, width=1.0, depth=0.22):
     _part(f"{name}__board", bm, root, col)
 
     y = -depth / 2
-    builders = (_ornament_gear, _ornament_globe, _ornament_phone, _ornament_computer)  # services order (content/services.ts)
+    builders = (_ornament_gear, _ornament_globe, _ornament_phone, _ornament_computer)  # stable IDs; motion.ts arranges in service order
     for i, (build, x) in enumerate(zip(builders, (-0.36, -0.12, 0.12, 0.36))):
         bm = bmesh.new()
         build(bm)
