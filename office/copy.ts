@@ -53,8 +53,8 @@ export const COPY = {
   caseStudy: { monitor: "See on the monitor", live: "See it live" },
   crate: {
     label: (name: string, n: number, of: number) => `Record crate: ${name}, ${n} of ${of}. Arrow keys flick, Enter puts it on.`,
-    hint: "Hover a record to flick to it. Click it to put it on.",
-    hintTouch: "Swipe down for the next record. Tap to put it on.",
+    hint: "Move up and down over the records to browse. Click one to play it.",
+    hintTouch: "Swipe up or down to browse. Tap a record to play it.",
   },
   shelf: {
     label: "Shelf",

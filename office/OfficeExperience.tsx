@@ -31,6 +31,7 @@ import { usePortrait } from "./usePortrait";
 import { useCoarsePointer } from "./useCoarsePointer";
 import { clampDig } from "./objects/crate";
 import { canPull, digFor } from "./crate/dig";
+import { CrateWalkthrough } from "./crate/walkthrough";
 import { tourAt } from "./hints/tour";
 import { GLINT_SECONDS, glintGap, nextGlint } from "./hints/glint";
 import { findWork, work } from "@/content/work";
@@ -67,6 +68,9 @@ export default function OfficeExperience() {
   const trigger = useRef<HTMLElement | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [dig, setDig] = useState(0);
+  const crateWalkthrough = useRef(new CrateWalkthrough());
+  const walkthroughCue = useRef<HTMLDivElement | null>(null);
+  const [walkthroughVisible, setWalkthroughVisible] = useState(false);
   const browsingRef = useRef(false);
   // Arrival hints (spec 3.1): a tour of the four objects, then each object's dot, in its colour, with now and then one
   // object lit up (a glint). Once the visitor has opened something the glints and the line of text stop; the dots stay.
@@ -121,7 +125,7 @@ export default function OfficeExperience() {
     (hit: Hit | null) => {
       visitorHover.current = hit;
       if (hit) interacted.current = true;
-      if (hit?.hotspot === "hs_crate" && hit.item && browsingRef.current) {
+      if (hit?.hotspot === "hs_crate" && hit.item && browsingRef.current && !crateWalkthrough.current.active) {
         const i = work.findIndex((w) => w.slug === hit.item);
         if (i >= 0) setDig(i);
       }
@@ -267,6 +271,55 @@ export default function OfficeExperience() {
   const crate = useRef({ dig: 0, playing: null as number | null, browsing: false });
   crate.current = { dig: digFor(dig, pulledSlug), playing: pulledIndex < 0 ? null : pulledIndex, browsing };
   const crateRef = useRef<HTMLDivElement | null>(null);
+
+  // Browsing starts after the camera settles; the real dig drives the existing sleeve animation.
+  useEffect(() => {
+    const demo = crateWalkthrough.current;
+    if (!browsing) return;
+    let visitStorage: Storage | undefined;
+    try { visitStorage = window.sessionStorage; } catch { /* Storage may be blocked. */ }
+    if (!demo.begin(work.length, reducedMotion(), performance.now() / 1000, visitStorage)) return;
+    setWalkthroughVisible(true);
+    let frame = 0;
+    let previousDig = -1;
+    const stop = () => {
+      demo.cancel();
+      cancelAnimationFrame(frame);
+      setWalkthroughVisible(false);
+    };
+    const move = (event: PointerEvent) => {
+      if (event.movementX || event.movementY) stop();
+    };
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const preferenceChanged = () => { if (preference.matches) stop(); };
+    const tick = (now: number) => {
+      const sample = demo.sample(now / 1000);
+      if (sample.dig !== null && sample.dig !== previousDig) {
+        previousDig = sample.dig;
+        setDig(sample.dig);
+      }
+      walkthroughCue.current?.style.setProperty("--crate-demo-y", `${sample.offset}px`);
+      if (demo.active) frame = requestAnimationFrame(tick);
+      else setWalkthroughVisible(false);
+    };
+    frame = requestAnimationFrame(tick);
+    // Native capture listeners yield before the existing hover, swipe and keyboard handlers act.
+    window.addEventListener("pointerdown", stop, true);
+    window.addEventListener("pointermove", move, true);
+    window.addEventListener("keydown", stop, true);
+    window.addEventListener("wheel", stop, { capture: true, passive: true });
+    window.addEventListener("blur", stop);
+    preference.addEventListener("change", preferenceChanged);
+    return () => {
+      stop();
+      window.removeEventListener("pointerdown", stop, true);
+      window.removeEventListener("pointermove", move, true);
+      window.removeEventListener("keydown", stop, true);
+      window.removeEventListener("wheel", stop, true);
+      window.removeEventListener("blur", stop);
+      preference.removeEventListener("change", preferenceChanged);
+    };
+  }, [browsing]);
 
   // The shelf (spec 3.4): browse it, pick an ornament (it floats to the camera, its plaque beside it), read it in the panel.
   const shelfSlug = scene.target?.hotspot === "hs_shelf" ? scene.target.item : null;
@@ -593,9 +646,20 @@ export default function OfficeExperience() {
             onFocus={() => show({ hotspot: "hs_crate", item: work[crate.current.dig].slug })}
           />
           {/* read out as the records flick (the group's own label isn't re-announced when it changes) */}
-          <p className="office-sr" aria-live="polite">
+          <p className="office-sr" aria-live={walkthroughVisible ? "off" : "polite"}>
             {work[crate.current.dig].name}
           </p>
+          {walkthroughVisible && (
+            <div ref={walkthroughCue} className="office-crate-demo" aria-hidden="true">
+              <svg className="office-crate-demo-rail" viewBox="0 0 20 100" fill="none">
+                <path d="M5 8 10 3 15 8 M10 4V96 M5 92 10 97 15 92" />
+              </svg>
+              <span className="office-crate-demo-gesture">
+                <svg className="office-hint-pointer" viewBox="0 0 40 48"><path d="M7 4v33l9-8 7 14 7-4-7-13h12Z" /></svg>
+                <svg className="office-hint-touch" viewBox="0 0 40 48"><path d="M15 25V7a4 4 0 0 1 8 0v14l3-2 5 2 5 3v12l-6 9H17L6 31a4 4 0 0 1 6-5l3 3Z" /></svg>
+              </span>
+            </div>
+          )}
           <p className="office-hint" aria-hidden="true">
             <span className="office-hint-pointer">{COPY.crate.hint}</span>
             <span className="office-hint-touch">{COPY.crate.hintTouch}</span>

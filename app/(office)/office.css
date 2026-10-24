@@ -383,6 +383,12 @@ html.office-locked, html.office-menu-open {
 .office-hint { position: fixed; left: 16px; right: 16px; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 3; text-align: center; font: 11px/1.5 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.7); }
 /* The crate says how to use it in the visitor's own terms: hover and click with a pointer, swipe and tap on a phone. */
 .office-hint-touch { display: none; }
+.office-crate-demo { position: fixed; left: 56%; top: 56%; width: 48px; height: 112px; z-index: 4; pointer-events: none; --crate-demo-y: 0px; }
+.office-crate-demo-rail { position: absolute; left: -17px; top: 0; width: 20px; height: 100px; stroke: rgba(232, 232, 232, 0.65); stroke-width: 1.5; filter: drop-shadow(0 1px 2px #000); }
+.office-crate-demo-gesture { position: absolute; left: 0; top: 76px; width: 36px; height: 44px; transform: translateY(var(--crate-demo-y)); filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7)); }
+.office-crate-demo-gesture svg { width: 36px; height: 44px; fill: #e8e8e8; stroke: #171717; stroke-width: 1.5; stroke-linejoin: round; }
+@media (hover: none) { .office-crate-demo-gesture { top: 0; transform: translateY(calc(0px - var(--crate-demo-y))); } }
+@media (prefers-reduced-motion: reduce) { .office-crate-demo { display: none; } }
 @media (hover: none) {
   .office-hint-pointer { display: none; }
   .office-hint-touch { display: inline; }
