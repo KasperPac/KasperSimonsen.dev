@@ -246,7 +246,7 @@ export const previously: Project[] = [
     title: "EVERY INGREDIENT, ACCOUNTED FOR",
     displayName: "Silio",
     logo: "/silio.svg",
-    liveUrl: "https://pac-technologies.com.au/products/silio",
+    liveUrl: "https://pac-technologies.com.au/products#silio",
     role: "Sole engineer (software)",
     stack: [
       "Omron Sysmac NJ/NX PLC (plant control layer)",
