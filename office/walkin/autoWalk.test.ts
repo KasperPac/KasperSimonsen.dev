@@ -46,6 +46,36 @@ describe("walkStep", () => {
   it("moves the walk on by an ordinary frame", () => expect(walkStep(1 / 60)).toBeCloseTo(1 / 60));
   it("pauses through a hitch instead of leaping ahead into the office", () => expect(walkStep(8.5)).toBe(MAX_FRAME_SECONDS));
   it("never runs backwards", () => expect(walkStep(-0.5)).toBe(0));
+
+  it("gives the lobby at least two seconds without changing the approach or final arrival pace", () => {
+    const travel = (slow: boolean) => {
+      const at = new Map<number, number>();
+      let clock = 0, elapsed = 0;
+      while (clock < 8 && elapsed < 20) {
+        const progress = walkAt(clock, 0, 1000, 8) / 1000;
+        for (const mark of [0.45, 0.55, 0.62, 0.72]) {
+          if (progress >= mark && !at.has(mark)) at.set(mark, elapsed);
+        }
+        clock += slow ? walkStep(1 / 60, progress) : walkStep(1 / 60);
+        elapsed += 1 / 60;
+      }
+      return { at, elapsed };
+    };
+    const original = travel(false), slower = travel(true);
+    expect(slower.at.get(0.62)! - slower.at.get(0.55)!).toBeGreaterThanOrEqual(2);
+    expect(slower.elapsed).toBeGreaterThan(10);
+    expect(slower.elapsed).toBeLessThan(13);
+    expect(slower.at.get(0.45)).toBeCloseTo(original.at.get(0.45)!, 1);
+    expect(slower.elapsed - slower.at.get(0.72)!).toBeCloseTo(original.elapsed - original.at.get(0.72)!, 1);
+  });
+
+  it("eases into and out of the slower section without stopping or jumping", () => {
+    const steps = Array.from({ length: 1001 }, (_, i) => walkStep(1 / 60, i / 1000));
+    expect(Math.min(...steps)).toBeGreaterThan(0);
+    expect(Math.max(...steps)).toBeLessThanOrEqual(1 / 60);
+    expect(Math.min(...steps)).toBeLessThan(1 / 60 / 4);
+    expect(Math.max(...steps.slice(1).map((step, i) => Math.abs(step - steps[i])))).toBeLessThan(0.001);
+  });
 });
 
 describe("takesOver", () => {

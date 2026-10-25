@@ -26,9 +26,19 @@ export function walkAt(t: number, from: number, to: number, duration: number): n
   return from + (to - from) * (1 - Math.cos((Math.PI * t) / duration)) / 2;
 }
 
-/** How far a frame `dt` seconds long moves the walk on. */
-export function walkStep(dt: number): number {
-  return Math.min(MAX_FRAME_SECONDS, Math.max(0, dt));
+/** Slow through the lobby, easing between its walking pace and the surrounding journey. */
+function lobbyPace(progress: number): number {
+  const smooth = (from: number, to: number) => {
+    const t = Math.min(1, Math.max(0, (progress - from) / (to - from)));
+    return t * t * (3 - 2 * t);
+  };
+  const within = Math.min(smooth(0.5, 0.535), 1 - smooth(0.635, 0.68));
+  return 1 - 0.82 * within;
+}
+
+/** How far a frame moves the walk's clock on, with extra time inside the lobby. */
+export function walkStep(dt: number, progress = 0): number {
+  return Math.min(MAX_FRAME_SECONDS, Math.max(0, dt)) * lobbyPace(progress);
 }
 
 /** Does this input mean the visitor wants to steer? Never the walk's own scrolling. */
@@ -39,7 +49,7 @@ export function takesOver(type: string, key?: string): boolean {
 
 /**
  * Scrolls the page to the bottom for the visitor, so the scroll-scrubbed walk-in plays exactly as if they'd scrolled
- * it (and scrolling back up still reverses it). The whole walk takes `seconds`. A wheel, touch, click or scrolling key
+ * it (and scrolling back up still reverses it). `seconds` is the base journey time, with extra time in the lobby. A wheel, touch, click or scrolling key
  * stops it where it is. `onEnd` runs once, however it ends; the returned function ends it early.
  */
 export function startAutoWalk(seconds: number, onEnd: () => void): () => void {
@@ -62,7 +72,8 @@ export function startAutoWalk(seconds: number, onEnd: () => void): () => void {
     if (takesOver(e.type, (e as KeyboardEvent).key)) end();
   };
   const step = (now: number) => {
-    t += last === null ? 0 : walkStep((now - last) / 1000);
+    const progress = to > 0 ? walkAt(t, from, to, duration) / to : 1;
+    t += last === null ? 0 : walkStep((now - last) / 1000, progress);
     last = now;
     window.scrollTo({ top: walkAt(t, from, to, duration), behavior: "instant" });
     if (t >= duration) end();

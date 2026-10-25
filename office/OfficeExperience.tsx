@@ -603,6 +603,7 @@ export default function OfficeExperience() {
           overlay.current.label = el;
         }}
         className="office-label"
+        data-hotspot={hovered?.hotspot}
         aria-hidden="true"
         hidden={!hovered}
         style={{ "--accent": hovered ? theme.accents[hovered.hotspot] : theme.line } as CSSProperties}

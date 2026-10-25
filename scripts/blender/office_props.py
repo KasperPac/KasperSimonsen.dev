@@ -1116,6 +1116,7 @@ def build_book_stack(name, location, rotation_z, parent, col, count=5):
 
 MUG_R, MUG_SEGS = 0.041, 14
 ROUND_DEG = 60.0  # edge_threshold_deg for small round things: rims and handles draw, the facets between them don't
+DESK_PROP_DEG = 45.0  # headphones and lamp: retain the rims and joints without drawing each round facet
 DUCK_DEG = 45.0  # and for the duck: its outlines draw, the facets of its lenses don't
 
 
@@ -1232,6 +1233,8 @@ def build_desk_mess(name, location, rotation_z, parent, col, depth=0.7, parts=No
         obj = _part(f"{name}__{part}", bm, root, col, loc, (0, 0, rot))
         if part in ("mug", "can"):
             _soft(obj, ROUND_DEG)
+        elif part == "headphones":
+            _soft(obj, DESK_PROP_DEG)
     if wanted("paper_balls"):
         bm = bmesh.new()
         _crumple(bm, 0.028, (0.15, 0.03, 0.026), seed=5)
@@ -1271,9 +1274,10 @@ def build_desk_lamp(name, location, rotation_z, parent, col):
             + math.sin(2 * math.pi * k / per) * side) for k in range(turns * per + 1)]
     _tube(bm, coil, 0.0016, 4)
     shade = Matrix.Translation(j3 + Vector((0, -0.02, -0.01))) @ Matrix.Rotation(math.radians(-28), 4, "X")
-    _lathe(bm, [(0.0, 0.012), (0.022, 0.012), (0.024, -0.02), (0.07, -0.1), (0.074, -0.11)], 10, shade, caps=False)
+    # Broad shade panels retain a visible profile at DESK_PROP_DEG without a cage of narrow ribs.
+    _lathe(bm, [(0.0, 0.012), (0.022, 0.012), (0.024, -0.02), (0.07, -0.1), (0.074, -0.11)], 6, shade, caps=False)
     _lathe(bm, [(0.0, -0.02), (0.018, -0.035), (0.02, -0.05), (0.012, -0.066), (0.0, -0.07)], 8, shade)
-    _part(f"{name}__lamp", bm, root, col)
+    _soft(_part(f"{name}__lamp", bm, root, col), DESK_PROP_DEG)
     return root
 
 

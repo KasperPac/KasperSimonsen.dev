@@ -198,6 +198,21 @@ html.office-locked, html.office-menu-open {
 .office[data-director="idle"]:is([data-hints="dots"], [data-hints="used"]):not([data-office-fallback="true"]) .office-marker { display: block; }
 /* With the dots up, an object's label sits above its dot's ring rather than on it. */
 .office[data-director="idle"]:is([data-hints="dots"], [data-hints="used"]) .office-label { margin-top: -64px; }
+/* Contact belongs to the drawer. Keep its label below the desktop clutter, with a quiet, solid backing. */
+.office[data-director] .office-label[data-hotspot="hs_drawer"] {
+  margin-top: 28px;
+  padding: 10px 12px;
+  background: var(--office-bg);
+  font-size: 12px;
+}
+.office-label[data-hotspot="hs_drawer"]::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 100%;
+  height: 8px;
+  border-left: 1px solid var(--accent);
+}
 .office-hints-text { display: none; position: fixed; left: 16px; right: 16px; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 3; text-align: center; font: 11px/1.5 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.7); }
 .office[data-hints="dots"][data-director="idle"]:not([data-office-fallback="true"]) .office-hints-text { display: block; }
 /* Phones pan the standing view sideways (camera/pan.ts): the page keeps vertical drags (the walk-in's scroll) and hands
