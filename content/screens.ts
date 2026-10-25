@@ -34,11 +34,10 @@ export const slides: Slide[] = [
     label: "Silio",
     shot: { src: "/reel/silio-dashboard.jpg", alt: "Silio's dashboard: throughput, orders and hours at a glance" },
   },
-  // Not live yet, so its record has no liveUrl and its button is See the case study only.
   {
     slug: "mariannes-hair",
     label: "Marianne's Hair · site",
-    shot: { src: "/reel/mariannes-hair-site.jpg", alt: "Marianne's Hair's home page: a line drawing of the salon's shopfront above its name in script" },
+    shot: { src: "/reel/mariannes-hair-site-20261025.jpg", alt: "Marianne's Hair's live home page, with its gold shopfront illustration, scissors wordmark and online booking button on a navy background" },
   },
   {
     slug: "pac-technologies",

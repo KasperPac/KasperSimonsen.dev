@@ -76,11 +76,11 @@ export const currently: Project[] = [
   },
   // DRAFT for Kasper: Marianne's Hair. Facts are from C:\dev\Mariannes-Hair (its README, CLAUDE.md, package.json,
   // docs/superpowers/specs/2026-10-05-mariannes-website-design.md, src/, tests/ and git log); each is marked `// src:`.
-  // Not live, so no `liveUrl`. No phone number, street address or hours: none of them belongs in a case study.
+  // Live domain supplied by Kasper, 2026-10-25. No phone number, street address or hours in the case study.
   {
     slug: "mariannes-hair",
-    statusLabel: "BUILDING — PRE-LAUNCH", // src: README "Launching" (production build blocked until check:launch is clean); CLAUDE.md "Stage: not declared"
-    statusType: "building",
+    statusLabel: "LIVE",
+    statusType: "shipped",
     yearRange: "2026", // src: git first commit 2026-10-05, latest 2026-10-05 (37 commits)
     year: "2026",
     category: "Website",
@@ -91,10 +91,11 @@ export const currently: Project[] = [
     pills: ["Astro", "TypeScript", "Square", "Vercel"], // src: package.json (astro, @astrojs/vercel, typescript)
     stackSummary: "Astro · Square · Vercel",
     integration: "Square Catalog API · Square Appointments", // src: src/lib/square/client.ts; spec §4.2 (the Book link is the Appointments booking page)
-    statusNote: "Pre-launch",
+    statusNote: "Live",
     githubRepo: "Mariannes-Hair", // src: README "Deployment" (github.com/KasperPac/Mariannes-Hair, private; owner differs from lib/github's GITHUB_USERNAME)
     title: "A SALON WEBSITE THAT MAKES BOOKING EASY",
     displayName: "Marianne's Hair",
+    liveUrl: "https://www.marianneshair.com.au",
     logo: "/mariannes-hair-mark.svg", // a white, mark-only SVG (no navy square), from Mariannes-Hair/public/favicon.svg
     role: "Sole engineer", // src: git shortlog, one author. [inferred] the mark itself comes from the designer's master (commit MHAIR-48), not from this repo's author
     stack: [

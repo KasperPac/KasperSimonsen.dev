@@ -18,9 +18,9 @@ describe("work", () => {
       }
     }
   });
-  it("keeps the Pac Technologies site's address, and gives Marianne's Hair none: it isn't live", () => {
+  it("links the Pac Technologies and Marianne's Hair records to their live sites", () => {
     expect(findWork("pac-technologies")?.liveUrl).toBe("https://www.pac-technologies.com.au");
-    expect(findWork("mariannes-hair")?.liveUrl).toBeUndefined();
+    expect(findWork("mariannes-hair")?.liveUrl).toBe("https://www.marianneshair.com.au");
   });
   it("never prints a phone number in Marianne's Hair's record", () => {
     const text = JSON.stringify(findWork("mariannes-hair"));

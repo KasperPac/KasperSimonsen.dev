@@ -82,7 +82,7 @@ describe("slides", () => {
       ["manuva", "Manuva · bill of materials", "/reel/manuva-app-bom.jpg"],
       ["manuva", "Manuva · components", "/reel/manuva-app-components.jpg"],
       ["silio", "Silio", "/reel/silio-dashboard.jpg"],
-      ["mariannes-hair", "Marianne's Hair · site", "/reel/mariannes-hair-site.jpg"],
+      ["mariannes-hair", "Marianne's Hair · site", "/reel/mariannes-hair-site-20261025.jpg"],
       ["pac-technologies", "Pac Technologies · site", "/reel/pac-tech-site.jpg"],
     ]);
   });

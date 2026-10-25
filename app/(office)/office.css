@@ -19,7 +19,12 @@ body {
 .office-stage {
   position: fixed;
   inset: 0;
+  transition: opacity 180ms ease;
 }
+
+.office[data-crate-demo="true"] .office-stage { opacity: 0.24; }
+.office[data-crate-demo="true"] .office-hint { bottom: max(48px, env(safe-area-inset-bottom)); max-width: 480px; margin: 0 auto; font-size: clamp(14px, 1.3vw, 18px); font-weight: 500; letter-spacing: 0.035em; text-transform: none; color: var(--office-fg); }
+@media (prefers-reduced-motion: reduce) { .office-stage { transition: none; } }
 
 .office-fallback {
   position: fixed;

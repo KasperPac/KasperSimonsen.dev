@@ -25,11 +25,13 @@ sys.path.insert(0, str(Path(__file__).parent))
 import common  # noqa: E402
 import commons  # noqa: E402
 import office_props  # noqa: E402
+import lobby_props  # noqa: E402
 import signs  # noqa: E402
 
 importlib.reload(common)
 importlib.reload(commons)
 importlib.reload(office_props)
+importlib.reload(lobby_props)
 importlib.reload(signs)
 
 FPS = 24
@@ -367,7 +369,7 @@ def build_corridor(root, col, lobby_north):
     span("prop_corridor_stub_floor", (OFFICE_AT[0], STUB_END, -0.01), (north, OFFICE_WEST, 0), root, col)
     span("prop_corridor_ceiling", (office_back, OFFICE_WEST, height), (north, west, height + 0.05), root, col)
     span("prop_corridor_stub_ceiling", (OFFICE_AT[0], STUB_END, height), (north, OFFICE_WEST, height + 0.05), root, col)
-    span("prop_corridor_wall_west", (office_back, west, 0), (north + WALL, west + WALL, height), root, col)
+    lobby_props.build_corridor_offices(root, col, office_back, north, west, height, WALL)
     span("prop_corridor_wall_north", (north, STUB_END - WALL, 0), (north + WALL, west, height), root, col)
     span("prop_corridor_wall_end", (OFFICE_AT[0], STUB_END - WALL, 0), (north, STUB_END, height), root, col)
 
@@ -413,6 +415,7 @@ def build_lobby(frame, root, col, fp):
         ((c0, back - 1.6, 0), (c1, back - 0.9, 1.08)), ((c0 - 0.03, back - 1.63, 1.08), (c1 + 0.03, back - 0.87, 1.12)),
         ((c0 + 0.1, back - 0.9, 0), (c1 - 0.1, back - 0.85, 0.75)),
     ], root, col)
+    lobby_props.build_lobby(root, col, back, ceiling)
     return north
 
 
