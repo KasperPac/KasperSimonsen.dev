@@ -1116,7 +1116,8 @@ def build_book_stack(name, location, rotation_z, parent, col, count=5):
 
 MUG_R, MUG_SEGS = 0.041, 14
 ROUND_DEG = 60.0  # edge_threshold_deg for small round things: rims and handles draw, the facets between them don't
-DESK_PROP_DEG = 45.0  # headphones and lamp: retain the rims and joints without drawing each round facet
+DESK_PROP_DEG = 45.0  # lamp: retain the broad shade panels and joints without drawing each base facet
+HEADPHONES_DEG = 35.0  # broad earcup walls and cushion rims must remain visible from the standing camera
 DUCK_DEG = 45.0  # and for the duck: its outlines draw, the facets of its lenses don't
 
 
@@ -1200,9 +1201,11 @@ def _pen(bm):
 def _headphones(bm):
     """Over-ear headphones lying on their back: the band flat on the desk, the cups turned flat beside it."""
     for side in (-1, 1):
-        _lathe(bm, [(0.0, 0.0), (0.038, 0.0), (0.045, 0.008), (0.045, 0.026), (0.047, 0.03), (0.046, 0.042), (0.038, 0.048),
-                    (0.024, 0.048), (0.02, 0.04), (0.0, 0.04)], 12, Matrix.Translation((side * 0.11, -0.01, 0)))
-    arc = [(0.11 * math.cos(a), -0.01 + 0.13 * math.sin(a), 0.03) for a in (math.pi * k / 10 for k in range(11))]
+        # One deep shell and one cushion bevel: clear volume, without the original stack of narrow rings.
+        _lathe(bm, [(0.0, 0.0), (0.047, 0.0), (0.047, 0.04), (0.033, 0.054), (0.0, 0.054)],
+               8, Matrix.Translation((side * 0.11, 0.025, 0)))
+    # A broad U-shaped band, with enough clearance to keep the full pair on the desk.
+    arc = [(0.11 * math.cos(a), 0.025 - 0.13 * math.sin(a), 0.03) for a in (math.pi * k / 10 for k in range(11))]
     _sweep(bm, arc, _rrect(0.008, 0.03, 0.0))
 
 
@@ -1224,7 +1227,7 @@ def build_desk_mess(name, location, rotation_z, parent, col, depth=0.7, parts=No
     # front left keeps just the papers and the mug; the chips have been shoved back under the monitor's left edge
     for part, build, loc, rot in (("mug", _mug, (-0.38, -0.28, 0), 0.4), ("chips", _chip_packet, (-0.39, 0.16, 0), 0.25),
                                   ("papers", _papers, (-0.53, -0.1, 0), -0.3), ("notes", _sticky_notes, (0.2, -0.27, 0), 0.0),
-                                  ("pen", _pen, (0.24, -0.1, 0.0), 0.7), ("headphones", _headphones, (0.52, -0.22, 0), -0.3),
+                                  ("pen", _pen, (0.24, -0.1, 0.0), 0.7), ("headphones", _headphones, (0.54, -0.18, 0), math.pi / 2 - 0.3),
                                   ("can", _can, (0.21, 0.2, 0), 0.3)):
         if not wanted(part):
             continue
@@ -1234,7 +1237,7 @@ def build_desk_mess(name, location, rotation_z, parent, col, depth=0.7, parts=No
         if part in ("mug", "can"):
             _soft(obj, ROUND_DEG)
         elif part == "headphones":
-            _soft(obj, DESK_PROP_DEG)
+            _soft(obj, HEADPHONES_DEG)
     if wanted("paper_balls"):
         bm = bmesh.new()
         _crumple(bm, 0.028, (0.15, 0.03, 0.026), seed=5)
