@@ -14,7 +14,7 @@ export const COPY = {
   back: "Back",
   backHint: "Scroll up to step back",
   backHintTouch: "Swipe right or pinch in to step back",
-  menu: { open: "Menu", title: "Go straight to", office: "Look around the office" },
+  menu: { open: "Menu", contact: "Contact", title: "Go straight to", office: "Look around the office" },
   close: "Close",
   card: {
     eyebrow: "Contact",
@@ -24,6 +24,8 @@ export const COPY = {
   contact: {
     title: "Get in touch",
     lede: "I reply within 24 hours. Usually faster.",
+    direct: "Email me directly, or use the form below.",
+    noScript: "The form needs JavaScript. You can email me directly above.",
     name: "Name",
     email: "Email",
     subject: "What's it about",

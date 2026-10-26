@@ -37,13 +37,16 @@ export default function OfficeMenu({ onNavigate }: { onNavigate: (hit: Hit | nul
 
   return (
     <>
-      <button className="office-menu-toggle" type="button" aria-haspopup="dialog" aria-expanded={open} aria-controls="office-menu" onClick={() => {
-        dialog.current?.showModal();
-        setOpen(true);
-      }}>
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" strokeWidth="1.5" /></svg>
-        {COPY.menu.open}
-      </button>
+      <div className="office-quick-nav">
+        <a className="office-contact-link" href="/contact">{COPY.menu.contact}</a>
+        <button className="office-menu-toggle" type="button" aria-haspopup="dialog" aria-expanded={open} aria-controls="office-menu" onClick={() => {
+          dialog.current?.showModal();
+          setOpen(true);
+        }}>
+          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden="true"><path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" strokeWidth="1.5" /></svg>
+          {COPY.menu.open}
+        </button>
+      </div>
       <dialog id="office-menu" ref={dialog} className="office-menu" aria-labelledby="office-menu-title" onClose={() => setOpen(false)} onCancel={(e) => { e.preventDefault(); close(); }} onKeyDown={onKeyDown} onClick={(e) => {
         if (e.target !== e.currentTarget) return;
         const box = e.currentTarget.getBoundingClientRect();
