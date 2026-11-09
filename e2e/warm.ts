@@ -8,7 +8,7 @@ export default async function warm(config: FullConfig) {
   const { baseURL, launchOptions } = config.projects[0].use;
   const browser = await chromium.launch(launchOptions);
   const page = await browser.newPage();
-  await page.goto(baseURL ?? "http://localhost:3010");
+  await page.goto(new URL("/office", baseURL ?? "http://localhost:3010").href);
   await page.locator(".office[data-scene-ready='true']").waitFor({ timeout: 300_000 });
   await browser.close();
 }

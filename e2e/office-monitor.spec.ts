@@ -43,7 +43,7 @@ const CRATE = slides.findIndex((s) => s.slug);
 const SITE = slides.findIndex((s) => !s.slug && s.href);
 
 async function standInOffice(page: Page) {
-  await page.goto("/");
+  await page.goto("/office");
   await expect(office(page)).toHaveAttribute("data-scene-ready", "true", { timeout: 60_000 });
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
@@ -134,7 +134,7 @@ test("the notes come off, the screenshot fills the monitor with the carousel ove
   await expect(shotOnMonitor(page)).toHaveAttribute("alt", `${slides[0].label}: ${slides[0].shot.alt}`);
   await reel(page).getByRole("button", { name: COPY.reel.next }).click();
   await expect(words(page)).toHaveAttribute("data-slide", "1", { timeout: MOVE_WAIT });
-  expect(new URL(page.url()).pathname).toBe("/"); // the reel is local
+  expect(new URL(page.url()).pathname).toBe("/office"); // the reel is local
   await expect(shotOnMonitor(page)).toHaveAttribute("src", slides[1].shot.src);
   await expect(words(page).locator(".reel-label")).toHaveText(slides[1].label);
   await expect(page.getByRole("dialog")).toHaveCount(0); // › steps; it doesn't open full screen
@@ -168,7 +168,7 @@ test("the notes come off, the screenshot fills the monitor with the carousel ove
   await expect(office(page)).toHaveAttribute("data-playing", slides[CRATE].slug!);
   await expect(office(page)).toHaveAttribute("data-notes", "up", { timeout: MOVE_WAIT });
   await page.goBack();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/office$/);
   await expect(office(page)).toHaveAttribute("data-director", "focused:hs_monitor", { timeout: MOVE_WAIT });
   await expect(office(page)).toHaveAttribute("data-notes", "down", { timeout: MOVE_WAIT });
   await expect(page.getByRole("heading", { name: COPY.reel.title })).toBeFocused({ timeout: MOVE_WAIT });
@@ -199,7 +199,7 @@ test("a click on the screenshot opens it full screen: uncropped, ← → step, t
   const open = (await page.locator(".office-reel .reel-open").boundingBox())!;
   await page.mouse.click(open.x + open.width / 2, open.y + open.height / 2);
   await expect(viewer(page, i)).toBeVisible({ timeout: MOVE_WAIT });
-  expect(new URL(page.url()).pathname).toBe("/"); // a local layer, like the panels
+  expect(new URL(page.url()).pathname).toBe("/office"); // a local layer, like the panels
   await expect(viewer(page, i)).toHaveAccessibleDescription(COPY.reel.position(i + 1, slides.length));
   const img = viewer(page, i).locator("img");
   await expect(img).toHaveAttribute("src", slides[i].shot.src);

@@ -11,7 +11,7 @@ const link = (page: Page, i: number) => page.getByRole("link", { name: services[
 const plaque = (page: Page, i: number) => page.getByRole("region", { name: services[i].name });
 
 async function standInOffice(page: Page) {
-  await page.goto("/");
+  await page.goto("/office");
   await expect(office(page)).toHaveAttribute("data-scene-ready", "true", { timeout: 60_000 });
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
@@ -29,7 +29,7 @@ async function openShelf(page: Page) {
 test("the keyboard picks a service, reads it, writes from it, and steps back out one layer at a time", async ({ page }) => {
   await standInOffice(page);
   const button = await openShelf(page);
-  await expect(page).toHaveURL(/\/$/); // browsing the shelf is local
+  await expect(page).toHaveURL(/\/office$/); // browsing the shelf is local
   await page.keyboard.press("Tab");
   await expect(link(page, 1)).toBeFocused();
   await page.keyboard.press("Enter");
@@ -62,7 +62,7 @@ test("the keyboard picks a service, reads it, writes from it, and steps back out
   await expect(dialog).toBeHidden();
   await expect(more).toBeFocused();
   await page.keyboard.press("Escape");
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/office$/);
   await expect(office(page)).toHaveAttribute("data-shelf", "in", { timeout: MOVE_WAIT });
   await expect(link(page, 1)).toBeFocused(); // back on the one that was out
   await page.keyboard.press("Escape");
@@ -82,7 +82,7 @@ test("picking another ornament swaps it without a new history entry", async ({ p
   await expect(plaque(page, 2)).toBeVisible({ timeout: MOVE_WAIT });
   await expect(plaque(page, 0)).toBeHidden();
   await page.goBack();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/office$/);
   await expect(office(page)).toHaveAttribute("data-director", "focused:hs_shelf"); // one Back: the shelf, not the first ornament
 });
 
@@ -111,7 +111,7 @@ test("a refreshed or shared service link is the standalone page", async ({ page 
   await expect(page.locator(".office")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: COPY.service.ways })).toBeVisible();
   for (const m of engagementModels) await expect(page.getByRole("link", { name: m.ctaLabel })).toHaveAttribute("href", `/contact?topic=${m.topic}`);
-  await expect(page.getByRole("link", { name: COPY.enter })).toHaveAttribute("href", "/");
+  await expect(page.getByRole("link", { name: COPY.enter })).toHaveAttribute("href", "/office#enter");
 });
 
 test("an unknown service is a 404", async ({ page }) => {

@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 test("contact is one click away while the models are still loading", async ({ page }) => {
   // Leave the models pending: visitors who want to enquire must not need to wait for them.
   await page.route("**/models/**", () => {});
-  await page.goto("/", { waitUntil: "domcontentloaded" });
+  await page.goto("/office", { waitUntil: "domcontentloaded" });
   const contact = page.getByRole("link", { name: "Contact", exact: true });
   await expect(contact).toBeVisible();
   const bounds = await contact.boundingBox();

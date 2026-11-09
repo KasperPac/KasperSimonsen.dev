@@ -15,7 +15,7 @@ const progress = async (page: Page) => Number(await office(page).getAttribute("d
 async function openOffice(page: Page) {
   const errors: string[] = [];
   page.on("pageerror", (e) => errors.push(e.message));
-  await page.goto("/");
+  await page.goto("/office");
   await expect(office(page)).toHaveAttribute("data-scene-ready", "true", { timeout: 60_000 });
   return errors;
 }
@@ -59,8 +59,9 @@ test("rotating to a phone viewport keeps the canvas filling the screen", async (
 
 test("a missing model shows the fallback with links, not a blank screen", async ({ page }) => {
   await page.route("**/models/street.glb", (route) => route.fulfill({ status: 404, body: "" }));
-  await page.goto("/");
+  await page.goto("/office");
   await expect(page.locator(".office-fallback")).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByRole("link", { name: COPY.entry.browse })).toHaveAttribute("href", "/portfolio");
   await expect(page.getByRole("link", { name: "See the work" })).toHaveAttribute("href", "/work");
   await expect(page.getByRole("link", { name: "Get in touch" })).toHaveAttribute("href", "/contact");
   for (const s of services) await expect(page.getByRole("link", { name: s.name })).toHaveAttribute("href", `/services/${s.slug}`);
@@ -71,7 +72,15 @@ test("a missing model shows the fallback with links, not a blank screen", async 
   await expect(page.getByRole("button", { name: "Come in" })).toBeHidden();
 });
 
-test("the old pages still work while the office takes over /", async ({ page }) => {
+test("Enter Office starts the walk without a second click", async ({ page }) => {
+  await page.goto("/");
+  await page.getByRole("link", { name: COPY.entry.office }).click();
+  await expect(page).toHaveURL(/\/office#enter$/);
+  await expect(office(page)).toHaveAttribute("data-walking", "true", { timeout: 60_000 });
+  await expect.poll(() => progress(page), { timeout: MOVE_WAIT }).toBeGreaterThan(0.02);
+});
+
+test("the existing work index still works", async ({ page }) => {
   const response = await page.goto("/work");
   expect(response?.status()).toBe(200);
 });
@@ -159,6 +168,12 @@ test("scrolling during the walk takes over from it", async ({ page }) => {
 
 test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
+  test("Enter Office goes straight in with reduced motion", async ({ page }) => {
+    await page.goto("/");
+    await page.getByRole("link", { name: COPY.entry.office }).click();
+    await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: 60_000 });
+    await expect(office(page)).toHaveAttribute("data-walking", "false");
+  });
   test("Come in goes straight in", async ({ page }) => {
     await openOffice(page);
     await comeIn(page).click();

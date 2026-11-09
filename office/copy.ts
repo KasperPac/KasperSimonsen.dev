@@ -3,6 +3,16 @@
  * conversational, dry, contractions, no marketing words).
  */
 export const COPY = {
+  entry: {
+    role: "Independent software engineer in Cremorne, Melbourne",
+    intro: "I build websites, apps and automation for businesses.",
+    office: "Enter Office",
+    contact: "Contact Me",
+    browse: "Browse the static site",
+    portfolio: "Static portfolio",
+    loading: "Loading the office…",
+    pause: "Pause animation",
+  },
   nav: "Around the office",
   labels: {
     hs_crate: "The work",

@@ -7,7 +7,7 @@ const menu = (page: Page) => page.getByRole("dialog", { name: "Go straight to" }
 const WAIT = 30_000;
 
 async function ready(page: Page) {
-  await page.goto("/");
+  await page.goto("/office");
   await expect(office(page)).toHaveAttribute("data-scene-ready", "true", { timeout: 90_000 });
 }
 
@@ -29,7 +29,9 @@ test("menu is available on arrival, traps focus and opens project, service and c
   for (const item of [...work, ...services]) await expect(menu(page).getByRole("link", { name: item.name, exact: true })).toBeVisible();
   await menu(page).getByRole("button", { name: "Close" }).focus();
   await page.keyboard.press("Shift+Tab");
-  await expect(menu(page).getByRole("link", { name: "Look around the office" })).toBeFocused();
+  const staticSite = menu(page).getByRole("link", { name: "Browse the static site" });
+  await expect(staticSite).toBeFocused();
+  await expect(staticSite).toHaveAttribute("href", "/portfolio");
   await menu(page).evaluate((el) => { el.scrollTop = 0; });
   await page.screenshot({ path: "test-results/navigation-desktop-menu.png" });
   await page.keyboard.press("Escape");

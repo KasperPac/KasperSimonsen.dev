@@ -3,7 +3,7 @@ import { defineConfig, devices } from "@playwright/test";
 // Contact must be usable before the office models load, so this suite skips the scene warm-up.
 export default defineConfig({
   testDir: "e2e",
-  testMatch: "office-contact.spec.ts",
+  testMatch: ["office-contact.spec.ts", "portfolio-entry.spec.ts"],
   workers: 1,
   timeout: 60_000,
   use: { baseURL: "http://localhost:3010" },

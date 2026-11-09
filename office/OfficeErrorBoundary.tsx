@@ -2,6 +2,7 @@
 
 import { Component, type ReactNode, type RefObject } from "react";
 import { services } from "@/content/services";
+import { COPY } from "./copy";
 
 type Props = { host: RefObject<HTMLElement | null>; children: ReactNode };
 
@@ -23,6 +24,7 @@ export default class OfficeErrorBoundary extends Component<Props, { failed: bool
     return (
       <div className="office-fallback" role="status">
         <p>The office didn&apos;t load. The work&apos;s still here though.</p>
+        <p><a href="/portfolio">{COPY.entry.browse}</a></p>
         <p>
           <a href="/work">See the work</a> · <a href="/contact">Get in touch</a>
         </p>

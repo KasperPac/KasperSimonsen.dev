@@ -538,7 +538,263 @@ html.office-locked, html.office-menu-open {
 
 /* Standalone pages (a shared or refreshed link), in the office's style. */
 .standalone { max-width: 62ch; margin: 0 auto; padding: 48px 16px 80px; }
-.standalone-enter { display: inline-block; margin-bottom: 32px; color: var(--office-fg); font: 11px/1.2 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; }
+
+.site-entry,
+.site-portfolio {
+  --site-contact: #2ef2ff;
+  --site-muted: #b2b2b2;
+  --site-rule: #393939;
+  width: min(100% - 2 * clamp(20px, 5vw, 72px), 72rem);
+  margin-inline: auto;
+}
+
+.site-entry {
+  --site-skyline: url("/entry/melbourne-skyline.webp");
+  --site-skyline-fade: linear-gradient(90deg, var(--office-bg), transparent 76%);
+  position: relative;
+  isolation: isolate;
+  min-height: 100svh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(2rem, 6vw, 7rem);
+  padding-block: 2rem;
+}
+
+.site-entry::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: var(--site-skyline-fade), var(--site-skyline) center / cover no-repeat;
+  opacity: .18;
+}
+
+.site-entry-credit {
+  position: absolute;
+  right: 0;
+  bottom: max(.5rem, env(safe-area-inset-bottom));
+  color: var(--site-muted);
+  font-size: .75rem;
+}
+
+.site-entry-credit a { color: inherit; text-underline-offset: .2em; }
+
+.site-entry-role {
+  margin: 0 0 1.1rem;
+  color: var(--site-muted);
+  font: .9rem/1.5 var(--font-mono), ui-monospace, monospace;
+}
+
+.site-entry h1,
+.site-portfolio-intro h1 {
+  margin: 0;
+  font-size: clamp(3.4rem, 8.5vw, 8rem);
+  font-weight: 700;
+  line-height: .92;
+  letter-spacing: -.06em;
+}
+
+.site-entry-intro,
+.site-portfolio-intro p {
+  max-width: 37ch;
+  margin: 1.5rem 0 2rem;
+  color: var(--site-muted);
+  font-size: clamp(1.15rem, 2vw, 1.45rem);
+  line-height: 1.45;
+}
+
+.site-entry-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+}
+
+.site-entry-button {
+  display: inline-flex;
+  min-height: 3.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: .75rem clamp(1rem, 2.6vw, 1.9rem);
+  border: 1px solid var(--office-fg);
+  color: var(--office-bg);
+  background: var(--office-fg);
+  font-size: 1rem;
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.site-entry-contact {
+  border-color: var(--site-contact);
+  background: transparent;
+  color: var(--site-contact);
+}
+
+.site-entry-button:hover { background: #fff; }
+.site-entry-contact:hover { background: var(--site-contact); color: var(--office-bg); }
+
+.site-entry-static,
+.site-portfolio a:not(.site-entry-button),
+.site-nav a {
+  color: var(--office-fg);
+  text-underline-offset: .26em;
+}
+
+.site-entry-static {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  margin-top: .65rem;
+}
+
+:is(.site-entry, .site-portfolio, .site-nav) a:focus-visible {
+  outline: 2px solid var(--office-fg);
+  outline-offset: 4px;
+}
+
+.site-mark {
+  margin: 0;
+  text-align: center;
+}
+
+.site-mark svg {
+  display: block;
+  width: 100%;
+  height: min(56svh, 440px);
+  stroke: #fff;
+  stroke-width: 1.5;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.site-mark-rope {
+  opacity: 0;
+  animation-name: site-mark-rope-step;
+  animation-iteration-count: infinite;
+  animation-timing-function: step-end;
+}
+
+.site-mark-rope[data-step="0"] { opacity: 1; }
+.site-mark:has(input:checked) .site-mark-rope { animation-play-state: paused; }
+
+@keyframes site-mark-rope-step {
+  from { opacity: 1; }
+  16.666667%, to { opacity: 0; }
+}
+
+.site-mark-control {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: .5rem;
+  color: var(--site-muted);
+  font-size: .875rem;
+  cursor: pointer;
+}
+
+.site-mark-control input {
+  width: 1rem;
+  height: 1rem;
+  margin: 0;
+  accent-color: var(--site-contact);
+}
+
+.site-mark-control input:focus-visible {
+  outline: 2px solid var(--office-fg);
+  outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-mark-rope { animation-name: none; }
+  .site-mark-control { display: none; }
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 1.3rem;
+  row-gap: .25rem;
+  margin-bottom: 2rem;
+}
+
+.site-nav a {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+}
+
+.site-nav a[aria-current="page"] { text-decoration: none; }
+
+.site-portfolio {
+  padding-block: 1.5rem 4rem;
+}
+
+.site-portfolio > .site-nav {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--site-rule);
+}
+
+.site-portfolio-intro { padding-block: clamp(1.5rem, 6vw, 5rem); }
+.site-portfolio-intro h1 { font-size: clamp(3rem, 8vw, 6.75rem); }
+.site-portfolio-intro nav { display: flex; gap: 1.5rem; }
+.site-portfolio-intro nav a { display: inline-flex; min-height: 44px; align-items: center; }
+.site-portfolio > section { margin-bottom: clamp(3rem, 8vw, 6rem); }
+.site-portfolio h2 { margin: 0 0 1.4rem; font-size: clamp(1.75rem, 4vw, 2.75rem); letter-spacing: -.035em; }
+
+.site-projects,
+.site-services {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 2rem clamp(1rem, 4vw, 3rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-projects li,
+.site-services li { padding-top: .9rem; border-top: 1px solid var(--site-rule); }
+.site-projects img { display: block; width: 100%; height: auto; background: #171717; }
+.site-portfolio h3 { margin: .85rem 0 .4rem; font-size: 1.35rem; }
+.site-projects p,
+.site-services p { margin: 0; color: var(--site-muted); line-height: 1.55; }
+
+.site-portfolio-contact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+  border-top: 1px solid var(--site-rule);
+  padding-top: 1.5rem;
+}
+
+.office-loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  padding: 1rem;
+  text-align: center;
+}
+
+.office-loading a { color: inherit; text-underline-offset: .26em; }
+.office:is([data-scene-ready="true"], [data-office-fallback="true"]) .office-loading { display: none; }
+
+@media (max-width: 760px) {
+  .site-entry {
+    --site-skyline: url("/entry/melbourne-skyline-portrait.webp");
+    --site-skyline-fade: linear-gradient(180deg, var(--office-bg) 18%, transparent 87%);
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
+    gap: 1rem;
+  }
+  .site-mark svg { height: clamp(150px, 28svh, 230px); }
+}
+
+@media (max-width: 660px) {
+  .site-projects,
+  .site-services { grid-template-columns: minmax(0, 1fr); }
+}
 
 /* The monitor's reel (spec 3.5): the screenshot edge to edge on the monitor, the next one sliding in over it from the
    right, placed by --at (1 = off the right edge, 0 = covering the monitor). Its words are on the laptop, or

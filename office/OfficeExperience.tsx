@@ -6,7 +6,7 @@ import OfficeErrorBoundary from "./OfficeErrorBoundary";
 import { theme } from "./theme";
 import { COPY } from "./copy";
 import { useWalkInProgress } from "./walkin/useWalkInProgress";
-import { startAutoWalk } from "./walkin/autoWalk";
+import { onStreet, startAutoWalk } from "./walkin/autoWalk";
 import { dragPan, inView, isPanGesture, panFor } from "./camera/pan";
 import { describeDirector, focusedHotspot, initialDirector, isLocked, reduceDirector, type DirectorState } from "./director/director";
 import { pathForTarget } from "./scene/targets";
@@ -46,6 +46,7 @@ import ServiceArticle from "@/panels/ServiceArticle";
 // three.js never runs on the server and never ships to pages that don't render the office.
 const OfficeCanvas = dynamic(() => import("./OfficeCanvas"), { ssr: false });
 
+const OFFICE_PATH = "/office";
 const toEnd = () => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" });
 const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 const back = () => window.history.back();
@@ -84,6 +85,7 @@ export default function OfficeExperience() {
   // "Come in" walks the visitor in by scrolling for them, so the walk-in plays as it would scrolled (spec 3.3).
   const [walking, setWalking] = useState(false);
   const stopWalk = useRef<(() => void) | null>(null);
+  const hasStartedScene = useRef(false);
   useEffect(() => () => stopWalk.current?.(), []);
   const comeIn = () => {
     if (reducedMotion()) return toEnd();
@@ -93,6 +95,18 @@ export default function OfficeExperience() {
       stopWalk.current = null;
       setWalking(false);
     });
+  };
+  const onProgressCross = (value: number) => {
+    dispatch({ type: "progress", value });
+    if (hasStartedScene.current) return;
+    hasStartedScene.current = true;
+    if (
+      window.location.hash === "#enter" &&
+      onStreet(value) &&
+      !document.documentElement.classList.contains("office-menu-open")
+    ) {
+      comeIn();
+    }
   };
 
   // The location asks for a target; the director moves the camera there (or home).
@@ -153,7 +167,7 @@ export default function OfficeExperience() {
     }
     const active = document.activeElement as HTMLElement | null;
     if (active && navRef.current?.contains(active)) trigger.current = active;
-    pushLayer({ focus: hit.hotspot, reading: false, topic: null }, pathForTarget(hit) ?? "/");
+    pushLayer({ focus: hit.hotspot, reading: false, topic: null }, pathForTarget(hit) ?? OFFICE_PATH);
   }, [markUsed]);
   const read = useCallback(() => {
     const { layer: l, scene: s } = live();
@@ -176,7 +190,7 @@ export default function OfficeExperience() {
     toEnd();
     const current = live();
     const next = { focus: hit?.hotspot ?? null, reading, topic: null };
-    const path = hit ? pathForTarget(hit) ?? "/" : "/";
+    const path = (hit && pathForTarget(hit)) ?? OFFICE_PATH;
     if (window.location.pathname === path && current.layer.focus === next.focus && current.layer.reading === reading && !current.layer.topic) return;
     pushLayer(next, path);
   }, [markUsed]);
@@ -551,13 +565,17 @@ export default function OfficeExperience() {
             }}
             onBoardHeight={setBoardHeightPx}
             onPresented={setOutIndex}
-            onProgressCross={(value) => dispatch({ type: "progress", value })}
+            onProgressCross={onProgressCross}
             onSettled={() => dispatch({ type: "settled" })}
             onHover={onHover}
             onActivate={activate}
             onDrawerOpen={setDrawerOpen}
           />
         </OfficeErrorBoundary>
+        <div className="office-loading">
+          <p role="status">{COPY.entry.loading}</p>
+          <a href="/portfolio">{COPY.entry.browse}</a>
+        </div>
       </div>
 
       <nav ref={navRef} className="office-nav" aria-label={COPY.nav}>

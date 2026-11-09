@@ -8,7 +8,7 @@ const office = (page: Page) => page.locator(".office");
 async function readProduct(page: Page, slug: string) {
   const index = work.findIndex(item => item.slug === slug);
   const item = work[index];
-  await page.goto("/");
+  await page.goto("/office");
   await expect(office(page)).toHaveAttribute("data-scene-ready", "true", { timeout: WAIT });
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: WAIT });

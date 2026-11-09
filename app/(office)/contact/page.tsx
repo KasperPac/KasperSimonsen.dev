@@ -1,8 +1,8 @@
 import type { CSSProperties } from "react";
 import type { Metadata } from "next";
-import { COPY } from "@/office/copy";
 import { theme } from "@/office/theme";
 import ContactForm from "@/panels/ContactForm";
+import PortfolioNav from "../PortfolioNav";
 
 export const metadata: Metadata = {
   title: "Contact — Kasper Simonsen",
@@ -18,7 +18,7 @@ export default async function ContactPage({
   const { topic } = await searchParams;
   return (
     <main className="standalone" style={{ "--accent": theme.accents.hs_drawer } as CSSProperties}>
-      <a href="/" className="standalone-enter">{COPY.enter}</a>
+      <PortfolioNav current="contact" />
       <ContactForm topic={typeof topic === "string" ? topic : undefined} titleId="contact-title" level={1} />
     </main>
   );

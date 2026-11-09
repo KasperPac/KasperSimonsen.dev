@@ -5,7 +5,7 @@ test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true
 const WAIT = 60_000;
 
 async function enter(page: Page) {
-  await page.goto("/");
+  await page.goto("/office");
   await expect(page.locator(".office")).toHaveAttribute("data-scene-ready", "true", { timeout: WAIT });
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect(page.locator(".office")).toHaveAttribute("data-director", "idle", { timeout: WAIT });

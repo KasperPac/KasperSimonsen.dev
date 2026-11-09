@@ -34,7 +34,7 @@ function subscribe(onChange: () => void) {
   };
 }
 
-const SERVER = `/|${JSON.stringify(NO_LAYER)}`;
+const SERVER = `/office|${JSON.stringify(NO_LAYER)}`;
 const snapshot = () => `${window.location.pathname}|${JSON.stringify(layerOf(window.history.state))}`;
 
 /** Path + layer, re-rendering on every history change (Back, Forward, our pushes). */

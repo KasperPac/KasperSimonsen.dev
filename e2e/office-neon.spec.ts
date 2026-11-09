@@ -24,7 +24,7 @@ async function arrive(page: Page) {
 }
 
 test("the sign is off in the walk-in, powers up on arrival, goes off on leaving and comes back on", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/office");
   await expect(office(page)).toHaveAttribute("data-scene-ready", "true", { timeout: 60_000 });
   await expect(office(page)).toHaveAttribute("data-neon", "off");
   const seen = await recordNeon(page);
@@ -43,7 +43,7 @@ test("the sign is off in the walk-in, powers up on arrival, goes off on leaving 
 });
 
 test("opening an object leaves the sign on", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/office");
   await expect(office(page)).toHaveAttribute("data-scene-ready", "true", { timeout: 60_000 });
   await arrive(page);
   await expect(office(page)).toHaveAttribute("data-neon", "on", { timeout: MOVE_WAIT });
@@ -57,7 +57,7 @@ test("opening an object leaves the sign on", async ({ page }) => {
 });
 
 test("a direct visit that opens an object powers the sign up too", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/office");
   await expect(office(page)).toHaveAttribute("data-scene-ready", "true", { timeout: 60_000 });
   const link = page.getByRole("link", { name: "Get in touch" });
   await link.focus();
@@ -76,7 +76,7 @@ test("a direct visit that opens an object powers the sign up too", async ({ page
 test.describe("reduced motion", () => {
   test.use({ reducedMotion: "reduce" });
   test("goes straight to on, with no power-up", async ({ page }) => {
-    await page.goto("/");
+    await page.goto("/office");
     await expect(office(page)).toHaveAttribute("data-scene-ready", "true", { timeout: 60_000 });
     const seen = await recordNeon(page);
     await arrive(page);

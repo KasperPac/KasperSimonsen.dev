@@ -1,18 +1,28 @@
-"use client";
-
 import type { WorkItem } from "@/content/work";
 import { COPY } from "@/office/copy";
 
 /** A product description, with an optional shortcut to its screenshots in the office. */
-export default function CaseStudy({ item, titleId, onShowOnMonitor }: { item: WorkItem; titleId: string; onShowOnMonitor?: () => void }) {
+export default function CaseStudy({
+  item,
+  titleId,
+  level = 2,
+  onShowOnMonitor,
+}: {
+  item: WorkItem;
+  titleId: string;
+  level?: 1 | 2;
+  onShowOnMonitor?: () => void;
+}) {
+  const Title = level === 1 ? "h1" : "h2";
+  const SectionHeading = level === 1 ? "h2" : "h3";
   return (
     <article className="article">
       <p className="article-eyebrow">
         {item.years} · {item.role}
       </p>
-      <h2 id={titleId} className="article-title">
+      <Title id={titleId} className="article-title">
         {item.name}
-      </h2>
+      </Title>
       <p className="article-lede">{item.headline}</p>
       {onShowOnMonitor && (
         <p>
@@ -26,7 +36,7 @@ export default function CaseStudy({ item, titleId, onShowOnMonitor }: { item: Wo
       ))}
       {item.sections.map((s) => (
         <section key={s.title}>
-          <h3>{s.title}</h3>
+          <SectionHeading>{s.title}</SectionHeading>
           {s.paras.map((p, i) => (
             <p key={i}>{p}</p>
           ))}

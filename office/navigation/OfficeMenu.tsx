@@ -63,11 +63,12 @@ export default function OfficeMenu({ onNavigate }: { onNavigate: (hit: Hit | nul
             <ul>{work.map((item) => <li key={item.slug}><a href={`/work/${item.slug}`} onClick={(e) => go(e, { hotspot: "hs_crate", item: item.slug }, true)}>{item.name}</a></li>)}</ul>
           </section>
           <section aria-labelledby="menu-services">
-            <h3 id="menu-services"><a href="/#services" onClick={(e) => go(e, { hotspot: "hs_shelf", item: null })}>{COPY.labels.hs_shelf}<span aria-hidden="true">↗</span></a></h3>
+            <h3 id="menu-services"><a href="/portfolio#services" onClick={(e) => go(e, { hotspot: "hs_shelf", item: null })}>{COPY.labels.hs_shelf}<span aria-hidden="true">↗</span></a></h3>
             <ul>{services.map((item) => <li key={item.slug}><a href={`/services/${item.slug}`} onClick={(e) => go(e, { hotspot: "hs_shelf", item: item.slug }, true)}>{item.name}</a></li>)}</ul>
           </section>
-          <a className="office-menu-primary" href="/#monitor" onClick={(e) => go(e, { hotspot: "hs_monitor", item: null }, true)}>{COPY.reel.title}<span aria-hidden="true">↗</span></a>
-          <a className="office-menu-primary" href="/" onClick={(e) => go(e, null)}>{COPY.menu.office}<span aria-hidden="true">↗</span></a>
+          <a className="office-menu-primary" href="/portfolio#work" onClick={(e) => go(e, { hotspot: "hs_monitor", item: null }, true)}>{COPY.reel.title}<span aria-hidden="true">↗</span></a>
+          <a className="office-menu-primary" href="/office" onClick={(e) => go(e, null)}>{COPY.menu.office}<span aria-hidden="true">↗</span></a>
+          <a className="office-menu-primary" href="/portfolio">{COPY.entry.browse}<span aria-hidden="true">↗</span></a>
         </nav>
       </dialog>
     </>

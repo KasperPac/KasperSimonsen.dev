@@ -7,7 +7,7 @@ const MOVE_WAIT = 30_000;
 const office = (page: Page) => page.locator(".office");
 
 async function standInOffice(page: Page) {
-  await page.goto("/");
+  await page.goto("/office");
   await expect(office(page)).toHaveAttribute("data-scene-ready", "true", { timeout: 60_000 });
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });

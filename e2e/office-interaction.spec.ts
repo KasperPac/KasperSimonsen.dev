@@ -13,7 +13,7 @@ const office = (page: Page) => page.locator(".office");
 const progress = async (page: Page) => Number(await office(page).getAttribute("data-walkin-progress"));
 
 async function standInOffice(page: Page) {
-  await page.goto("/");
+  await page.goto("/office");
   await expect(office(page)).toHaveAttribute("data-scene-ready", "true", { timeout: 60_000 });
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
@@ -69,7 +69,7 @@ test("the drawer opens with the business card, Write to me opens the form, Esc p
   await expect(page).toHaveURL(/\/contact$/);
 
   await page.keyboard.press("Escape");
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/office$/);
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
   await expect(office(page)).toHaveAttribute("data-drawer", "shut", { timeout: MOVE_WAIT });
   await expect(link).toBeFocused();
@@ -85,7 +85,7 @@ test("browser Back peels the same layers", async ({ page }) => {
   await expect(page.getByRole("dialog")).toBeHidden();
   await expect(page.getByRole("region", { name: "Kasper Simonsen" })).toBeVisible();
   await page.goBack();
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/office$/);
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
 });
 
@@ -97,7 +97,7 @@ test("a double activation adds one history entry, so one Back closes it", async 
   await expect(office(page)).toHaveAttribute("data-director", /focus(ing|ed):hs_monitor/, { timeout: MOVE_WAIT });
   await page.goBack();
   await expect(office(page)).toHaveAttribute("data-director", /returning|idle/, { timeout: MOVE_WAIT });
-  expect(new URL(page.url()).pathname).toBe("/");
+  expect(new URL(page.url()).pathname).toBe("/office");
 });
 
 test("the crate, shelf and monitor focus locally with no URL change", async ({ page }) => {
@@ -106,7 +106,7 @@ test("the crate, shelf and monitor focus locally with no URL change", async ({ p
     await page.getByRole("button", { name }).focus();
     await page.keyboard.press("Enter");
     await expect(office(page)).toHaveAttribute("data-director", `focused:${hotspot}`, { timeout: MOVE_WAIT });
-    expect(new URL(page.url()).pathname).toBe("/");
+    expect(new URL(page.url()).pathname).toBe("/office");
     // each takes focus into itself: the crate's control (arrow keys flick), the shelf's first ornament, the monitor's screen
     const into =
       hotspot === "hs_crate"
@@ -141,7 +141,7 @@ test("Esc with focus outside the panel still backs out exactly one layer", async
   await expect(page).toHaveURL(/\/contact$/);
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await page.keyboard.press("Escape");
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/office$/);
 });
 
 test("focus stays inside the panel", async ({ page }) => {

@@ -11,7 +11,7 @@ const MOVE_WAIT = 30_000;
 const office = (page: Page) => page.locator(".office");
 
 async function standInOffice(page: Page) {
-  await page.goto("/");
+  await page.goto("/office");
   await expect(office(page)).toHaveAttribute("data-scene-ready", "true", { timeout: 60_000 });
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect(office(page)).toHaveAttribute("data-director", "idle", { timeout: MOVE_WAIT });
@@ -48,7 +48,7 @@ test("the keyboard flicks, pulls, reads and steps back out one layer at a time",
   for (let i = 0; i < work.length + 2; i++) await page.keyboard.press("ArrowDown");
   const last = work[work.length - 1];
   await expect(office(page)).toHaveAttribute("data-dig", String(work.length - 1)); // stops at the last project
-  await expect(page).toHaveURL(/\/$/); // flicking is local
+  await expect(page).toHaveURL(/\/office$/); // flicking is local
 
   await page.keyboard.press("Enter");
   await expect(page).toHaveURL(new RegExp(`/work/${last.slug}$`));
@@ -69,7 +69,7 @@ test("the keyboard flicks, pulls, reads and steps back out one layer at a time",
   await expect(dialog).toBeHidden();
   await expect(more).toBeFocused();
   await page.keyboard.press("Escape");
-  await expect(page).toHaveURL(/\/$/);
+  await expect(page).toHaveURL(/\/office$/);
   await expect(office(page)).toHaveAttribute("data-playing", "");
   await expect(office(page)).toHaveAttribute("data-sleeve", "in", { timeout: MOVE_WAIT });
   await expect(crate(page)).toBeFocused();

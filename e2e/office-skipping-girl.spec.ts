@@ -3,7 +3,7 @@ import { test, expect } from "@playwright/test";
 test.use({ reducedMotion: "no-preference", viewport: { width: 1100, height: 740 } });
 
 test("the Skipping Girl keeps skipping while the visitor is not scrolling", async ({ page }) => {
-  await page.goto("/");
+  await page.goto("/office");
   const office = page.locator(".office");
   await expect(office).toHaveAttribute("data-scene-ready", "true", { timeout: 60_000 });
   await expect(office).toHaveAttribute("data-walkin-progress", "0.0000");
