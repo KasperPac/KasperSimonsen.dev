@@ -1,22 +1,28 @@
 /** First agency draft. The business name is intentionally provisional. */
 
 /**
- * The project shown at the top of the page. The image is the reviewed capture already in `public/reel/`.
- * The project already has a case study on the portfolio (`/work/mariannes-hair`), where it was marked
- * pre-launch on 12 November 2026. Whether it leads this page is Kasper's call.
+ * The work shown at the top of the page: the Manuva home page, in a browser frame and on a phone.
+ * Kasper asked for it on 12 November 2026 ("a bit more colorful and impressive"), in both frames.
  *
- * It is described as a website and a custom booking platform at Kasper's instruction (12 November 2026):
- * the public site, plus the owner's booking diary built for the salon, with bookings kept in Square.
+ * Both images are captures of the public site (manuva.app) taken that day, at 1920 x 1080 and 390 x 844.
+ * They show the last scene of its scroll animation, which he asked for: feet up, the logo on the wall and
+ * the lime highlight. The highlighted word rotates on the live site; both were taken on "making".
+ *
+ * If Marianne's Hair is shown again, describe it as a salon website and custom booking platform, not only
+ * a website (Kasper's instruction the same day).
  */
 export const heroWork = {
-  name: "Marianne’s Hair",
-  detail: "Salon website and custom booking platform",
-  image: {
-    src: "/reel/mariannes-hair-site-20261025.jpg",
-    width: 1280,
-    height: 720,
-    alt: "The Marianne’s Hair home page: a line drawing of the salon’s shopfront above its logo and a Book online button",
+  note: "One of ours.",
+  name: "Manuva",
+  detail: "Manufacturing software and its website",
+  browser: {
+    src: "/agency/manuva-end-desktop.jpg",
+    width: 1920,
+    height: 1080,
+    alt: "The Manuva home page: a clay figure leaning back at his desk with his feet up and a mug in his hands, the Manuva logo on the wall behind him, and the headline Less chaos. More making.",
   },
+  // The same page on a phone. Decorative beside the browser image, so it carries no alt text.
+  phone: { src: "/agency/manuva-end-phone.jpg", width: 1170, height: 2532 },
 } as const;
 
 export const services = [

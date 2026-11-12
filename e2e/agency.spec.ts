@@ -33,9 +33,13 @@ test("the chosen design: real work up top, a sketch per service, the example as 
   await page.goto("/agency");
   const work = page.locator(".hero-work");
   await expect(work).toContainText("One of ours.");
-  await expect(work.locator("figcaption")).toHaveText("Marianne’s Hair Salon website and custom booking platform");
+  await expect(work.locator("figcaption")).toHaveText("Manuva Manufacturing software and its website");
+  // One project in both frames: the browser image is described, the phone repeats it and stays silent.
   await expect(work.getByRole("img")).toHaveCount(1);
-  await expect(work.getByRole("img")).toHaveAttribute("alt", /^The Marianne’s Hair home page/);
+  await expect(work.getByRole("img")).toHaveAttribute("alt", /^The Manuva home page/);
+  await expect(work.locator(".work-phone img")).toHaveAttribute("alt", "");
+  await expect(work.locator(".work-browser img")).toHaveAttribute("src", /manuva-end-desktop/);
+  await expect(work.locator(".work-phone img")).toHaveAttribute("src", /manuva-end-phone/);
   await expect(page.locator("#services h2")).toHaveText("What needs to work better?");
   await expect(page.locator("#services .service svg")).toHaveCount(4);
   await expect(page.locator("#ai-agents ol > li")).toHaveCount(3);
@@ -57,6 +61,10 @@ test("the chosen design: real work up top, a sketch per service, the example as 
   expect(await background('.enquiry-form button[type="submit"]')).toBe(accent);
   expect(await background(".nav-contact")).not.toBe(accent);
   expect(await background("#the-office .button")).not.toBe(accent);
+  // Each section's name sits on a strip of the accent, in ink, on light and dark bands alike.
+  const labels = await page.locator(".section-label").evaluateAll(elements => elements.map(element => { const style = getComputedStyle(element); return { background: style.backgroundColor, color: style.color }; }));
+  expect(labels).toHaveLength(7);
+  expect(labels).toEqual(Array(7).fill({ background: accent, color: "rgb(23, 43, 54)" }));
 });
 
 test("enquiry validates, retains input on failure, and reports confirmed success", async ({ page }) => {
