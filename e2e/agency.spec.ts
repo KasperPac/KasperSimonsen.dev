@@ -17,6 +17,7 @@ test("agency is readable, routes visitors to services, and keeps industrial work
   await expect(page.locator("#services details").first()).toHaveAttribute("open", "");
   await expect(page.locator("#services details").first()).toContainText("Booking tools");
   await page.locator("#services summary").first().click();
+  await expect(page.locator("#services")).toContainText("Talk about AI & automation");
   const missingAnchors = await page.locator('a[href^="#"]').evaluateAll(links => links.map(link => link.getAttribute("href")!.slice(1)).filter(id => !document.getElementById(id)));
   expect(missingAnchors).toEqual([]);
   expect(await page.locator("img").evaluateAll(images => images.every(img => img instanceof HTMLImageElement && img.complete && img.naturalWidth > 0))).toBe(true);
@@ -25,6 +26,37 @@ test("agency is readable, routes visitors to services, and keeps industrial work
   await page.screenshot({ path: "test-results/agency-desktop.png", fullPage: true });
   expect(modelRequests).toEqual([]);
   expect(errors).toEqual([]);
+});
+
+test("the chosen design: real work up top, a sketch per service, the example as a sequence, one accent", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.goto("/agency");
+  const work = page.locator(".hero-work");
+  await expect(work).toContainText("One of ours.");
+  await expect(work.locator("figcaption")).toHaveText("Marianne’s Hair Salon website and custom booking platform");
+  await expect(work.getByRole("img")).toHaveCount(1);
+  await expect(work.getByRole("img")).toHaveAttribute("alt", /^The Marianne’s Hair home page/);
+  await expect(page.locator("#services h2")).toHaveText("What needs to work better?");
+  await expect(page.locator("#services .service svg")).toHaveCount(4);
+  await expect(page.locator("#ai-agents ol > li")).toHaveCount(3);
+  await expect(page.locator("#ai-agents ol > li").first()).toContainText("An enquiry arrives");
+  // Each step shows an example screen. They are pictures: hidden from assistive technology, with the
+  // step's own description standing in, and their "buttons" are not controls.
+  await expect(page.locator('#ai-agents ol > li > .agent-screen[aria-hidden="true"]')).toHaveCount(3);
+  await expect(page.locator("#ai-agents ol > li").nth(1)).toContainText("prepares a draft response");
+  await expect(page.getByRole("button", { name: "Approve and send" })).toHaveCount(0);
+  await expect(page.locator("#ai-agents")).toContainText("One example.");
+  await expect(page.locator("#small-business li")).toHaveCount(5);
+  // Handwriting is kept to two notes: the hero and the door.
+  await expect(page.locator(".hero-work-note, .office-door-note")).toHaveCount(2);
+  await expect(page.getByText("Start with a conversation.")).toHaveCount(0);
+  // One accent: the main contact button of a section and the form's send button share it. The header button does not.
+  const background = (selector: string) => page.locator(selector).first().evaluate(element => getComputedStyle(element).backgroundColor);
+  const accent = await background(".hero-actions .button");
+  expect(await background("#small-business .button")).toBe(accent);
+  expect(await background('.enquiry-form button[type="submit"]')).toBe(accent);
+  expect(await background(".nav-contact")).not.toBe(accent);
+  expect(await background("#the-office .button")).not.toBe(accent);
 });
 
 test("enquiry validates, retains input on failure, and reports confirmed success", async ({ page }) => {
@@ -64,7 +96,7 @@ test("phone navigation and content fit narrow screens", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Send enquiry", exact: true })).toBeEnabled();
   await page.screenshot({ path: "test-results/agency-phone-top.png" });
   await page.screenshot({ path: "test-results/agency-phone.png", fullPage: true });
-  for (const width of [320, 390, 768, 1024]) {
+  for (const width of [320, 390, 768, 820, 1024]) {
     await page.setViewportSize({ width, height: 900 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `layout at ${width}px`).toBe(true);
   }

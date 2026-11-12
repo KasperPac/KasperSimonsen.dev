@@ -40,7 +40,7 @@ export default function EnquiryForm() {
       <label>What would you like help with?<select name="help" defaultValue="Not sure yet"><option>Not sure yet</option><option>A website</option><option>Business software</option><option>AI agents & automation</option><option>Digital support</option></select></label>
       <label>A little about what you need<textarea name="message" required rows={4} maxLength={10000} placeholder="What would you like to make better?" /></label>
       <p className="form-note">We’ll use these details to respond to your enquiry. Please leave out passwords or sensitive customer information.</p>
-      <button className="button button-light" type="submit">{status === "sending" ? "Sending your enquiry…" : "Send enquiry"}<span aria-hidden="true">↗</span></button>
+      <button className="button button-accent" type="submit">{status === "sending" ? "Sending your enquiry…" : "Send enquiry"}<span aria-hidden="true">↗</span></button>
       {status === "error" && <p role="alert">Your enquiry couldn’t be sent. Please try again or email <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>. Your details are still here.</p>}
     </fieldset>
   </form>;
