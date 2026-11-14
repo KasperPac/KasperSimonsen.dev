@@ -6,6 +6,7 @@
   --office-fg: #e8e8e8;
   --office-bg-rgb: 11 11 11;
   --office-fg-rgb: 232 232 232;
+  --office-halo-rgb: 0 0 0;
   --office-hover: #fff;
   --office-gesture-edge: #171717;
   --office-muted: #b2b2b2;
@@ -23,6 +24,7 @@
   --office-fg: #161616;
   --office-bg-rgb: 244 243 239;
   --office-fg-rgb: 22 22 22;
+  --office-halo-rgb: 244 243 239;
   --office-hover: #000;
   --office-gesture-edge: #f4f3ef;
   --office-muted: #555450;
@@ -440,8 +442,8 @@ html.office-locked, html.office-menu-open {
 /* The crate says how to use it in the visitor's own terms: hover and click with a pointer, swipe and tap on a phone. */
 .office-hint-touch { display: none; }
 .office-crate-demo { position: fixed; left: 56%; top: 56%; width: 48px; height: 112px; z-index: 4; pointer-events: none; --crate-demo-y: 0px; }
-.office-crate-demo-rail { position: absolute; left: -17px; top: 0; width: 20px; height: 100px; stroke: rgb(var(--office-fg-rgb) / 0.65); stroke-width: 1.5; filter: drop-shadow(0 1px 2px #000); }
-.office-crate-demo-gesture { position: absolute; left: 0; top: 76px; width: 36px; height: 44px; transform: translateY(var(--crate-demo-y)); filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7)); }
+.office-crate-demo-rail { position: absolute; left: -17px; top: 0; width: 20px; height: 100px; stroke: rgb(var(--office-fg-rgb) / 0.65); stroke-width: 1.5; filter: drop-shadow(0 1px 2px rgb(var(--office-halo-rgb))); }
+.office-crate-demo-gesture { position: absolute; left: 0; top: 76px; width: 36px; height: 44px; transform: translateY(var(--crate-demo-y)); filter: drop-shadow(0 2px 4px rgb(var(--office-halo-rgb) / 0.7)); }
 .office-crate-demo-gesture svg { width: 36px; height: 44px; fill: var(--office-fg); stroke: var(--office-gesture-edge); stroke-width: 1.5; stroke-linejoin: round; }
 @media (hover: none) { .office-crate-demo-gesture { top: 0; transform: translateY(calc(0px - var(--crate-demo-y))); } }
 @media (prefers-reduced-motion: reduce) { .office-crate-demo { display: none; } }

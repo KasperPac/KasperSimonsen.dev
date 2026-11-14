@@ -124,7 +124,7 @@ export default function Whiteboard({
       />
       <div ref={strip} className="whiteboard-tools">
         {TOOLS.map((t) => (
-          <button key={t.id} type="button" className="whiteboard-swatch" aria-label={t.label} aria-pressed={tool === t.id} style={{ ["--swatch" as string]: inkFor(t.color, mode) }} onClick={() => onTool(t.id)} />
+          <button key={t.id} type="button" className="whiteboard-swatch" aria-label={t.id === 0 && mode === "light" ? COPY.whiteboard.blackMarker : t.label} aria-pressed={tool === t.id} style={{ ["--swatch" as string]: inkFor(t.color, mode) }} onClick={() => onTool(t.id)} />
         ))}
         <button type="button" className="whiteboard-eraser" aria-label={COPY.whiteboard.eraser} aria-pressed={tool === "eraser"} onClick={() => onTool("eraser")} />
         <button

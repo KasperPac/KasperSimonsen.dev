@@ -23,7 +23,7 @@ function renderRope(frame: (typeof frames)[number]) {
         animationDelay: `${(frame.step - STEPS) * stepMs}ms`,
       }}
     >
-      {frame.side === "front" && <polyline points={frame.points} stroke="var(--office-bg)" strokeWidth="4" />}
+      {frame.side === "front" && <polyline points={frame.points} stroke="#000" strokeWidth="4" />}
       <polyline points={frame.points} />
     </g>
   );
@@ -34,12 +34,12 @@ export default function LandingMark() {
     <figure className="site-mark">
       <svg viewBox={`${BOX.min} ${BOX.min} ${size} ${size}`} fill="none" aria-hidden="true">
         {frames.filter((frame) => frame.side === "back").map(renderRope)}
-        <g className="site-mark-letters" fill="var(--office-bg)">
+        <g className="site-mark-letters" fill="#000">
           <polygon points={points(K)} />
           <polygon points={points(S)} />
         </g>
         {frames.filter((frame) => frame.side === "front").map(renderRope)}
-        <circle {...HEAD} fill="var(--office-bg)" />
+        <circle {...HEAD} fill="#000" />
       </svg>
       <figcaption>
         <label className="site-mark-control">

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { THEME_INIT_SCRIPT, THEME_KEY, getTheme, resetThemeState, resolveTheme, setTheme, subscribeTheme, systemTheme } from "./themeState";
+import { THEME_INIT_SCRIPT, THEME_KEY, getTheme, resetThemeState, resolveTheme, setTheme, showThemeOnPage, subscribeTheme, systemTheme } from "./themeState";
 
 function browser(opts: { stored?: string | null; prefersLight?: boolean; onPage?: string; blocked?: boolean }) {
   const store = new Map<string, string>(opts.stored != null ? [[THEME_KEY, opts.stored]] : []);
@@ -86,9 +86,10 @@ describe("theme state", () => {
 });
 
 describe("THEME_INIT_SCRIPT (runs before first paint)", () => {
-  const run = (opts: Parameters<typeof browser>[0]) => {
+  const run = (opts: Parameters<typeof browser>[0], pathname = "/office") => {
     const { root } = browser(opts);
     vi.stubGlobal("localStorage", window.localStorage);
+    vi.stubGlobal("location", { pathname });
     new Function(THEME_INIT_SCRIPT)();
     return root.dataset.theme;
   };
@@ -103,5 +104,30 @@ describe("THEME_INIT_SCRIPT (runs before first paint)", () => {
   it("falls back to the system on a bad stored value or blocked storage", () => {
     expect(run({ stored: "blue", prefersLight: true })).toBe("light");
     expect(run({ blocked: true, prefersLight: true })).toBe("light");
+  });
+  it("sets nothing on any page but /office, whatever is stored or set", () => {
+    for (const path of ["/", "/portfolio", "/portfolio/some-project", "/contact", "/services/web", "/officer", "/office/x"]) {
+      expect(run({ stored: "light", prefersLight: true }, path)).toBeUndefined();
+    }
+  });
+  it("sets the theme on /office with a trailing slash too", () => {
+    expect(run({ stored: "light", prefersLight: false }, "/office/")).toBe("light");
+  });
+});
+
+describe("showThemeOnPage (client-side navigation shares the layout)", () => {
+  it("puts the theme on the page while the office is shown and takes it off on leaving", () => {
+    const { root } = browser({ stored: "light", prefersLight: false });
+    const leave = showThemeOnPage();
+    expect(root.dataset.theme).toBe("light");
+    leave();
+    expect(root.dataset.theme).toBeUndefined();
+  });
+  it("follows the system when nothing is stored", () => {
+    const { root } = browser({ prefersLight: true });
+    const leave = showThemeOnPage();
+    expect(root.dataset.theme).toBe("light");
+    leave();
+    expect(root.dataset.theme).toBeUndefined();
   });
 });

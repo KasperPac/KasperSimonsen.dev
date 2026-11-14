@@ -36,7 +36,8 @@ import { CrateMotion, findCrateNodes, type PlayerPoses } from "./objects/crate";
 import { findShelfNodes, ShelfMotion } from "./objects/shelf";
 import { findNotesNodes, NotesMotion } from "./objects/notes";
 import NeonSign from "./neon/NeonSign";
-import LightFixture, { LIGHT_HIT } from "./light/LightFixture";
+import LightFixture from "./light/LightFixture";
+import { lightTakesPointer } from "./light/hit";
 import { toggleLight } from "./light/lightState";
 import type { Placement } from "./objects/shelf";
 import { screenRect } from "./overlay/screenRect";
@@ -565,8 +566,8 @@ function Office({
     const dig = digFromPointer(on, z, plane?.userData.tops ?? [], work.length, crate.current.dig);
     return across || onCrate(e) ? { hotspot: "hs_crate", item: work[dig]?.slug ?? null } : null;
   };
-  /** The light's switch or bulb is the nearest thing under the pointer: anything in front of it (a hotspot) wins. */
-  const onLight = (e: ThreeEvent<PointerEvent | MouseEvent>) => !!e.intersections[0]?.object.userData[LIGHT_HIT];
+  /** The light's switch or bulb has the pointer: it is the nearest thing under it and no hotspot is under it at all. */
+  const onLight = (e: ThreeEvent<PointerEvent | MouseEvent>) => lightTakesPointer(e.intersections.map((i) => i.object));
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
     if (!interactive()) return;
     if (onLight(e)) {

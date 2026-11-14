@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import {
-  BoxGeometry,
   CircleGeometry,
   Color,
   DoubleSide,
@@ -11,27 +10,25 @@ import {
   MeshBasicMaterial,
   PlaneGeometry,
   Vector2,
-  type Intersection,
   type Object3D,
-  type Raycaster,
 } from "three";
 import { Line2 } from "three/addons/lines/Line2.js";
 import { LineGeometry } from "three/addons/lines/LineGeometry.js";
 import { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import type { DirectorState } from "../director/director";
-import { NO_BOUNDS } from "../hotspots/proxies";
 import { palettes, theme } from "../theme";
 import { useTheme } from "../themeState";
 import { flickerElapsedMs, useLight } from "./lightState";
+import { lightHitBox } from "./hit";
 import { lightBrightness } from "./sequence";
 
-/** userData flag on the invisible shapes that take a click for the light (read by the office's pointer handlers). */
-export const LIGHT_HIT = "lightHit";
-
 /** Where the switch and the bulb sit, in the room's frame (the back wall is z = -5.1, the ceiling y = 2.72). */
-export const SWITCH_AT = [2.0, 1.45, -5.09] as const;
+export const SWITCH_AT = [-0.1, 1.6, -5.09] as const;
 export const BULB_AT = [0.4, 1.9, -3.6] as const;
 const CEILING_Y = 2.72;
+/** The hit boxes' sizes (metres): the plate with a margin, and the glass (0.13 wide, 0.15 tall) with its cap. */
+const SWITCH_HIT = [0.3, 0.36, 0.12] as const;
+const BULB_HIT = [0.15, 0.2, 0.15] as const;
 
 const WARM = new Color("#ffd98a"); // the glass when lit
 const FILAMENT_ON = { dark: "#fff4e2", light: "#b45f00" } as const;
@@ -153,20 +150,9 @@ export default function LightFixture({ scene, director, reduced }: Props) {
     // Invisible shapes over the plate and the bulb take the pointer, only while the room is idle.
     const hitMaterial = new MeshBasicMaterial({ visible: false });
     const enabled = () => director.current.kind === "idle";
-    const hit = (size: [number, number, number], at: readonly [number, number, number]) => {
-      const m = new Mesh(new BoxGeometry(1, 1, 1), hitMaterial);
-      m.scale.set(...size);
-      m.position.set(...at);
-      m.userData[LIGHT_HIT] = true;
-      m.userData[NO_BOUNDS] = true;
-      m.userData.cleanEdges = true; // never filled or outlined
-      m.raycast = function (this: Mesh, raycaster: Raycaster, intersects: Intersection[]) {
-        if (enabled()) Mesh.prototype.raycast.call(this, raycaster, intersects);
-      };
-      return m;
-    };
-    const switchHit = hit([0.3, 0.36, 0.12], SWITCH_AT);
-    const bulbHit = hit([0.32, 0.32, 0.32], [BULB_AT[0], BULB_AT[1], BULB_AT[2]]);
+    const switchHit = lightHitBox(SWITCH_HIT, SWITCH_AT, hitMaterial, enabled);
+    // Just the drawn glass and its cap, and a little margin: anything wider could reach over a hotspot beside it.
+    const bulbHit = lightHitBox(BULB_HIT, [BULB_AT[0], BULB_AT[1] + 0.02, BULB_AT[2]], hitMaterial, enabled);
     f.root.add(switchHit, bulbHit);
     parent.add(f.root);
     return () => {

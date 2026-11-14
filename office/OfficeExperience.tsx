@@ -6,6 +6,7 @@ import OfficeErrorBoundary from "./OfficeErrorBoundary";
 import { accentVar, theme } from "./theme";
 import { COPY } from "./copy";
 import { toggleLight, useLight } from "./light/lightState";
+import { showThemeOnPage } from "./themeState";
 import { useWalkInProgress } from "./walkin/useWalkInProgress";
 import { onStreet, startAutoWalk } from "./walkin/autoWalk";
 import { dragPan, inView, isPanGesture, panFor } from "./camera/pan";
@@ -218,6 +219,7 @@ export default function OfficeExperience() {
   // Asked once, on the client: this page is also rendered on the server, where there is no matchMedia.
   const reduced = useMemo(() => typeof window !== "undefined" && reducedMotion(), []);
   const light = useLight();
+  useEffect(showThemeOnPage, []); // light mode is the office's alone: on <html> only while it is on screen
   // The reel's full-screen view (spec 3.5 3a) is the monitor's reading layer, as Read more is the others': Esc or Back
   // closes it to the monitor. The reel holds still while it's open.
   const viewing = scene.reading && scene.target?.hotspot === "hs_monitor";

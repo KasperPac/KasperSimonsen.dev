@@ -28,15 +28,27 @@ function readStored(): string | null {
 
 /**
  * Runs in the page head before first paint (layout.tsx), so the right theme is on <html> before anything is drawn.
- * Self-contained, so keep it in step with `resolveTheme`. The values are the key and the two modes.
+ * It acts only on /office; elsewhere nothing is set and the pages stay dark. Self-contained, so keep it in step with
+ * `resolveTheme`. The values are the key and the two modes.
  */
-export const THEME_INIT_SCRIPT = `(function(){try{var m=null;try{m=localStorage.getItem(${JSON.stringify(THEME_KEY)})}catch(e){}if(m!=="dark"&&m!=="light")m=window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";document.documentElement.dataset.theme=m}catch(e){}})()`;
+export const THEME_INIT_SCRIPT = `(function(){try{var p=location.pathname;if(p!=="/office"&&p!=="/office/")return;var m=null;try{m=localStorage.getItem(${JSON.stringify(THEME_KEY)})}catch(e){}if(m!=="dark"&&m!=="light")m=window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";document.documentElement.dataset.theme=m}catch(e){}})()`;
 
 let current: ThemeMode | null = null;
 const listeners = new Set<() => void>();
 
 function applyToPage(mode: ThemeMode): void {
   document.documentElement.dataset.theme = mode;
+}
+
+/**
+ * Puts the theme on <html> while the office is on screen, and takes it off when the visitor leaves for another page
+ * (the layout is shared, so a client-side navigation would otherwise carry light mode with it). Returns the undo.
+ */
+export function showThemeOnPage(): () => void {
+  applyToPage(getTheme());
+  return () => {
+    delete document.documentElement.dataset.theme;
+  };
 }
 
 /** The theme now: the one the head script put on <html>, else the stored or system choice. Dark on the server. */

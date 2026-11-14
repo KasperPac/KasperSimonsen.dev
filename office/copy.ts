@@ -59,6 +59,7 @@ export const COPY = {
     todo: "TODO: sleep",
     note: "(next sprint)",
     tools: { white: "White marker", lime: "Green marker", red: "Red marker", cyan: "Blue marker", amber: "Orange marker" },
+    blackMarker: "Black marker", // the first marker, in the light office
     eraser: "Eraser",
     wipe: "Wipe it",
   },
