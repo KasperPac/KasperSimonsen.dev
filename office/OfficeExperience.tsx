@@ -3,8 +3,10 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import OfficeErrorBoundary from "./OfficeErrorBoundary";
-import { theme } from "./theme";
+import { accentVar, theme } from "./theme";
 import { COPY } from "./copy";
+import { toggleLight, useLight } from "./light/lightState";
+import { showThemeOnPage } from "./themeState";
 import { useWalkInProgress } from "./walkin/useWalkInProgress";
 import { onStreet, startAutoWalk } from "./walkin/autoWalk";
 import { dragPan, inView, isPanGesture, panFor } from "./camera/pan";
@@ -216,6 +218,8 @@ export default function OfficeExperience() {
   // The monitor's reel of past work (spec 3.5): runs while the monitor is open, and keeps its place between visits.
   // Asked once, on the client: this page is also rendered on the server, where there is no matchMedia.
   const reduced = useMemo(() => typeof window !== "undefined" && reducedMotion(), []);
+  const light = useLight();
+  useEffect(showThemeOnPage, []); // light mode is the office's alone: on <html> only while it is on screen
   // The reel's full-screen view (spec 3.5 3a) is the monitor's reading layer, as Read more is the others': Esc or Back
   // closes it to the monitor. The reel holds still while it's open.
   const viewing = scene.reading && scene.target?.hotspot === "hs_monitor";
@@ -503,7 +507,7 @@ export default function OfficeExperience() {
   const navProps = (hit: Hit) => ({ onFocus: () => onHover(hit), onBlur: () => onHover(null) });
 
   return (
-    <div ref={host} className="office" data-crate-demo={walkthroughVisible ? "true" : undefined} data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-presented={shelfSlug ?? ""} data-shelf="in" data-notes="up" data-neon="off" data-whiteboard="shut" data-hints={hints} data-walking={walking}>
+    <div ref={host} className="office" data-crate-demo={walkthroughVisible ? "true" : undefined} data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-presented={shelfSlug ?? ""} data-shelf="in" data-notes="up" data-neon="off" data-light={light} data-whiteboard="shut" data-hints={hints} data-walking={walking}>
       {/* First in the page, so the keyboard reaches it first (spec 7.3). Shows only on the street. */}
       <div className="office-arrive">
         <button type="button" className="office-come-in" onClick={comeIn}>
@@ -613,6 +617,12 @@ export default function OfficeExperience() {
               {COPY.whiteboard.nav}
             </button>
           </li>
+          {/* The same switch as on the wall: a keyboard and screen reader way to it. On is light mode. */}
+          <li>
+            <button type="button" role="switch" aria-checked={light !== "off"} onClick={() => toggleLight(reduced)}>
+              {COPY.light.label}
+            </button>
+          </li>
         </ul>
       </nav>
 
@@ -624,7 +634,7 @@ export default function OfficeExperience() {
         data-hotspot={hovered?.hotspot}
         aria-hidden="true"
         hidden={!hovered}
-        style={{ "--accent": hovered ? theme.accents[hovered.hotspot] : theme.line } as CSSProperties}
+        style={{ "--accent": hovered ? accentVar(hovered.hotspot) : "var(--office-fg)" } as CSSProperties}
       >
         {hovered ? labelFor(hovered, COPY.labels) : ""}
       </div>
@@ -636,7 +646,7 @@ export default function OfficeExperience() {
           }}
           className="office-marker"
           data-hotspot={h}
-          style={{ "--marker": theme.accents[h] } as CSSProperties}
+          style={{ "--marker": accentVar(h) } as CSSProperties}
           aria-hidden="true"
           // A dot is a way in too, for a finger especially; the nav has the same for keyboards and screen readers.
           onClick={() => activate({ hotspot: h, item: null })}

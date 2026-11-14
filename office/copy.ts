@@ -21,6 +21,7 @@ export const COPY = {
     hs_monitor: "Monitor",
     hs_whiteboard: "Have a go",
   },
+  light: { label: "Office light" },
   back: "Back",
   backHint: "Scroll up to step back",
   backHintTouch: "Swipe right or pinch in to step back",
@@ -58,6 +59,7 @@ export const COPY = {
     todo: "TODO: sleep",
     note: "(next sprint)",
     tools: { white: "White marker", lime: "Green marker", red: "Red marker", cyan: "Blue marker", amber: "Orange marker" },
+    blackMarker: "Black marker", // the first marker, in the light office
     eraser: "Eraser",
     wipe: "Wipe it",
   },

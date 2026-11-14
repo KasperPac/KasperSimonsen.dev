@@ -1,3 +1,5 @@
+import { inkFor } from "../theme";
+import { getTheme } from "../themeState";
 import { boardItems } from "./board";
 import { drawItems, drawStrokeTail, type Ctx2D, type Stroke } from "./strokes";
 
@@ -64,7 +66,11 @@ export function redrawBoard(): void {
   ctx.restore();
   ctx.save();
   ctx.setTransform(DENSITY, 0, 0, DENSITY, 0, 0);
-  drawItems(ctx as unknown as Ctx2D, boardItems(), font());
+  drawItems(
+    ctx as unknown as Ctx2D,
+    boardItems().map((item) => (item.kind === "stroke" && item.erase ? item : { ...item, color: inkFor(item.color, getTheme()) })),
+    font(),
+  );
   ctx.restore();
   version++;
 }
@@ -75,7 +81,7 @@ export function inkStroke(stroke: Stroke): void {
   if (!ctx || !size.widthPx) return;
   ctx.save();
   ctx.setTransform(DENSITY, 0, 0, DENSITY, 0, 0);
-  drawStrokeTail(ctx as unknown as Ctx2D, stroke);
+  drawStrokeTail(ctx as unknown as Ctx2D, stroke.erase ? stroke : { ...stroke, color: inkFor(stroke.color, getTheme()) });
   ctx.restore();
   version++;
 }

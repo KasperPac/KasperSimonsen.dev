@@ -54,6 +54,8 @@ export type Sign = {
   glow: Record<TubeId, LineMaterial>;
   tubes: Record<TubeId, Line2[]>;
   gaps: (Line2 | null)[];
+  /** What a front rope's gap draws in: the wall behind the sign. */
+  gap: LineMaterial;
 };
 
 function line(points: number[], material: LineMaterial, order: number): Line2 {
@@ -63,7 +65,7 @@ function line(points: number[], material: LineMaterial, order: number): Line2 {
   return l;
 }
 
-export function buildSign(): Sign {
+export function buildSign(background: string = theme.background): Sign {
   const materials: LineMaterial[] = [];
   // Opaque, depth-tested less-or-equal against the room, and layered by ORDER.
   const material = (color: string, linewidth: number) => {
@@ -93,7 +95,7 @@ export function buildSign(): Sign {
       return parts;
     });
   }
-  const gapMaterial = material(theme.background, WIDTH.gap);
+  const gapMaterial = material(background, WIDTH.gap);
   const gaps = Array.from({ length: STEPS }, (_, step) => {
     if (ropeSide(step) !== "front") return null;
     const g = line(toLocal(tubeLines(`rope${step}` as TubeId)[0], Z.gap), gapMaterial, ORDER.gap);
@@ -101,7 +103,7 @@ export function buildSign(): Sign {
     ropes.add(g);
     return g;
   });
-  return { root, body, unlit, materials, core, glow, tubes, gaps };
+  return { root, body, unlit, materials, core, glow, tubes, gaps, gap: gapMaterial };
 }
 
 /** `out` = the lit colour at brightness `k`, scaled in sRGB, as the eye sees it: 0.35 reads as a third as bright. */

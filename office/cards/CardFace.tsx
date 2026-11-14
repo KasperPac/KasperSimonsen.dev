@@ -4,7 +4,7 @@ import { useMemo, useRef, type CSSProperties, type ReactNode } from "react";
 import { createPortal, useFrame } from "@react-three/fiber";
 import { Html } from "@react-three/drei";
 import { Matrix4, Vector3, type Group, type Mesh } from "three";
-import { theme } from "@/office/theme";
+import { accentVar } from "@/office/theme";
 import type { HotspotName } from "@/office/hotspots/registry";
 import { backFaceFor, belowFaceFor, faceFor, screenFaceFor } from "./face";
 import { projectFace } from "./projection";
@@ -80,7 +80,7 @@ export default function CardFace({
           ref={section}
           className={place === "back" ? "office-card-face office-sleeve-back" : place === "screen" ? "office-card-face office-screen" : "office-card-face"}
           aria-labelledby={focus ? titleId : undefined}
-          style={{ width: widthPx, height: face.heightPx, transformOrigin: "0 0", "--accent": theme.accents[hotspot] } as CSSProperties}
+          style={{ width: widthPx, height: face.heightPx, transformOrigin: "0 0", "--accent": accentVar(hotspot) } as CSSProperties}
         >
           {children}
         </section>

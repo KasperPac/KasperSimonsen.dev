@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { IBM_Plex_Mono, Inter_Tight } from "next/font/google";
+import { THEME_INIT_SCRIPT } from "@/office/themeScript";
 import "./office.css";
 
 const ui = Inter_Tight({ variable: "--font-ui", subsets: ["latin"], display: "swap" });
@@ -19,7 +20,11 @@ export const metadata: Metadata = {
 
 export default function OfficeLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${ui.variable} ${mono.variable}`}>
+    // The head script sets data-theme before first paint, so the server's markup differs from the page by design.
+    <html lang="en" className={`${ui.variable} ${mono.variable}`} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+      </head>
       <body>
         {children}
         <Analytics />

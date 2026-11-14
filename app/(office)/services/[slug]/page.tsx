@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { findService, services } from "@/content/services";
 import { CONTACT_NAME } from "@/content/contact";
 import ServiceArticle from "@/panels/ServiceArticle";
-import { theme } from "@/office/theme";
+import { accentVar } from "@/office/theme";
 import PortfolioNav from "../../PortfolioNav";
 
 type Params = Promise<{ slug: string }>;
@@ -26,7 +26,7 @@ export default async function ServicePage({ params }: { params: Params }) {
   const service = findService((await params).slug);
   if (!service) notFound();
   return (
-    <main className="standalone" style={{ "--accent": theme.accents.hs_shelf } as CSSProperties}>
+    <main className="standalone" style={{ "--accent": accentVar("hs_shelf") } as CSSProperties}>
       <PortfolioNav />
       <ServiceArticle service={service} titleId="service-title" level={1} />
     </main>
