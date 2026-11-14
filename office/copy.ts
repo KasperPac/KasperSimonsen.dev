@@ -21,6 +21,7 @@ export const COPY = {
     hs_monitor: "Monitor",
     hs_whiteboard: "Have a go",
   },
+  light: { label: "Office light" },
   back: "Back",
   backHint: "Scroll up to step back",
   backHintTouch: "Swipe right or pinch in to step back",

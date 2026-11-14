@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSS
 import OfficeErrorBoundary from "./OfficeErrorBoundary";
 import { accentVar, theme } from "./theme";
 import { COPY } from "./copy";
+import { toggleLight, useLight } from "./light/lightState";
 import { useWalkInProgress } from "./walkin/useWalkInProgress";
 import { onStreet, startAutoWalk } from "./walkin/autoWalk";
 import { dragPan, inView, isPanGesture, panFor } from "./camera/pan";
@@ -216,6 +217,7 @@ export default function OfficeExperience() {
   // The monitor's reel of past work (spec 3.5): runs while the monitor is open, and keeps its place between visits.
   // Asked once, on the client: this page is also rendered on the server, where there is no matchMedia.
   const reduced = useMemo(() => typeof window !== "undefined" && reducedMotion(), []);
+  const light = useLight();
   // The reel's full-screen view (spec 3.5 3a) is the monitor's reading layer, as Read more is the others': Esc or Back
   // closes it to the monitor. The reel holds still while it's open.
   const viewing = scene.reading && scene.target?.hotspot === "hs_monitor";
@@ -503,7 +505,7 @@ export default function OfficeExperience() {
   const navProps = (hit: Hit) => ({ onFocus: () => onHover(hit), onBlur: () => onHover(null) });
 
   return (
-    <div ref={host} className="office" data-crate-demo={walkthroughVisible ? "true" : undefined} data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-presented={shelfSlug ?? ""} data-shelf="in" data-notes="up" data-neon="off" data-whiteboard="shut" data-hints={hints} data-walking={walking}>
+    <div ref={host} className="office" data-crate-demo={walkthroughVisible ? "true" : undefined} data-walkin-progress="0" data-director={describeDirector(state)} data-drawer="shut" data-sleeve="in" data-dig={crate.current.dig} data-playing={pulledSlug ?? ""} data-presented={shelfSlug ?? ""} data-shelf="in" data-notes="up" data-neon="off" data-light={light} data-whiteboard="shut" data-hints={hints} data-walking={walking}>
       {/* First in the page, so the keyboard reaches it first (spec 7.3). Shows only on the street. */}
       <div className="office-arrive">
         <button type="button" className="office-come-in" onClick={comeIn}>
@@ -611,6 +613,12 @@ export default function OfficeExperience() {
           <li>
             <button type="button" onClick={() => activate({ hotspot: "hs_whiteboard", item: null })} {...navProps({ hotspot: "hs_whiteboard", item: null })}>
               {COPY.whiteboard.nav}
+            </button>
+          </li>
+          {/* The same switch as on the wall: a keyboard and screen reader way to it. On is light mode. */}
+          <li>
+            <button type="button" role="switch" aria-checked={light !== "off"} onClick={() => toggleLight(reduced)}>
+              {COPY.light.label}
             </button>
           </li>
         </ul>

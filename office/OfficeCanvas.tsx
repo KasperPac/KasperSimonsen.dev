@@ -36,6 +36,8 @@ import { CrateMotion, findCrateNodes, type PlayerPoses } from "./objects/crate";
 import { findShelfNodes, ShelfMotion } from "./objects/shelf";
 import { findNotesNodes, NotesMotion } from "./objects/notes";
 import NeonSign from "./neon/NeonSign";
+import LightFixture, { LIGHT_HIT } from "./light/LightFixture";
+import { toggleLight } from "./light/lightState";
 import type { Placement } from "./objects/shelf";
 import { screenRect } from "./overlay/screenRect";
 import { placeCard } from "./overlay/place";
@@ -563,8 +565,16 @@ function Office({
     const dig = digFromPointer(on, z, plane?.userData.tops ?? [], work.length, crate.current.dig);
     return across || onCrate(e) ? { hotspot: "hs_crate", item: work[dig]?.slug ?? null } : null;
   };
+  /** The light's switch or bulb is the nearest thing under the pointer: anything in front of it (a hotspot) wins. */
+  const onLight = (e: ThreeEvent<PointerEvent | MouseEvent>) => !!e.intersections[0]?.object.userData[LIGHT_HIT];
   const onPointerMove = (e: ThreeEvent<PointerEvent>) => {
     if (!interactive()) return;
+    if (onLight(e)) {
+      e.stopPropagation();
+      onHover(null);
+      document.body.style.cursor = "pointer";
+      return;
+    }
     // A finger dragged over the crate is a swipe (the page flicks one record per swipe), not a pointer to follow.
     if (crate.current.browsing && e.pointerType === "touch") return;
     e.stopPropagation();
@@ -578,6 +588,11 @@ function Office({
   };
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     if (!interactive()) return;
+    if (onLight(e)) {
+      e.stopPropagation();
+      toggleLight(reduced);
+      return;
+    }
     // Browsing the crate, a click, tap or second click anywhere on it plays the front record (spec 3.2.3), the one shown,
     // never whichever record happens to be under the pointer at that moment (a leaning one, or one peeking over the front).
     const hit = crate.current.browsing
@@ -592,6 +607,7 @@ function Office({
     <>
       <primitive object={office.scene} onPointerMove={onPointerMove} onPointerOut={onPointerOut} onClick={onClick} />
       <NeonSign scene={office.scene} director={director} host={host} reduced={reduced} />
+      <LightFixture scene={office.scene} director={director} reduced={reduced} />
       {drawerCard && card && (
         <CardFace surface={card} hotspot="hs_drawer" titleId={drawerCard.titleId}>
           {drawerCard.content}
