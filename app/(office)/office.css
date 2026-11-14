@@ -1,7 +1,37 @@
+/* Dark is the office as it was; html[data-theme="light"] (set before first paint, see layout.tsx) is the lights on. Keep the
+   accents in step with office/theme.ts: theme.test.ts checks they match. */
 :root {
   color-scheme: dark;
   --office-bg: #0b0b0b;
   --office-fg: #e8e8e8;
+  --office-bg-rgb: 11 11 11;
+  --office-fg-rgb: 232 232 232;
+  --office-hover: #fff;
+  --office-gesture-edge: #171717;
+  --office-muted: #b2b2b2;
+  --office-rule: #393939;
+  --accent-hs_crate: #C6FF3D;
+  --accent-hs_shelf: #FF3B30;
+  --accent-hs_drawer: #2EF2FF;
+  --accent-hs_monitor: #FFB224;
+  --accent-hs_whiteboard: #e8e8e8;
+}
+
+:root[data-theme="light"] {
+  color-scheme: light;
+  --office-bg: #f4f3ef;
+  --office-fg: #161616;
+  --office-bg-rgb: 244 243 239;
+  --office-fg-rgb: 22 22 22;
+  --office-hover: #000;
+  --office-gesture-edge: #f4f3ef;
+  --office-muted: #555450;
+  --office-rule: #c9c7c0;
+  --accent-hs_crate: #4a7300;
+  --accent-hs_shelf: #d1251b;
+  --accent-hs_drawer: #007582;
+  --accent-hs_monitor: #a85f00;
+  --accent-hs_whiteboard: #161616;
 }
 
 * {
@@ -80,7 +110,7 @@ html.office-locked, html.office-menu-open {
   z-index: 3;
   padding: 12px 14px;
   background: var(--office-bg);
-  border: 1px solid rgba(232, 232, 232, 0.25);
+  border: 1px solid rgb(var(--office-fg-rgb) / 0.25);
 }
 .office-nav ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
 .office-nav a,
@@ -113,7 +143,7 @@ html.office-locked, html.office-menu-open {
   padding: 0 14px;
   background: var(--office-bg);
   color: var(--office-fg);
-  border: 1px solid rgba(232, 232, 232, 0.35);
+  border: 1px solid rgb(var(--office-fg-rgb) / 0.35);
   font: 12px/1 var(--font-mono), ui-monospace, monospace;
   cursor: pointer;
 }
@@ -132,23 +162,23 @@ html.office-locked, html.office-menu-open {
   background: var(--office-bg);
   color: var(--office-fg);
   border: 0;
-  border-left: 1px solid rgba(232, 232, 232, 0.25);
+  border-left: 1px solid rgb(var(--office-fg-rgb) / 0.25);
 }
-.office-menu::backdrop { background: rgba(11, 11, 11, 0.75); }
+.office-menu::backdrop { background: rgb(var(--office-bg-rgb) / 0.75); }
 .office-menu[open] { animation: office-menu-in 0.2s ease-out; }
 .office-menu-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; background: var(--office-bg); }
-.office-menu-head h2 { margin: 0; font: 12px/1.4 var(--font-mono), ui-monospace, monospace; color: rgba(232, 232, 232, 0.7); }
+.office-menu-head h2 { margin: 0; font: 12px/1.4 var(--font-mono), ui-monospace, monospace; color: rgb(var(--office-fg-rgb) / 0.7); }
 .office-menu-head button { min-width: 44px; min-height: 44px; border: 0; padding: 0 10px; background: none; color: inherit; font: 12px/1 var(--font-mono), ui-monospace, monospace; cursor: pointer; }
 .office-menu a { display: flex; align-items: center; justify-content: space-between; min-height: 44px; color: inherit; text-decoration: none; }
-.office-menu section { padding: 14px 0; border-top: 1px solid rgba(232, 232, 232, 0.2); }
+.office-menu section { padding: 14px 0; border-top: 1px solid rgb(var(--office-fg-rgb) / 0.2); }
 .office-menu h3 { margin: 0; font-size: 20px; font-weight: 500; }
 .office-menu ul { padding: 0; margin: 4px 0 0; list-style: none; }
-.office-menu li a { font-size: 16px; color: rgba(232, 232, 232, 0.75); }
-.office-menu-primary { padding: 12px 0; font-size: 20px; border-top: 1px solid rgba(232, 232, 232, 0.2); }
+.office-menu li a { font-size: 16px; color: rgb(var(--office-fg-rgb) / 0.75); }
+.office-menu-primary { padding: 12px 0; font-size: 20px; border-top: 1px solid rgb(var(--office-fg-rgb) / 0.2); }
 .office-menu-primary:first-child { border-top: 0; }
 .office-menu :focus-visible, .office-menu-toggle:focus-visible, .office-contact-link:focus-visible, .office-back:focus-visible { outline: 2px solid var(--office-fg); outline-offset: 3px; }
 @media (hover: hover) {
-  .office-menu a:hover, .office-menu-head button:hover { color: #fff; text-decoration: underline; text-underline-offset: 4px; }
+  .office-menu a:hover, .office-menu-head button:hover { color: var(--office-hover); text-decoration: underline; text-underline-offset: 4px; }
   .office-menu-toggle:hover, .office-contact-link:hover, .office-back:hover { border-color: var(--office-fg); }
 }
 .office-menu a:active, .office-menu-head button:active, .office-menu-toggle:active, .office-contact-link:active { opacity: 0.65; }
@@ -219,7 +249,7 @@ html.office-locked, html.office-menu-open {
   height: 8px;
   border-left: 1px solid var(--accent);
 }
-.office-hints-text { display: none; position: fixed; left: 16px; right: 16px; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 3; text-align: center; font: 11px/1.5 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.7); }
+.office-hints-text { display: none; position: fixed; left: 16px; right: 16px; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 3; text-align: center; font: 11px/1.5 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgb(var(--office-fg-rgb) / 0.7); }
 .office[data-hints="dots"][data-director="idle"]:not([data-office-fallback="true"]) .office-hints-text { display: block; }
 /* Phones pan the standing view sideways (camera/pan.ts): the page keeps vertical drags (the walk-in's scroll) and hands
    sideways ones to the office. */
@@ -244,7 +274,7 @@ html.office-locked, html.office-menu-open {
   justify-items: center;
   gap: 16px;
   padding: 14vh 16px max(28px, env(safe-area-inset-bottom));
-  background: linear-gradient(to bottom, rgba(11, 11, 11, 0), rgba(11, 11, 11, 0.88) 55%, var(--office-bg));
+  background: linear-gradient(to bottom, rgb(var(--office-bg-rgb) / 0), rgb(var(--office-bg-rgb) / 0.88) 55%, var(--office-bg));
   pointer-events: none;
   opacity: 0;
   visibility: hidden;
@@ -271,7 +301,7 @@ html.office-locked, html.office-menu-open {
   pointer-events: auto;
   transition: background-color 0.2s ease;
 }
-.office-come-in:hover { background: #fff; }
+.office-come-in:hover { background: var(--office-hover); }
 .office-come-in:focus-visible { outline: 1px solid var(--office-fg); outline-offset: 4px; }
 .office-scroll {
   margin: 0;
@@ -281,7 +311,7 @@ html.office-locked, html.office-menu-open {
   font: 12px/1 var(--font-mono), ui-monospace, monospace;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(232, 232, 232, 0.9);
+  color: rgb(var(--office-fg-rgb) / 0.9);
 }
 /* The chevron breathes downwards, in time with the office's dots. */
 .office-scroll::after {
@@ -308,7 +338,7 @@ html.office-locked, html.office-menu-open {
   min-height: 44px;
   background: var(--office-bg);
   color: var(--office-fg);
-  border: 1px solid rgba(232, 232, 232, 0.35);
+  border: 1px solid rgb(var(--office-fg-rgb) / 0.35);
   font: 11px/1 var(--font-mono), ui-monospace, monospace;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -323,7 +353,7 @@ html.office-locked, html.office-menu-open {
   margin: 0;
   padding: 6px 8px;
   background: var(--office-bg);
-  color: rgba(232, 232, 232, 0.7);
+  color: rgb(var(--office-fg-rgb) / 0.7);
   font: 10px/1.5 var(--font-mono), ui-monospace, monospace;
 }
 
@@ -336,7 +366,7 @@ html.office-locked, html.office-menu-open {
   width: min(340px, calc(100vw - 32px));
   padding: 20px 22px;
   background: var(--office-bg);
-  border: 1px solid rgba(232, 232, 232, 0.9);
+  border: 1px solid rgb(var(--office-fg-rgb) / 0.9);
   font: 15px/1.5 var(--font-ui), system-ui, sans-serif;
   animation: office-card-in 0.3s ease-out both;
 }
@@ -354,7 +384,7 @@ html.office-locked, html.office-menu-open {
   color: var(--accent);
 }
 .office-card-title { margin: 0 0 6px; font-size: 22px; font-weight: 600; line-height: 1.15; }
-.office-card-text { margin: 0 0 8px; color: rgba(232, 232, 232, 0.8); }
+.office-card-text { margin: 0 0 8px; color: rgb(var(--office-fg-rgb) / 0.8); }
 .office-card a { color: var(--office-fg); }
 .office-card-links { margin: 0 0 14px; padding: 0; list-style: none; display: flex; gap: 14px; }
 .office-card-cta {
@@ -381,7 +411,7 @@ html.office-locked, html.office-menu-open {
 .office-card-face .office-card-title:focus { outline: none; } /* a focus target for the reader, not a control */
 .office-card-face .office-card-eyebrow { margin: 0 0 14px; font-size: 15px; }
 .office-card-face .office-card-title { margin: 0 0 4px; font-size: 44px; font-weight: 600; line-height: 1.05; }
-.office-card-face .office-card-text { margin: 0 0 4px; color: rgba(232, 232, 232, 0.8); }
+.office-card-face .office-card-text { margin: 0 0 4px; color: rgb(var(--office-fg-rgb) / 0.8); }
 .office-card-face a { color: var(--office-fg); }
 .office-card-face .office-card-links { margin: auto 0 0; padding: 0; list-style: none; display: flex; gap: 18px; }
 .office-card-face .office-card-cta {
@@ -406,13 +436,13 @@ html.office-locked, html.office-menu-open {
 .article h2:not(.article-title),
 .article h3 { margin: 28px 0 8px; font-size: 18px; font-weight: 600; }
 /* the crate's hint, bottom centre while browsing it */
-.office-hint { position: fixed; left: 16px; right: 16px; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 3; text-align: center; font: 11px/1.5 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.7); }
+.office-hint { position: fixed; left: 16px; right: 16px; bottom: max(20px, env(safe-area-inset-bottom)); z-index: 3; text-align: center; font: 11px/1.5 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgb(var(--office-fg-rgb) / 0.7); }
 /* The crate says how to use it in the visitor's own terms: hover and click with a pointer, swipe and tap on a phone. */
 .office-hint-touch { display: none; }
 .office-crate-demo { position: fixed; left: 56%; top: 56%; width: 48px; height: 112px; z-index: 4; pointer-events: none; --crate-demo-y: 0px; }
-.office-crate-demo-rail { position: absolute; left: -17px; top: 0; width: 20px; height: 100px; stroke: rgba(232, 232, 232, 0.65); stroke-width: 1.5; filter: drop-shadow(0 1px 2px #000); }
+.office-crate-demo-rail { position: absolute; left: -17px; top: 0; width: 20px; height: 100px; stroke: rgb(var(--office-fg-rgb) / 0.65); stroke-width: 1.5; filter: drop-shadow(0 1px 2px #000); }
 .office-crate-demo-gesture { position: absolute; left: 0; top: 76px; width: 36px; height: 44px; transform: translateY(var(--crate-demo-y)); filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.7)); }
-.office-crate-demo-gesture svg { width: 36px; height: 44px; fill: #e8e8e8; stroke: #171717; stroke-width: 1.5; stroke-linejoin: round; }
+.office-crate-demo-gesture svg { width: 36px; height: 44px; fill: var(--office-fg); stroke: var(--office-gesture-edge); stroke-width: 1.5; stroke-linejoin: round; }
 @media (hover: none) { .office-crate-demo-gesture { top: 0; transform: translateY(calc(0px - var(--crate-demo-y))); } }
 @media (prefers-reduced-motion: reduce) { .office-crate-demo { display: none; } }
 @media (hover: none) {
@@ -449,7 +479,7 @@ html.office-locked, html.office-menu-open {
   overflow-y: auto;
   padding: 64px 40px 48px;
   background: var(--office-bg);
-  border-left: 1px solid rgba(232, 232, 232, 0.2);
+  border-left: 1px solid rgb(var(--office-fg-rgb) / 0.2);
   outline: none;
   animation: panel-in 0.35s ease-out both;
 }
@@ -469,7 +499,7 @@ html.office-locked, html.office-menu-open {
   padding: 8px 12px;
   background: none;
   color: var(--office-fg);
-  border: 1px solid rgba(232, 232, 232, 0.35);
+  border: 1px solid rgb(var(--office-fg-rgb) / 0.35);
   font: 11px/1 var(--font-mono), ui-monospace, monospace;
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -480,8 +510,8 @@ html.office-locked, html.office-menu-open {
 .article { max-width: 62ch; font: 16px/1.6 var(--font-ui), system-ui, sans-serif; }
 .article-title { margin: 8px 0 12px; font-size: clamp(28px, 4vw, 40px); line-height: 1.1; font-weight: 600; letter-spacing: -0.01em; }
 .article-lede { font-size: 19px; color: var(--office-fg); }
-.article p { color: rgba(232, 232, 232, 0.8); }
-.article ul { margin: 12px 0 20px; padding-left: 20px; list-style: disc; color: rgba(232, 232, 232, 0.8); }
+.article p { color: rgb(var(--office-fg-rgb) / 0.8); }
+.article ul { margin: 12px 0 20px; padding-left: 20px; list-style: disc; color: rgb(var(--office-fg-rgb) / 0.8); }
 .article li + li { margin-top: 8px; }
 .article a { color: var(--office-fg); }
 .article-cta {
@@ -501,7 +531,7 @@ html.office-locked, html.office-menu-open {
   font: 11px/1 var(--font-mono), ui-monospace, monospace;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(232, 232, 232, 0.7);
+  color: rgb(var(--office-fg-rgb) / 0.7);
 }
 .form input,
 .form textarea {
@@ -510,13 +540,13 @@ html.office-locked, html.office-menu-open {
   padding: 10px 12px;
   background: transparent;
   color: var(--office-fg);
-  border: 1px solid rgba(232, 232, 232, 0.3);
+  border: 1px solid rgb(var(--office-fg-rgb) / 0.3);
   font: 16px/1.4 var(--font-ui), system-ui, sans-serif;
 }
 .form textarea { resize: vertical; }
 .form .article-cta { min-height: 44px; }
 .form :focus-visible { outline: 1px solid var(--accent); border-color: var(--accent); }
-.contact-direct { margin: 24px 0; padding: 16px 0; border-block: 1px solid rgba(232, 232, 232, 0.2); }
+.contact-direct { margin: 24px 0; padding: 16px 0; border-block: 1px solid rgb(var(--office-fg-rgb) / 0.2); }
 .contact-direct > a { font-size: clamp(18px, 4vw, 22px); text-underline-offset: 4px; overflow-wrap: anywhere; }
 .contact-direct p { margin: 6px 0 0; font-size: 14px; }
 
@@ -530,10 +560,10 @@ html.office-locked, html.office-menu-open {
 .office-screen { padding: 0; }
 
 /* A service's Read more ends with the two ways to work. */
-.article-model { margin-top: 24px; padding-top: 18px; border-top: 1px solid rgba(232, 232, 232, 0.2); }
+.article-model { margin-top: 24px; padding-top: 18px; border-top: 1px solid rgb(var(--office-fg-rgb) / 0.2); }
 .article-model h3,
 .article-model h4 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
-.article-label { margin: 14px 0 2px; font: 11px/1.2 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgba(232, 232, 232, 0.6); }
+.article-label { margin: 14px 0 2px; font: 11px/1.2 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.1em; text-transform: uppercase; color: rgb(var(--office-fg-rgb) / 0.6); }
 .article-hint { font-size: 14px; }
 
 /* Standalone pages (a shared or refreshed link), in the office's style. */
@@ -541,9 +571,9 @@ html.office-locked, html.office-menu-open {
 
 .site-entry,
 .site-portfolio {
-  --site-contact: #2ef2ff;
-  --site-muted: #b2b2b2;
-  --site-rule: #393939;
+  --site-contact: var(--accent-hs_drawer);
+  --site-muted: var(--office-muted);
+  --site-rule: var(--office-rule);
   width: min(100% - 2 * clamp(20px, 5vw, 72px), 72rem);
   margin-inline: auto;
 }
@@ -631,7 +661,7 @@ html.office-locked, html.office-menu-open {
   color: var(--site-contact);
 }
 
-.site-entry-button:hover { background: #fff; }
+.site-entry-button:hover { background: var(--office-hover); }
 .site-entry-contact:hover { background: var(--site-contact); color: var(--office-bg); }
 
 .site-entry-static,
@@ -662,7 +692,7 @@ html.office-locked, html.office-menu-open {
   display: block;
   width: 100%;
   height: min(56svh, 440px);
-  stroke: #fff;
+  stroke: var(--office-hover);
   stroke-width: 1.5;
   stroke-linejoin: round;
   stroke-linecap: round;
@@ -809,12 +839,12 @@ html.office-locked, html.office-menu-open {
    The dots' bar lets clicks through to the screenshot (which opens full screen); only the dots themselves catch them. */
 .reel-open { position: absolute; inset: 0; cursor: zoom-in; }
 .reel-zone { position: absolute; top: 0; bottom: 96px; z-index: 2; width: 16%; padding: 0; border: 0; color: var(--office-fg); font: 140px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; opacity: 0.25; transition: opacity 0.2s; }
-.reel-zone--prev { left: 0; background: linear-gradient(to right, rgba(11, 11, 11, 0.55), transparent); }
-.reel-zone--next { right: 0; background: linear-gradient(to left, rgba(11, 11, 11, 0.55), transparent); }
+.reel-zone--prev { left: 0; background: linear-gradient(to right, rgb(var(--office-bg-rgb) / 0.55), transparent); }
+.reel-zone--next { right: 0; background: linear-gradient(to left, rgb(var(--office-bg-rgb) / 0.55), transparent); }
 .office-reel:hover .reel-zone, .reel-zone:focus-visible { opacity: 1; }
-.reel-expand { position: absolute; top: 18px; right: 18px; z-index: 2; width: 72px; height: 72px; border: 1px solid rgba(232, 232, 232, 0.6); background: rgba(11, 11, 11, 0.6); color: var(--office-fg); font: 40px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; opacity: 0.25; transition: opacity 0.2s; }
+.reel-expand { position: absolute; top: 18px; right: 18px; z-index: 2; width: 72px; height: 72px; border: 1px solid rgb(var(--office-fg-rgb) / 0.6); background: rgb(var(--office-bg-rgb) / 0.6); color: var(--office-fg); font: 40px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; opacity: 0.25; transition: opacity 0.2s; }
 .office-reel:hover .reel-expand, .reel-expand:focus-visible { opacity: 1; }
-.reel-dots { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 22px; min-height: 96px; padding: 0 16%; box-sizing: border-box; background: linear-gradient(to top, rgba(11, 11, 11, 0.6), transparent); pointer-events: none; }
+.reel-dots { position: absolute; left: 0; right: 0; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 22px; min-height: 96px; padding: 0 16%; box-sizing: border-box; background: linear-gradient(to top, rgb(var(--office-bg-rgb) / 0.6), transparent); pointer-events: none; }
 .reel-dot { width: 26px; height: 26px; padding: 0; border: 2px solid var(--office-fg); border-radius: 50%; background: none; cursor: pointer; pointer-events: auto; }
 .reel-dot:focus-visible, .reel-expand:focus-visible { outline: 4px solid var(--accent); outline-offset: 4px; }
 /* a zone is the full height of the print and fills its edge, so its outline sits inside it */
@@ -831,14 +861,14 @@ html.office-locked, html.office-menu-open {
 @media (prefers-reduced-motion: reduce) { .reel-zone, .reel-expand { transition: none; } }
 .reel-words { box-sizing: border-box; display: flex; flex-direction: column; gap: 12px; height: 100%; padding: 22px 26px 18px; font-size: 22px; }
 .reel-label { display: flex; align-items: center; gap: 10px; margin: 0; font: 16px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; }
-.reel-label::before { content: ""; flex: none; width: 34px; height: 8px; background: radial-gradient(circle, rgba(232, 232, 232, 0.7) 3px, transparent 3.5px) 0 0 / 12px 8px repeat-x; }
+.reel-label::before { content: ""; flex: none; width: 34px; height: 8px; background: radial-gradient(circle, rgb(var(--office-fg-rgb) / 0.7) 3px, transparent 3.5px) 0 0 / 12px 8px repeat-x; }
 /* One line, however long the label: a wrapped one would push the headline down. The padding (taken back by the margin)
    keeps descenders out of the clip without making the line taller. */
 .reel-label > span { min-width: 0; overflow: hidden; padding: 0.15em 0; margin: -0.15em 0; text-overflow: ellipsis; white-space: nowrap; }
-.reel-headline { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; margin: 0; overflow: hidden; line-height: 1.25; color: rgba(232, 232, 232, 0.85); }
+.reel-headline { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; margin: 0; overflow: hidden; line-height: 1.25; color: rgb(var(--office-fg-rgb) / 0.85); }
 .reel-words .office-card-cta { position: static; align-self: flex-start; margin-top: auto; padding: 10px 16px; font-size: 17px; white-space: nowrap; }
-.reel-description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; margin: 0; overflow: hidden; line-height: 1.3; color: rgba(232, 232, 232, 0.7); }
-.reel-details { margin: 0; font: 15px/1.3 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.04em; color: rgba(232, 232, 232, 0.6); }
+.reel-description { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; margin: 0; overflow: hidden; line-height: 1.3; color: rgb(var(--office-fg-rgb) / 0.7); }
+.reel-details { margin: 0; font: 15px/1.3 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.04em; color: rgb(var(--office-fg-rgb) / 0.6); }
 /* On the laptop (~0.59 on a 1440 x 900 screen): the words fill its screen, label and headline reading at ~16 and ~22 px.
    The print is 640 x ~432, 386 px inside its padding. Every part is bounded whatever the words, so any project fits: the label
    is one line (27, ellipsis), the headline is clamped to two (2 x 38 px x 1.2 = 91), the description to three (3 x 24 px x 1.3 = 94),
@@ -848,7 +878,7 @@ html.office-locked, html.office-menu-open {
 .reel-words--laptop { gap: 14px; padding: 26px 30px 20px; font-size: 38px; }
 .reel-words--laptop > * { flex: none; }
 .reel-words--laptop .reel-label { gap: 14px; font-size: 27px; }
-.reel-words--laptop .reel-label::before { width: 52px; height: 12px; background-size: 18px 12px; background-image: radial-gradient(circle, rgba(232, 232, 232, 0.7) 4.5px, transparent 5px); }
+.reel-words--laptop .reel-label::before { width: 52px; height: 12px; background-size: 18px 12px; background-image: radial-gradient(circle, rgb(var(--office-fg-rgb) / 0.7) 4.5px, transparent 5px); }
 .reel-words--laptop .reel-headline { -webkit-line-clamp: 2; line-height: 1.2; }
 .reel-words--laptop .office-card-cta { padding: 16px 24px; font-size: 27px; }
 .reel-words--laptop .reel-description { font-size: 24px; }
@@ -856,7 +886,7 @@ html.office-locked, html.office-menu-open {
 
 /* The strip under the monitor (portrait screens): seen at about half size on a phone, so the action is made to be
    tapped: 84 px tall, which at ~0.56 comes out over 40 px on screen. */
-.reel-words--strip { gap: 10px; padding: 16px 18px; font-size: 28px; border: 1px solid rgba(232, 232, 232, 0.6); background: var(--office-bg); }
+.reel-words--strip { gap: 10px; padding: 16px 18px; font-size: 28px; border: 1px solid rgb(var(--office-fg-rgb) / 0.6); background: var(--office-bg); }
 /* nothing in the strip may be squeezed: the print is sized to hold all of it (STRIP_HEIGHT_PX), headline at its two lines */
 .reel-words--strip > * { flex: none; }
 .reel-words--strip .reel-label { font-size: 22px; }
@@ -869,13 +899,13 @@ html.office-locked, html.office-menu-open {
 /* The board's canvas, laid in under the pointer: see-through, since the ink shows on the 3D board (under the held marker). */
 .whiteboard-ink { flex: none; touch-action: none; cursor: crosshair; }
 .whiteboard-canvas { display: block; opacity: 0; }
-.whiteboard-tools { display: flex; flex: none; align-items: center; gap: 18px; height: 96px; padding: 0 24px; border-top: 1px solid rgba(232, 232, 232, 0.25); }
+.whiteboard-tools { display: flex; flex: none; align-items: center; gap: 18px; height: 96px; padding: 0 24px; border-top: 1px solid rgb(var(--office-fg-rgb) / 0.25); }
 .whiteboard-swatch,
-.whiteboard-eraser { width: 56px; height: 56px; padding: 0; border: 2px solid rgba(232, 232, 232, 0.5); border-radius: 50%; background: var(--swatch, transparent); cursor: pointer; }
-.whiteboard-eraser { border-radius: 8px; background: repeating-linear-gradient(45deg, rgba(232, 232, 232, 0.6) 0 6px, transparent 6px 12px); }
+.whiteboard-eraser { width: 56px; height: 56px; padding: 0; border: 2px solid rgb(var(--office-fg-rgb) / 0.5); border-radius: 50%; background: var(--swatch, transparent); cursor: pointer; }
+.whiteboard-eraser { border-radius: 8px; background: repeating-linear-gradient(45deg, rgb(var(--office-fg-rgb) / 0.6) 0 6px, transparent 6px 12px); }
 .whiteboard-swatch[aria-pressed="true"],
 .whiteboard-eraser[aria-pressed="true"] { outline: 3px solid var(--office-fg); outline-offset: 4px; }
-.whiteboard-wipe { margin-left: auto; padding: 14px 22px; background: none; border: 1px solid rgba(232, 232, 232, 0.6); color: var(--office-fg); font: 600 24px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; }
+.whiteboard-wipe { margin-left: auto; padding: 14px 22px; background: none; border: 1px solid rgb(var(--office-fg-rgb) / 0.6); color: var(--office-fg); font: 600 24px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; }
 /* Phones see the board at under half size (~0.45 at 390 px across), so every tool is made at least 40 px on screen to
    tap. The strip grows with them; Whiteboard.tsx measures it, so the canvas takes what's left. A landscape phone
    (too wide for the width query, not portrait) is coarse-pointer, so it gets the same sizes. The seven items and their
@@ -891,11 +921,12 @@ html.office-locked, html.office-menu-open {
 
 /* The reel's full-screen view (spec 3.5 3a): over everything (above the Read more scrim at 10), on black, the screenshot uncropped. */
 /* The top 54 px is kept for the label and close (close: 10 + 44); the screenshot is centred in the rest. */
-.reel-viewer { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding-top: 54px; background: #000; outline: none; animation: reel-viewer-in 0.2s ease-out; }
+/* The full-window viewer is always a dark room around the picture. */
+.reel-viewer { --office-fg: #e8e8e8; --office-bg: #0b0b0b; --office-fg-rgb: 232 232 232; --office-bg-rgb: 11 11 11; position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding-top: 54px; background: #000; outline: none; animation: reel-viewer-in 0.2s ease-out; }
 .reel-viewer-shot { max-width: 100vw; max-height: calc(100vh - 54px); max-height: calc(100dvh - 54px); object-fit: contain; }
 .reel-viewer-label { position: absolute; top: 18px; left: 20px; margin: 0; font: 14px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; color: var(--office-fg); }
-.reel-viewer-close { position: absolute; top: 10px; right: 12px; min-width: 44px; min-height: 44px; padding: 0 14px; background: none; border: 1px solid rgba(232, 232, 232, 0.6); color: var(--office-fg); font: 14px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; cursor: pointer; }
-.reel-viewer-step { position: absolute; top: 50%; translate: 0 -50%; width: 56px; height: 96px; background: rgba(11, 11, 11, 0.55); border: 0; color: var(--office-fg); font: 48px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; }
+.reel-viewer-close { position: absolute; top: 10px; right: 12px; min-width: 44px; min-height: 44px; padding: 0 14px; background: none; border: 1px solid rgb(var(--office-fg-rgb) / 0.6); color: var(--office-fg); font: 14px/1 var(--font-mono), ui-monospace, monospace; letter-spacing: 0.06em; cursor: pointer; }
+.reel-viewer-step { position: absolute; top: 50%; translate: 0 -50%; width: 56px; height: 96px; background: rgb(var(--office-bg-rgb) / 0.55); border: 0; color: var(--office-fg); font: 48px/1 var(--font-ui), system-ui, sans-serif; cursor: pointer; }
 .reel-viewer-step--prev { left: 8px; }
 .reel-viewer-step--next { right: 8px; }
 /* On portrait screens ‹ › go in a bar under the image rather than over its edges, each at least 44 x 44. */

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useRef, type CSSProperties, type KeyboardEvent, type ReactNode } from "react";
-import { theme } from "@/office/theme";
+import { accentVar } from "@/office/theme";
 import { COPY } from "@/office/copy";
 import type { HotspotName } from "@/office/hotspots/registry";
 
@@ -58,7 +58,7 @@ export default function Panel({ hotspot, titleId, onClose, inert, children }: { 
         aria-labelledby={titleId}
         tabIndex={-1}
         className="panel"
-        style={{ "--accent": theme.accents[hotspot] } as CSSProperties}
+        style={{ "--accent": accentVar(hotspot) } as CSSProperties}
         onKeyDown={onKeyDown}
       >
         <button type="button" className="panel-close" onClick={onClose}>

@@ -43,6 +43,8 @@ export type CleanEdgesHandle = {
   /** A highlight group's own resting colour, where it has one (see `setTint`). */
   tints: Map<string, string>;
   baseColor: string;
+  /** The solid decal material for `flat_mark` meshes, once one exists. */
+  flatMark: MeshBasicMaterial | null;
 };
 
 const DEFAULT_FADE_MIN = 0.15;
@@ -144,7 +146,7 @@ export function applyCleanEdges(root: Object3D, opts: CleanEdgesOptions): CleanE
     for (const o of group.objects) box.union(new Box3().setFromObject(o));
     box.getBoundingSphere(new Sphere()).center.clone().toArray().forEach((v, i) => group.centre.setComponent(i, v));
   }
-  const handle = { fill, line, fades: [...fades.values()], highlights, tints: new Map<string, string>(), baseColor: opts.line };
+  const handle = { fill, line, fades: [...fades.values()], highlights, tints: new Map<string, string>(), baseColor: opts.line, flatMark };
   handles.set(root, handle);
   return handle;
 }
@@ -184,6 +186,19 @@ export function setHighlight(handle: CleanEdgesHandle, prefix: string | null, co
     const on = prefix !== null && (key === prefix || key.startsWith(`${prefix}__`));
     material.color.set(handle.tints.get(key) ?? (on ? color : handle.baseColor));
   }
+}
+
+/**
+ * Moves every material the handle made to a new background and line colour (a theme change). A tinted group keeps its
+ * tint; a highlighted group goes back to the line colour, so call `setHighlight` again to relight it.
+ */
+export function recolorEdges(handle: CleanEdgesHandle, background: string, line: string): void {
+  handle.fill.color.set(background);
+  handle.flatMark?.color.set(line);
+  handle.line.color.set(line);
+  for (const g of handle.fades) g.material.color.set(line);
+  for (const [key, material] of handle.highlights) material.color.set(handle.tints.get(key) ?? line);
+  handle.baseColor = line;
 }
 
 /** A highlight group's own line colour (the whiteboard's tray markers), kept through highlights. */

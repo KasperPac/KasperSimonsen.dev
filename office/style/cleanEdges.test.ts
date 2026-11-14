@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { BoxGeometry, Color, DoubleSide, Group, IcosahedronGeometry, Mesh, MeshBasicMaterial, Object3D, Raycaster, Vector3 } from "three";
 import type { LineMaterial } from "three/addons/lines/LineMaterial.js";
 import type { LineSegments2 } from "three/addons/lines/LineSegments2.js";
-import { applyCleanEdges, fadeOpacity, setHighlight, setLineResolution, setTint, updateEdgeFades } from "./cleanEdges";
+import { applyCleanEdges, fadeOpacity, recolorEdges, setHighlight, setLineResolution, setTint, updateEdgeFades } from "./cleanEdges";
 
 const opts = { background: "#000000", line: "#ffffff", lineWidth: 1.5, thresholdDeg: 20 };
 
@@ -345,5 +345,25 @@ describe("setTint", () => {
     setHighlight(handle, null, "#e8e8e8");
     expect(hex("hs_whiteboard__marker_01")).toBe("c6ff3d");
     expect(hex("hs_crate")).toBe("ffffff"); // untinted groups go to the base
+  });
+});
+
+describe("recolorEdges", () => {
+  it("moves the fill, lines, fades, decals and highlights to the new colours, keeping tints", () => {
+    const { root, crate } = scene();
+    const decal = new Mesh(new BoxGeometry(0.4, 0.001, 0.3));
+    decal.userData.flat_mark = true;
+    root.add(decal);
+    const handle = applyCleanEdges(root, { ...opts, highlightKey: (m) => (m.name === "hs_crate" ? "hs_crate" : null) });
+    setTint(handle, "hs_crate", "#ff0000");
+    setHighlight(handle, "hs_crate", "#00ff00");
+    recolorEdges(handle, "#f4f3ef", "#161616");
+    expect(handle.fill.color.getHexString()).toBe("f4f3ef");
+    expect(handle.line.color.getHexString()).toBe("161616");
+    expect((decal.material as MeshBasicMaterial).color.getHexString()).toBe("161616");
+    expect((edgesOf(crate).material as LineMaterial).color.getHexString()).toBe("ff0000");
+    expect(handle.baseColor).toBe("#161616");
+    setHighlight(handle, null, "#00ff00");
+    expect((edgesOf(crate).material as LineMaterial).color.getHexString()).toBe("ff0000");
   });
 });

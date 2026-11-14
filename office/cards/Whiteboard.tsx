@@ -2,7 +2,8 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { COPY } from "@/office/copy";
-import { theme } from "@/office/theme";
+import { inkFor, theme } from "@/office/theme";
+import { useTheme } from "@/office/themeState";
 import { endStroke, extendStroke, startStroke, wipe } from "@/office/whiteboard/board";
 import { boardCanvas, inkStroke, redrawBoard, sizeBoard } from "@/office/whiteboard/surface";
 import type { Pt, Stroke } from "@/office/whiteboard/strokes";
@@ -45,6 +46,7 @@ export default function Whiteboard({
   onTool: (t: ToolId) => void;
   pointer: { current: BoardPointer };
 }) {
+  const mode = useTheme();
   const ink = useRef<HTMLDivElement>(null);
   const strip = useRef<HTMLDivElement>(null);
   const [stripPx, setStripPx] = useState(STRIP_PX);
@@ -122,7 +124,7 @@ export default function Whiteboard({
       />
       <div ref={strip} className="whiteboard-tools">
         {TOOLS.map((t) => (
-          <button key={t.id} type="button" className="whiteboard-swatch" aria-label={t.label} aria-pressed={tool === t.id} style={{ ["--swatch" as string]: t.color }} onClick={() => onTool(t.id)} />
+          <button key={t.id} type="button" className="whiteboard-swatch" aria-label={t.label} aria-pressed={tool === t.id} style={{ ["--swatch" as string]: inkFor(t.color, mode) }} onClick={() => onTool(t.id)} />
         ))}
         <button type="button" className="whiteboard-eraser" aria-label={COPY.whiteboard.eraser} aria-pressed={tool === "eraser"} onClick={() => onTool("eraser")} />
         <button

@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic";
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import OfficeErrorBoundary from "./OfficeErrorBoundary";
-import { theme } from "./theme";
+import { accentVar, theme } from "./theme";
 import { COPY } from "./copy";
 import { useWalkInProgress } from "./walkin/useWalkInProgress";
 import { onStreet, startAutoWalk } from "./walkin/autoWalk";
@@ -624,7 +624,7 @@ export default function OfficeExperience() {
         data-hotspot={hovered?.hotspot}
         aria-hidden="true"
         hidden={!hovered}
-        style={{ "--accent": hovered ? theme.accents[hovered.hotspot] : theme.line } as CSSProperties}
+        style={{ "--accent": hovered ? accentVar(hovered.hotspot) : "var(--office-fg)" } as CSSProperties}
       >
         {hovered ? labelFor(hovered, COPY.labels) : ""}
       </div>
@@ -636,7 +636,7 @@ export default function OfficeExperience() {
           }}
           className="office-marker"
           data-hotspot={h}
-          style={{ "--marker": theme.accents[h] } as CSSProperties}
+          style={{ "--marker": accentVar(h) } as CSSProperties}
           aria-hidden="true"
           // A dot is a way in too, for a finger especially; the nav has the same for keyboards and screen readers.
           onClick={() => activate({ hotspot: h, item: null })}

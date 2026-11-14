@@ -4,6 +4,8 @@ import type { Object3D } from "three";
 import type { DirectorState } from "../director/director";
 import { applyFrame, buildSign, clampDt, disposeSign, setSignResolution, type Sign } from "./sign";
 import { NEON_NODE } from "./mark";
+import { palettes } from "../theme";
+import { useTheme } from "../themeState";
 import { neonFrame, nextPower, type NeonPower } from "./sequence";
 
 let warned = false;
@@ -31,6 +33,9 @@ export default function NeonSign({ scene, director, host, reduced }: Props) {
   const signRef = useRef<Sign | null>(null);
   const power = useRef<NeonPower>("off");
   const t = useRef(0);
+  const mode = useTheme();
+  const modeRef = useRef(mode);
+  modeRef.current = mode;
 
   useEffect(() => {
     if (!anchor) {
@@ -40,7 +45,7 @@ export default function NeonSign({ scene, director, host, reduced }: Props) {
       }
       return;
     }
-    const sign = buildSign();
+    const sign = buildSign(palettes[modeRef.current].background);
     const { size } = get();
     setSignResolution(sign, size.width, size.height);
     applyFrame(sign, neonFrame(power.current, t.current, seed, reduced));
@@ -54,6 +59,11 @@ export default function NeonSign({ scene, director, host, reduced }: Props) {
       if (el && el.dataset.neon !== "off") el.dataset.neon = "off";
     };
   }, [anchor, seed, reduced, get, host]);
+
+  // The sign keeps its own look; only the wall its rope gaps are cut against changes.
+  useEffect(() => {
+    signRef.current?.gap.color.set(palettes[mode].background);
+  }, [mode]);
 
   useEffect(() => {
     if (signRef.current) setSignResolution(signRef.current, width, height);

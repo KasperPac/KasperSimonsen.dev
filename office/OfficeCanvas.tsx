@@ -16,8 +16,9 @@ import {
   type PerspectiveCamera,
 } from "three";
 import manifest from "./manifest.json";
-import { theme } from "./theme";
-import { applyCleanEdges, setHighlight, setLineResolution, setTint, updateEdgeFades, type CleanEdgesHandle } from "./style/cleanEdges";
+import { inkFor, palettes, theme } from "./theme";
+import { getTheme, useTheme } from "./themeState";
+import { applyCleanEdges, recolorEdges, setHighlight, setLineResolution, setTint, updateEdgeFades, type CleanEdgesHandle } from "./style/cleanEdges";
 import { findClipFor, makeClipSampler, progressToTime } from "./walkin/clipSampler";
 import { useTurntable } from "./idle/useTurntable";
 import { applySkippingGirl, findSkippingGirl } from "./walkin/skippingGirl";
@@ -47,7 +48,7 @@ import { LAPTOP_WIDTH_PX, STRIP_GAP_PX, STRIP_HEIGHT_PX, STRIP_WIDTH_PX } from "
 import { STRIP_PX, TOOLS, WHITEBOARD_WIDTH_PX, type BoardPointer } from "./cards/Whiteboard";
 import { screenFaceFor } from "./cards/face";
 import { boardPoint, findTools, handPlacement, ToolMotion, type Face, type ToolId, type ToolNodes } from "./whiteboard/marker";
-import { boardCanvas, boardSize, boardVersion, sizeBoard } from "./whiteboard/surface";
+import { boardCanvas, boardSize, boardVersion, redrawBoard, sizeBoard } from "./whiteboard/surface";
 import { work } from "@/content/work";
 
 /** DOM the canvas positions each frame: the hover label and the touch markers. */
@@ -115,11 +116,12 @@ function useCleanEdges(url: string, keyFor?: (mesh: Object3D) => string | null) 
   const gltf = useGLTF(url);
   const width = useThree((s) => s.size.width);
   const height = useThree((s) => s.size.height);
+  const mode = useTheme();
   const handle = useMemo(
     () =>
       applyCleanEdges(gltf.scene, {
-        background: theme.background,
-        line: theme.line,
+        background: palettes[getTheme()].background,
+        line: palettes[getTheme()].line,
         lineWidth: theme.lineWidth,
         thresholdDeg: theme.edgeThresholdDeg,
         highlightKey: keyFor,
@@ -127,6 +129,7 @@ function useCleanEdges(url: string, keyFor?: (mesh: Object3D) => string | null) 
     [gltf.scene, keyFor],
   );
   useEffect(() => setLineResolution(handle, width, height), [handle, width, height]);
+  useEffect(() => recolorEdges(handle, palettes[mode].background, palettes[mode].line), [handle, mode]);
   useFrame(({ camera }) => updateEdgeFades(handle, camera.position)); // dense detail fades with distance
   return { gltf, handle };
 }
@@ -415,9 +418,12 @@ function Office({
   }, [office, handle, info]);
 
   // The tray's markers keep their colours in their outlines (whiteboard spec 4). The white one stays the base colour.
+  const mode = useTheme();
   useEffect(() => {
-    for (let i = 1; i < TOOLS.length; i++) setTint(handle, `hs_whiteboard__marker_0${i}`, TOOLS[i].color);
-  }, [handle]);
+    for (let i = 1; i < TOOLS.length; i++) setTint(handle, `hs_whiteboard__marker_0${i}`, inkFor(TOOLS[i].color, mode));
+    shown.current = null; // recoloured: the highlight is set again next frame
+    redrawBoard(); // the drawing's ink follows the theme
+  }, [handle, mode]);
 
   useFrame(({ camera, size, clock }, dt) => {
     // This frame's camera is placed already (the walk-in has just done it); its matrices only follow at the render, so
@@ -508,7 +514,7 @@ function Office({
     const lit = hover.current ?? focused;
     const key = lit ? `${highlightFor(lit)}:${lit.hotspot}` : null;
     if (key !== shown.current) {
-      setHighlight(handle, lit ? highlightFor(lit) : null, lit ? theme.accents[lit.hotspot] : theme.line);
+      setHighlight(handle, lit ? highlightFor(lit) : null, lit ? palettes[getTheme()].accents[lit.hotspot] : palettes[getTheme()].line);
       shown.current = key;
     }
 
@@ -623,10 +629,11 @@ function Office({
 
 export default function OfficeCanvas(props: OfficeCanvasProps) {
   const info = useRef<OfficeInfo | null>(null);
+  const { background } = palettes[useTheme()];
   return (
     <Canvas dpr={[1, 2]} camera={{ fov: 50, near: 0.1, far: 10000 }} gl={{ antialias: true }}>
-      <color attach="background" args={[theme.background]} />
-      <fog attach="fog" args={[theme.background, theme.fogNear, theme.fogFar]} />
+      <color attach="background" args={[background]} />
+      <fog attach="fog" args={[background, theme.fogNear, theme.fogFar]} />
       <Suspense fallback={null}>
         <Street {...props} info={info} />
         {/* The office streams in separately so the street can show first. */}

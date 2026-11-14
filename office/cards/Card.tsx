@@ -1,7 +1,7 @@
 "use client";
 
 import type { CSSProperties, ReactNode, RefObject } from "react";
-import { theme } from "@/office/theme";
+import { accentVar } from "@/office/theme";
 import type { HotspotName } from "@/office/hotspots/registry";
 
 /**
@@ -24,7 +24,7 @@ export default function Card({
       ref={cardRef as RefObject<HTMLElement>}
       className="office-card"
       aria-labelledby={titleId}
-      style={{ "--accent": theme.accents[hotspot] } as CSSProperties}
+      style={{ "--accent": accentVar(hotspot) } as CSSProperties}
     >
       {children}
     </section>
