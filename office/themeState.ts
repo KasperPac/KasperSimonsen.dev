@@ -1,8 +1,8 @@
 import { useSyncExternalStore } from "react";
 import { palettes, type Palette, type ThemeMode } from "./theme";
+import { THEME_INIT_SCRIPT, THEME_KEY } from "./themeScript";
 
-/** localStorage key for the visitor's choice. */
-export const THEME_KEY = "office-theme";
+export { THEME_INIT_SCRIPT, THEME_KEY };
 
 /** Dark unless the system says light. */
 export function systemTheme(prefersLight: boolean): ThemeMode {
@@ -25,13 +25,6 @@ function readStored(): string | null {
     return null; // storage blocked (private mode, policy): follow the system for this visit
   }
 }
-
-/**
- * Runs in the page head before first paint (layout.tsx), so the right theme is on <html> before anything is drawn.
- * It acts only on /office; elsewhere nothing is set and the pages stay dark. Self-contained, so keep it in step with
- * `resolveTheme`. The values are the key and the two modes.
- */
-export const THEME_INIT_SCRIPT = `(function(){try{var p=location.pathname;if(p!=="/office"&&p!=="/office/")return;var m=null;try{m=localStorage.getItem(${JSON.stringify(THEME_KEY)})}catch(e){}if(m!=="dark"&&m!=="light")m=window.matchMedia("(prefers-color-scheme: light)").matches?"light":"dark";document.documentElement.dataset.theme=m}catch(e){}})()`;
 
 let current: ThemeMode | null = null;
 const listeners = new Set<() => void>();

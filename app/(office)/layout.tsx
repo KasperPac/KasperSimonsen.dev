@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Analytics } from "@vercel/analytics/next";
 import { IBM_Plex_Mono, Inter_Tight } from "next/font/google";
-import { THEME_INIT_SCRIPT } from "@/office/themeState";
+import { THEME_INIT_SCRIPT } from "@/office/themeScript";
 import "./office.css";
 
 const ui = Inter_Tight({ variable: "--font-ui", subsets: ["latin"], display: "swap" });
